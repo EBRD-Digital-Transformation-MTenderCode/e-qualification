@@ -6,7 +6,7 @@ import com.procurement.qualification.infrastructure.service.CommandService
 import com.procurement.qualification.infrastructure.utils.toJson
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
 import com.procurement.qualification.infrastructure.web.parser.tryGetNode
-import com.procurement.qualification.infrastructure.web.response.generator.ApiResponseGenerator
+import com.procurement.qualification.infrastructure.web.response.generator.ApiResponseGenerator.generateResponseOnFailure
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/command")
 class CommandController(
     private val commandService: CommandService,
-    private val apiResponseGenerator: ApiResponseGenerator,
     private val logger: Logger
 ) {
 
@@ -43,7 +42,7 @@ class CommandController(
     }
 
     private fun generateResponseEntityOnFailure(fail: Fail): ResponseEntity<ApiResponse> {
-        val response = apiResponseGenerator.generateResponseOnFailure(fail = fail, logger = logger)
+        val response = generateResponseOnFailure(fail = fail, logger = logger)
         return ResponseEntity(response, HttpStatus.OK)
     }
 }

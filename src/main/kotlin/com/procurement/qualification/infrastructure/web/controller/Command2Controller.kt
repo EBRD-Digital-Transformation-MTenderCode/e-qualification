@@ -12,7 +12,7 @@ import com.procurement.qualification.infrastructure.web.parser.NaN
 import com.procurement.qualification.infrastructure.web.parser.tryGetId
 import com.procurement.qualification.infrastructure.web.parser.tryGetNode
 import com.procurement.qualification.infrastructure.web.parser.tryGetVersion
-import com.procurement.qualification.infrastructure.web.response.generator.ApiResponse2Generator
+import com.procurement.qualification.infrastructure.web.response.generator.ApiResponse2Generator.generateResponseOnFailure
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -25,7 +25,6 @@ import java.util.*
 @RequestMapping("/command2")
 class Command2Controller(
     private val command2Service: Command2Service,
-    private val apiResponse2Generator: ApiResponse2Generator,
     private val logger: Logger
 ) {
 
@@ -66,7 +65,7 @@ class Command2Controller(
     private fun generateResponseEntityOnFailure(
         fail: Fail, version: ApiVersion2 = GlobalProperties2.App.apiVersion, id: UUID = NaN
     ): ResponseEntity<ApiResponse2> {
-        val response = apiResponse2Generator.generateResponseOnFailure(
+        val response = generateResponseOnFailure(
             fail = fail, id = id, version = version, logger = logger
         )
         return ResponseEntity(response, HttpStatus.OK)
