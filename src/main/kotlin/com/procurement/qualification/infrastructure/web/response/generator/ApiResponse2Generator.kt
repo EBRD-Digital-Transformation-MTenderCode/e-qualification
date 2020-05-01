@@ -11,11 +11,9 @@ import com.procurement.qualification.infrastructure.web.dto.ApiVersion2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiErrorResponse2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiIncidentResponse2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
-import org.springframework.stereotype.Component
 import java.util.*
 
-@Component
-class ApiResponse2Generator {
+object ApiResponse2Generator {
 
     fun generateResponseOnFailure(
         fail: Fail, version: ApiVersion2, id: UUID, logger: Logger
