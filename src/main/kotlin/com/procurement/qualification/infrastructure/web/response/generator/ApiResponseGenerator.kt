@@ -7,6 +7,7 @@ import com.procurement.qualification.infrastructure.web.dto.command.ApiVersion
 import com.procurement.qualification.infrastructure.web.dto.response.ApiErrorResponse
 
 object ApiResponseGenerator {
+
     fun generateResponseOnFailure(
         fail: Fail, version: ApiVersion = GlobalProperties.App.apiVersion, logger: Logger, id: String = "N/A"
     ): ApiErrorResponse {
@@ -14,7 +15,7 @@ object ApiResponseGenerator {
         return ApiErrorResponse(
             errors = listOf(
                 ApiErrorResponse.Error(
-                    code = "400.${GlobalProperties.serviceId}." + fail.code,
+                    code = "${fail.code}/${GlobalProperties.serviceId}",
                     description = fail.description
                 )
             ),
