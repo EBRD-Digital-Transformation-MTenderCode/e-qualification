@@ -10,10 +10,10 @@ import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
 import com.procurement.qualification.infrastructure.web.dto.response.ApiSuccessResponse2
 import com.procurement.qualification.infrastructure.web.parser.tryGetId
 import com.procurement.qualification.infrastructure.web.parser.tryGetVersion
-import com.procurement.qualification.infrastructure.web.response.generator.ApiResponse2Generator
+import com.procurement.qualification.infrastructure.web.response.generator.ApiResponse2Generator.generateResponseOnFailure
 
 abstract class AbstractValidationHandler2<ACTION : Action, E : Fail>(
-    private val logger: Logger, private val apiResponse2Generator: ApiResponse2Generator
+    private val logger: Logger
 ) : Handler<ACTION, ApiResponse2> {
 
     override fun handle(node: JsonNode): ApiResponse2 {
@@ -26,7 +26,7 @@ abstract class AbstractValidationHandler2<ACTION : Action, E : Fail>(
                     logger.debug("${action.key} has been executed.")
                 ApiSuccessResponse2(version = version, id = id)
             }
-            is ValidationResult.Fail -> apiResponse2Generator.generateResponseOnFailure(
+            is ValidationResult.Fail -> generateResponseOnFailure(
                 fail = result.error, version = version, id = id, logger = logger
             )
         }

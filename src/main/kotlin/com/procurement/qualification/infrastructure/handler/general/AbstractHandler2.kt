@@ -11,10 +11,10 @@ import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
 import com.procurement.qualification.infrastructure.web.dto.response.ApiSuccessResponse2
 import com.procurement.qualification.infrastructure.web.parser.tryGetId
 import com.procurement.qualification.infrastructure.web.parser.tryGetVersion
-import com.procurement.qualification.infrastructure.web.response.generator.ApiResponse2Generator
+import com.procurement.qualification.infrastructure.web.response.generator.ApiResponse2Generator.generateResponseOnFailure
 
 abstract class AbstractHandler2<ACTION : Action, R : Any>(
-    private val logger: Logger, private val apiResponse2Generator: ApiResponse2Generator
+    private val logger: Logger
 ) : Handler<ACTION, ApiResponse2> {
 
     override fun handle(node: JsonNode): ApiResponse2 {
@@ -31,7 +31,7 @@ abstract class AbstractHandler2<ACTION : Action, R : Any>(
                     result = result.get
                 )
             }
-            is Result.Failure -> apiResponse2Generator.generateResponseOnFailure(
+            is Result.Failure -> generateResponseOnFailure(
                 fail = result.error,
                 version = version,
                 id = id,

@@ -11,16 +11,15 @@ import com.procurement.qualification.infrastructure.web.dto.command.CommandMessa
 import com.procurement.qualification.infrastructure.web.dto.command.CommandType
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
 import com.procurement.qualification.infrastructure.web.dto.response.ApiSuccessResponse
-import com.procurement.qualification.infrastructure.web.response.generator.ApiResponseGenerator
+import com.procurement.qualification.infrastructure.web.response.generator.ApiResponseGenerator.generateResponseOnFailure
 
 abstract class AbstractValidationHandler<ACTION : CommandType, E : Fail>(
-    private val logger: Logger, private val apiResponseGenerator: ApiResponseGenerator
-) :
-    Handler<ACTION, ApiResponse> {
+    private val logger: Logger
+) : Handler<ACTION, ApiResponse> {
 
     override fun handle(node: JsonNode): ApiResponse {
         val cm = node.tryToObject(CommandMessage::class.java)
-            .doReturn { return apiResponseGenerator.generateResponseOnFailure(fail = BadRequest(), logger = logger) }
+            .doReturn { return generateResponseOnFailure(fail = BadRequest(), logger = logger) }
 
         return when (val result = execute(cm)) {
             is ValidationResult.Ok -> {
@@ -30,7 +29,7 @@ abstract class AbstractValidationHandler<ACTION : CommandType, E : Fail>(
                     id = cm.id, version = cm.version, data = Unit
                 )
             }
-            is ValidationResult.Fail -> apiResponseGenerator.generateResponseOnFailure(
+            is ValidationResult.Fail -> generateResponseOnFailure(
                 fail = result.error, id = cm.id, version = cm.version, logger = logger
             )
         }
