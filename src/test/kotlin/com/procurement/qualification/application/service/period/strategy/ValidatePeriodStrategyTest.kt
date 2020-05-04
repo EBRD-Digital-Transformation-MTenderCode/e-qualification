@@ -11,6 +11,9 @@ import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
 import java.util.concurrent.TimeUnit
 
 internal class ValidatePeriodStrategyTest {
@@ -18,7 +21,13 @@ internal class ValidatePeriodStrategyTest {
         private const val COUNTRY = "MD"
         private val PMD = ProcurementMethod.GPA
         private val ALLOWED_TERM = TimeUnit.DAYS.toSeconds(10)
+
+        private const val FORMAT_PATTERN = "uuuu-MM-dd'T'HH:mm:ss'Z'"
+        private val FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern(FORMAT_PATTERN)
+            .withResolverStyle(ResolverStyle.STRICT)
+        private val DATE = LocalDateTime.parse("2020-02-10T08:49:55Z", FORMATTER)
     }
+
     @Nested
     inner class Execute {
 
@@ -29,7 +38,10 @@ internal class ValidatePeriodStrategyTest {
         fun periodDurationEqualsAllowedTerm_success() {
             whenever(periodRulesRepository.findTermBy(pmd = PMD, country = COUNTRY))
                 .thenReturn(ALLOWED_TERM.asSuccess())
-            val data = createValidatePeriodData(startDate = "2020-02-10T08:49:55Z", endDate = "2020-02-20T08:49:55Z")
+
+            val endDate = DATE.plusDays(10).format(FORMATTER)
+            val startDate = DATE.format(FORMATTER)
+            val data = createValidatePeriodData(startDate = startDate, endDate = endDate)
             val context = stubContext()
 
             val actual = strategy.execute(data = data, context = context)
@@ -41,7 +53,10 @@ internal class ValidatePeriodStrategyTest {
         fun periodDurationGreaterThanAllowedTerm_success() {
             whenever(periodRulesRepository.findTermBy(pmd = PMD, country = COUNTRY))
                 .thenReturn(ALLOWED_TERM.asSuccess())
-            val data = createValidatePeriodData(startDate = "2020-02-10T08:49:55Z", endDate = "2020-02-22T08:49:55Z")
+
+            val endDate = DATE.plusDays(10).plusSeconds(1).format(FORMATTER)
+            val startDate = DATE.format(FORMATTER)
+            val data = createValidatePeriodData(startDate = startDate, endDate = endDate)
             val context = stubContext()
 
             val actual = strategy.execute(data = data, context = context)
@@ -50,10 +65,11 @@ internal class ValidatePeriodStrategyTest {
         }
 
         @Test
-        fun startAndEndDateEqual_fail(){
+        fun startAndEndDateEqual_fail() {
             whenever(periodRulesRepository.findTermBy(pmd = PMD, country = COUNTRY))
                 .thenReturn(ALLOWED_TERM.asSuccess())
-            val date = "2020-02-10T08:49:55Z"
+
+            val date = DATE.format(FORMATTER)
             val data = createValidatePeriodData(startDate = date, endDate = date)
             val context = stubContext()
 
@@ -63,10 +79,14 @@ internal class ValidatePeriodStrategyTest {
         }
 
         @Test
-        fun endDatePrecedesStartDate_fail(){
+        fun endDatePrecedesStartDate_fail() {
             whenever(periodRulesRepository.findTermBy(pmd = PMD, country = COUNTRY))
                 .thenReturn(ALLOWED_TERM.asSuccess())
-            val data = createValidatePeriodData(startDate = "2020-02-10T08:49:55Z", endDate = "2020-02-09T08:49:55Z")
+
+            val startDate = DATE.plusDays(10).plusSeconds(1).format(FORMATTER)
+            val endDate = DATE.format(FORMATTER)
+
+            val data = createValidatePeriodData(startDate = startDate, endDate = endDate)
             val context = stubContext()
 
             val actual = strategy.execute(data = data, context = context)
@@ -75,10 +95,13 @@ internal class ValidatePeriodStrategyTest {
         }
 
         @Test
-        fun periodDurationLessThanTenDaysByOneSecond_fail(){
+        fun periodDurationLessThanTenDaysByOneSecond_fail() {
             whenever(periodRulesRepository.findTermBy(pmd = PMD, country = COUNTRY))
                 .thenReturn(ALLOWED_TERM.asSuccess())
-            val data = createValidatePeriodData(startDate = "2020-02-10T08:49:55Z", endDate = "2020-02-20T08:49:54Z")
+
+            val endDate = DATE.plusDays(10).minusSeconds(1).format(FORMATTER)
+            val startDate = DATE.format(FORMATTER)
+            val data = createValidatePeriodData(startDate = startDate, endDate = endDate)
             val context = stubContext()
 
             val actual = strategy.execute(data = data, context = context)
@@ -86,6 +109,20 @@ internal class ValidatePeriodStrategyTest {
             assertTrue(actual.error is ValidationError.CommandError.InvalidPeriodTerm)
         }
 
+        @Test
+        fun periodDurationRuleNotFound_fail() {
+            whenever(periodRulesRepository.findTermBy(pmd = PMD, country = COUNTRY))
+                .thenReturn(null.asSuccess())
+
+            val endDate = DATE.plusDays(10).format(FORMATTER)
+            val startDate = DATE.format(FORMATTER)
+            val data = createValidatePeriodData(startDate = startDate, endDate = endDate)
+            val context = stubContext()
+
+            val actual = strategy.execute(data = data, context = context)
+
+            assertTrue(actual.error is ValidationError.CommandError.PeriodRuleNotFound)
+        }
 
         private fun createValidatePeriodData(startDate: String, endDate: String): ValidatePeriodData {
             val period = ValidatePeriodData.Period.tryCreate(
