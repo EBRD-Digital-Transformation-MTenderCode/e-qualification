@@ -1,11 +1,11 @@
 package com.procurement.qualification.application.service.period
 
+import com.procurement.qualification.application.model.period.validate.ValidatePeriodContext
+import com.procurement.qualification.application.model.period.validate.ValidatePeriodData
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.PeriodRulesRepository
 import com.procurement.qualification.application.service.period.strategy.ValidatePeriodStrategy
 import com.procurement.qualification.domain.functional.ValidationResult
-import com.procurement.qualification.domain.model.data.period.validate.ValidatePeriodContext
-import com.procurement.qualification.domain.model.data.period.validate.ValidatePeriodData
 import com.procurement.qualification.infrastructure.fail.Fail
 import org.springframework.stereotype.Service
 
