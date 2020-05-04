@@ -3,6 +3,7 @@ package com.procurement.qualification.infrastructure.utils
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.NullNode
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.infrastructure.bind.jackson.configuration
 import com.procurement.qualification.infrastructure.fail.Fail
@@ -52,10 +53,13 @@ fun <T : Any> String.tryToObject(target: Class<T>): Result<T, Fail.Incident.Tran
     Result.failure(Fail.Incident.Transform.Parsing(target.canonicalName, expected))
 }
 
-fun <T : Any> JsonNode.tryToObject(target: Class<T>): Result<T, Fail.Incident.Transform.Parsing> = try {
-    Result.success(JsonMapper.mapper.treeToValue(this, target))
-} catch (expected: Exception) {
-    Result.failure(Fail.Incident.Transform.Parsing(target.canonicalName, expected))
+fun <T : Any> JsonNode.tryToObject(target: Class<T>): Result<T, Fail.Incident.Transform.Parsing> {
+    if (this is NullNode) return Result.failure(Fail.Incident.Transform.Parsing(target.canonicalName))
+    return try {
+        Result.success(JsonMapper.mapper.treeToValue(this, target))
+    } catch (expected: Exception) {
+        Result.failure(Fail.Incident.Transform.Parsing(target.canonicalName, expected))
+    }
 }
 
 fun String.tryToNode(): Result<JsonNode, Fail.Incident.Transform.Parsing> = try {
