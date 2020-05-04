@@ -13,6 +13,7 @@ import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import com.procurement.qualification.infrastructure.utils.tryToNode
 import com.procurement.qualification.infrastructure.utils.tryToObject
 import com.procurement.qualification.infrastructure.web.dto.ApiVersion2
+import com.procurement.qualification.infrastructure.web.dto.command.CommandType
 import com.procurement.qualification.infrastructure.web.enums.Command2Type
 import java.util.*
 
@@ -35,9 +36,10 @@ fun JsonNode.tryGetVersion(): Result<ApiVersion2, DataErrors> {
 }
 
 fun JsonNode.tryGetAction(): Result<Command2Type, DataErrors> =
-    tryGetAttributeAsEnum("action",
-                          Command2Type
-    )
+    tryGetAttributeAsEnum("action", Command2Type)
+
+fun JsonNode.tryGetCommand(): Result<CommandType, DataErrors> =
+    tryGetAttributeAsEnum("command", CommandType)
 
 fun <T : Any> JsonNode.tryGetParams(target: Class<T>): Result<T, Fail.Error> {
     val name = "params"
@@ -50,6 +52,16 @@ fun <T : Any> JsonNode.tryGetParams(target: Class<T>): Result<T, Fail.Error> {
         }
     }
 }
+
+fun <T : Any> JsonNode.tryGetData(target: Class<T>): Result<T, Fail.Error> {
+    return when (val result = this.tryToObject(target)) {
+            is Result.Success -> result
+            is Result.Failure -> Result.failure(
+                BadRequest("Error parsing data")
+            )
+        }
+}
+
 
 fun JsonNode.tryGetId(): Result<UUID, DataErrors> {
     val name = "id"
