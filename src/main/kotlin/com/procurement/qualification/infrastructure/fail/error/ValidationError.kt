@@ -21,7 +21,7 @@ sealed class ValidationError(
 
         class PeriodRuleNotFound(country: String, pmd: ProcurementMethod) : CommandError(
             numberError = "7.1.4",
-            description = "No period duration rule found for country $country and pmd $pmd."
+            description = "No period duration rule found for country '$country' and pmd '$pmd'."
         )
 
         class InvalidPeriodTerm() : CommandError(
