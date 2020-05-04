@@ -59,24 +59,16 @@ sealed class Fail {
                 description = "Database consistency incident. $message"
             )
 
-            class ParseFromDatabaseColumnIncident(val column: String,val value: String) : Database(
-                number = "1.4",
-                description = "Could not parse data stored in database."
-            ) {
-                override fun logging(logger: Logger) {
-                    logger.error(message = message, mdc = mapOf("column" to column, "value" to value))
-                }
-            }
         }
 
-        sealed class Transform(val number: String, override val description: String, val exception: Exception) :
+        sealed class Transform(val number: String, override val description: String, val exception: Exception? = null) :
             Incident(level = Level.ERROR, number = number, description = description) {
 
             override fun logging(logger: Logger) {
                 logger.error(message = message, exception = exception)
             }
 
-            class ParseFromDatabaseIncident(val jsonData: String, exception: Exception) : Transform(
+            class ParseFromDatabaseIncident(val jsonData: String, exception: Exception? = null) : Transform(
                 number = "2.1",
                 description = "Could not parse data stored in database.",
                 exception = exception
@@ -86,8 +78,17 @@ sealed class Fail {
                 }
             }
 
-            class Parsing(className: String, exception: Exception) :
+            class Parsing(className: String, exception: Exception? = null) :
                 Transform(number = "2.2", description = "Error parsing to $className.", exception = exception)
+
+            class ParseFromDatabaseColumnIncident(val column: String,val value: String) : Transform(
+                number = "2.3",
+                description = "Could not parse data stored in database."
+            ) {
+                override fun logging(logger: Logger) {
+                    logger.error(message = message, mdc = mapOf("column" to column, "value" to value))
+                }
+            }
         }
 
         enum class Level(override val key: String) : EnumElementProvider.Key {
