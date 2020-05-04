@@ -1,4 +1,4 @@
-package com.procurement.qualification.domain.model.data.period
+package com.procurement.qualification.domain.model.data.period.validate
 
 import com.procurement.qualification.domain.enums.ProcurementMethod
 

@@ -2,8 +2,8 @@ package com.procurement.qualification.infrastructure.converter
 
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
-import com.procurement.qualification.domain.model.data.period.ValidatePeriodContext
-import com.procurement.qualification.domain.model.data.period.ValidatePeriodData
+import com.procurement.qualification.domain.model.data.period.validate.ValidatePeriodContext
+import com.procurement.qualification.domain.model.data.period.validate.ValidatePeriodData
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import com.procurement.qualification.infrastructure.web.dto.command.CommandMessage
 import com.procurement.qualification.infrastructure.web.dto.command.country

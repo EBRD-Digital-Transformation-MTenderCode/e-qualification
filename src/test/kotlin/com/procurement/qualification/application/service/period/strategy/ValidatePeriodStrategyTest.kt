@@ -5,8 +5,8 @@ import com.nhaarman.mockito_kotlin.whenever
 import com.procurement.qualification.application.repository.PeriodRulesRepository
 import com.procurement.qualification.domain.enums.ProcurementMethod
 import com.procurement.qualification.domain.functional.asSuccess
-import com.procurement.qualification.domain.model.data.period.ValidatePeriodContext
-import com.procurement.qualification.domain.model.data.period.ValidatePeriodData
+import com.procurement.qualification.domain.model.data.period.validate.ValidatePeriodContext
+import com.procurement.qualification.domain.model.data.period.validate.ValidatePeriodData
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested

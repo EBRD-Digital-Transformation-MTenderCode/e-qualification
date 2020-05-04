@@ -5,8 +5,8 @@ import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.Result.Companion.failure
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asSuccess
-import com.procurement.qualification.domain.model.data.period.ValidatePeriodContext
-import com.procurement.qualification.domain.model.data.period.ValidatePeriodData
+import com.procurement.qualification.domain.model.data.period.validate.ValidatePeriodContext
+import com.procurement.qualification.domain.model.data.period.validate.ValidatePeriodData
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import java.time.temporal.ChronoUnit
