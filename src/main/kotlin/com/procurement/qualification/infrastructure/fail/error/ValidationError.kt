@@ -1,5 +1,6 @@
 package com.procurement.qualification.infrastructure.fail.error
 
+import com.procurement.qualification.domain.enums.ProcurementMethod
 import com.procurement.qualification.infrastructure.fail.Fail
 
 sealed class ValidationError(
@@ -18,8 +19,13 @@ sealed class ValidationError(
             description = "Period start date must precede end date."
         )
 
-        class InvalidPeriodTerm() : CommandError(
+        class PeriodRuleNotFound(country: String, pmd: ProcurementMethod) : CommandError(
             numberError = "7.1.4",
+            description = "No period duration rule found for country $country and pmd $pmd."
+        )
+
+        class InvalidPeriodTerm() : CommandError(
+            numberError = "7.1.5",
             description = "Period duration is invalid."
         )
     }

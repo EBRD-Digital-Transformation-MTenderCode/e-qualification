@@ -2,6 +2,7 @@ package com.procurement.qualification.application.service.period.strategy
 
 import com.procurement.qualification.application.repository.PeriodRulesRepository
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.functional.Result.Companion.failure
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.data.period.ValidatePeriodContext
@@ -23,20 +24,21 @@ class ValidatePeriodStrategy(private val periodRulesRepository: PeriodRulesRepos
     }
 
     private fun ValidatePeriodData.Period.checkTerm(context: ValidatePeriodContext): Result<ValidatePeriodData.Period, Fail> {
-        val allowedTerm = periodRulesRepository.findTermBy(country = context.country, pmd = context.pmd)
-            .orForwardFail { incident -> return incident }!!
+        val expectedDuration = periodRulesRepository.findTermBy(country = context.country, pmd = context.pmd)
+            .orForwardFail { incident -> return incident }
+            ?: return failure(ValidationError.CommandError.PeriodRuleNotFound(country = context.country, pmd = context.pmd))
 
-        val actualTerm = ChronoUnit.SECONDS.between(startDate, endDate)
+        val actualDuration = ChronoUnit.SECONDS.between(startDate, endDate)
 
-        if (actualTerm < allowedTerm)
-            return Result.failure(ValidationError.CommandError.InvalidPeriodTerm())
+        if (actualDuration < expectedDuration)
+            return failure(ValidationError.CommandError.InvalidPeriodTerm())
 
         return this.asSuccess()
     }
 
     private fun ValidatePeriodData.Period.checkDates(): Result<ValidatePeriodData.Period, Fail> {
         if (!startDate.isBefore(endDate))
-            return Result.failure(ValidationError.CommandError.InvalidPeriod())
+            return failure(ValidationError.CommandError.InvalidPeriod())
 
         return this.asSuccess()
     }
