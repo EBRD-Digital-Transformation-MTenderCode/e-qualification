@@ -1,9 +1,10 @@
 package com.procurement.qualification.infrastructure.service
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.procurement.qualification.application.repository.HistoryRepository
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.infrastructure.fail.error.BadRequest
+import com.procurement.qualification.infrastructure.handler.previous.generation.validation.ValidatePeriodHandler
+import com.procurement.qualification.infrastructure.web.dto.command.CommandType
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
 import com.procurement.qualification.infrastructure.web.parser.tryGetCommand
 import com.procurement.qualification.infrastructure.web.response.generator.ApiResponseGenerator.generateResponseOnFailure
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class CommandService(
-    private val historyRepository: HistoryRepository,
+    private val validatePeriodHandler: ValidatePeriodHandler,
     private val logger: Logger
 ) {
 
@@ -22,6 +23,8 @@ class CommandService(
                     fail = BadRequest(), logger = logger
                 )
             }
-        TODO()
+        return when (command) {
+            CommandType.VALIDATE_PERIOD -> validatePeriodHandler.handle(node)
+        }
     }
 }
