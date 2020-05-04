@@ -57,7 +57,7 @@ fun <T : Any> JsonNode.tryGetData(target: Class<T>): Result<T, Fail.Error> {
     return when (val result = this.tryToObject(target)) {
             is Result.Success -> result
             is Result.Failure -> Result.failure(
-                BadRequest("Error parsing data")
+                BadRequest("Error parsing 'data'")
             )
         }
 }
