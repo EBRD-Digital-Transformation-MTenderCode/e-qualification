@@ -75,7 +75,6 @@ val CommandMessage.pmd: Result<ProcurementMethod, DataErrors>
     }
 
 data class Context @JsonCreator constructor(
-    val operationId: String,
     val cpid: String?,
     val ocid: String?,
     val stage: String?,
@@ -85,7 +84,8 @@ data class Context @JsonCreator constructor(
 
 enum class CommandType(@JsonValue override val key: String) : Action, EnumElementProvider.Key {
 
-    VALIDATE_PERIOD("validatePeriod");
+    VALIDATE_PERIOD("validatePeriod"),
+    SAVE_PERIOD("savePeriod");
 
     override fun toString(): String = key
 
