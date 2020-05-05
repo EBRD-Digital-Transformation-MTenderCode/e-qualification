@@ -12,7 +12,6 @@ import com.procurement.qualification.application.model.period.validate.ValidateP
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.PeriodRulesRepository
 import com.procurement.qualification.domain.enums.ProcurementMethod
-import com.procurement.qualification.domain.enums.Stage
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
@@ -39,7 +38,6 @@ internal class PeriodServiceTest {
         private val DATE = LocalDateTime.parse("2020-02-10T08:49:55Z", FORMATTER)
         private val CPID = Cpid.tryCreateOrNull("ocds-t1s2t3-MD-1565251033096")!!
         private val OCID = Ocid.tryCreateOrNull("ocds-b3wdp1-MD-1581509539187-EV-1581509653044")!!
-        private val STAGE = Stage.AC
         private val PMD = ProcurementMethod.GPA
         private val ALLOWED_TERM = TimeUnit.DAYS.toSeconds(10)
     }
@@ -158,7 +156,7 @@ internal class PeriodServiceTest {
             val endDate = DATE.plusDays(10).format(FORMATTER)
             val startDate = DATE.format(FORMATTER)
             val data = createSavePeriodData(startDate = startDate, endDate = endDate)
-            val context = SavePeriodContext(cpid = CPID, ocid = OCID, stage = STAGE)
+            val context = SavePeriodContext(cpid = CPID, ocid = OCID)
 
             whenever(periodRepository.saveOrUpdatePeriod(any())).thenReturn(ValidationResult.ok())
             periodService.savePeriod(data = data, context = context)
@@ -178,7 +176,7 @@ internal class PeriodServiceTest {
             val endDate = DATE.plusDays(10).format(FORMATTER)
             val startDate = DATE.format(FORMATTER)
             val data = createSavePeriodData(startDate = startDate, endDate = endDate)
-            val context = SavePeriodContext(cpid = CPID, ocid = OCID, stage = STAGE)
+            val context = SavePeriodContext(cpid = CPID, ocid = OCID)
 
             whenever(periodRepository.saveOrUpdatePeriod(any())).thenReturn(ValidationResult.ok())
             val actual = periodService.savePeriod(data = data, context = context).get
@@ -191,7 +189,7 @@ internal class PeriodServiceTest {
             val endDate = DATE.plusDays(10).format(FORMATTER)
             val startDate = DATE.format(FORMATTER)
             val data = createSavePeriodData(startDate = startDate, endDate = endDate)
-            val context = SavePeriodContext(cpid = CPID, ocid = OCID, stage = STAGE)
+            val context = SavePeriodContext(cpid = CPID, ocid = OCID)
 
             val error = Fail.Incident.Database.DatabaseInteractionIncident(exception = RuntimeException())
 
