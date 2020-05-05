@@ -1,5 +1,8 @@
 package com.procurement.qualification.application.service.period
 
+import com.procurement.qualification.application.model.period.check.CheckPeriodContext
+import com.procurement.qualification.application.model.period.check.CheckPeriodData
+import com.procurement.qualification.application.model.period.check.CheckPeriodResult
 import com.procurement.qualification.application.model.period.save.SavePeriodContext
 import com.procurement.qualification.application.model.period.save.SavePeriodData
 import com.procurement.qualification.application.model.period.save.SavePeriodResult
@@ -7,6 +10,7 @@ import com.procurement.qualification.application.model.period.validate.ValidateP
 import com.procurement.qualification.application.model.period.validate.ValidatePeriodData
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.PeriodRulesRepository
+import com.procurement.qualification.application.service.period.strategy.CheckPeriodStrategy
 import com.procurement.qualification.application.service.period.strategy.ValidatePeriodStrategy
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.Result.Companion.failure
@@ -21,6 +25,7 @@ class PeriodService(
     private val periodRepository: PeriodRepository, periodRulesRepository: PeriodRulesRepository
 ) {
     private val validatePeriodStrategy = ValidatePeriodStrategy(periodRulesRepository)
+    private val checkPeriodStrategy = CheckPeriodStrategy(periodRepository)
 
     fun validatePeriod(data: ValidatePeriodData, context: ValidatePeriodContext): ValidationResult<Fail> =
         validatePeriodStrategy.execute(data = data, context = context)
@@ -37,4 +42,7 @@ class PeriodService(
 
         return SavePeriodResult.asSuccess()
     }
+
+    fun checkPeriod(data: CheckPeriodData, context: CheckPeriodContext): Result<CheckPeriodResult, Fail> =
+        checkPeriodStrategy.execute(data = data, context = context)
 }
