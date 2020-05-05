@@ -100,9 +100,7 @@ internal class PeriodServiceTest {
             whenever(periodRulesRepository.findTermBy(pmd = PMD, country = COUNTRY))
                 .thenReturn(ALLOWED_TERM.asSuccess())
 
-            val startDate = DATE.plusDays(10).plusSeconds(1).format(
-                FORMATTER
-            )
+            val startDate = DATE.plusDays(10).plusSeconds(1).format(FORMATTER)
             val endDate = DATE.format(FORMATTER)
 
             val data = createValidatePeriodData(startDate = startDate, endDate = endDate)
