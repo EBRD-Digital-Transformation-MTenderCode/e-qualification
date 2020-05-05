@@ -8,7 +8,6 @@ import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import com.procurement.qualification.infrastructure.web.dto.command.CommandMessage
 import com.procurement.qualification.infrastructure.web.dto.command.cpid
 import com.procurement.qualification.infrastructure.web.dto.command.ocid
-import com.procurement.qualification.infrastructure.web.dto.command.stage
 import com.procurement.qualification.infrastructure.web.dto.request.period.SavePeriodRequest
 
 fun SavePeriodRequest.convert() = SavePeriodData.tryCreate(
@@ -21,6 +20,5 @@ fun SavePeriodRequest.Period.convert() =
 fun CommandMessage.toSavePeriodContext(): Result<SavePeriodContext, DataErrors> =
     SavePeriodContext(
         cpid = cpid.orForwardFail { error -> return error },
-        ocid = ocid.orForwardFail { error -> return error },
-        stage = stage.orForwardFail { error -> return error }
+        ocid = ocid.orForwardFail { error -> return error }
     ).asSuccess()
