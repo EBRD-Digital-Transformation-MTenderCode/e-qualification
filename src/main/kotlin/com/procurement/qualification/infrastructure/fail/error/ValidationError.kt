@@ -28,5 +28,17 @@ sealed class ValidationError(
             numberError = "7.1.5",
             description = "Period duration is invalid."
         )
+
+        class InvalidPeriodOnCheckPeriod() : CommandError(
+            numberError = "7.3.2",
+            description = "Period start date must precede end date."
+        )
+
+        class InvalidPeriodEndDate() : CommandError(
+            numberError = "7.3.3",
+            description = "Period end date must be equal or greater than previously stored period end date."
+        )
+
+
     }
 }
