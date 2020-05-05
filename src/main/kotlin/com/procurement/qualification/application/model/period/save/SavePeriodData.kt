@@ -24,14 +24,10 @@ class SavePeriodData private constructor(
             private const val END_DATE_ATTRIBUTE_NAME = "endDate"
 
             fun tryCreate(startDate: String, endDate: String): Result<Period, DataErrors> {
-                val startDateParsed = parseDate(startDate,
-                                                START_DATE_ATTRIBUTE_NAME
-                )
+                val startDateParsed = parseDate(startDate, START_DATE_ATTRIBUTE_NAME)
                     .orForwardFail { error -> return error }
 
-                val endDateParsed = parseDate(endDate,
-                                              END_DATE_ATTRIBUTE_NAME
-                )
+                val endDateParsed = parseDate(endDate, END_DATE_ATTRIBUTE_NAME)
                     .orForwardFail { error -> return error }
 
                 return Period(
