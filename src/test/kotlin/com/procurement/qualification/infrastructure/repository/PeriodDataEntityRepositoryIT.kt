@@ -98,7 +98,7 @@ class PeriodDataEntityRepositoryIT {
     }
 
     @Test
-    fun cnNotFound() {
+    fun periodNotFound() {
         val actualPeriod = periodRepository.findBy(
             cpid = Cpid.tryCreateOrNull("ocds-t1s2t3-MD-1565251033000")!!,
             ocid = OCID
@@ -127,6 +127,43 @@ class PeriodDataEntityRepositoryIT {
         val actual = periodRepository.findBy(CPID, OCID)
 
         assertTrue(actual.isFail)
+        assertTrue(actual.error is Fail.Incident.Database.DatabaseInteractionIncident)
+    }
+
+    @Test
+    fun saveOrUpdatePeriod_save() {
+        val period = stubPeriod()
+        periodRepository.saveOrUpdatePeriod(period)
+        val savedPeriod = periodRepository.findBy(cpid = period.cpid, ocid = period.ocid).get
+
+        assertEquals(savedPeriod, period)
+    }
+
+    @Test
+    fun saveOrUpdatePeriod_update() {
+        val period = stubPeriod()
+        insertPeriod(period)
+        val startDate = START_DATE.plusDays(10)
+        val endDate = END_DATE.plusDays(10)
+        val updatedPeriod = PeriodEntity(
+            ocid = period.ocid, cpid = period.cpid, startDate = startDate, endDate = endDate
+        )
+        periodRepository.saveOrUpdatePeriod(updatedPeriod)
+
+        val savedPeriod = periodRepository.findBy(cpid = period.cpid, ocid = period.ocid).get
+
+        assertEquals(updatedPeriod, savedPeriod)
+    }
+
+    @Test
+    fun `error while saving or updating`() {
+        doThrow(RuntimeException())
+            .whenever(session)
+            .execute(any<BoundStatement>())
+
+        val actual = periodRepository.saveOrUpdatePeriod(stubPeriod())
+
+        assertTrue(actual.isError)
         assertTrue(actual.error is Fail.Incident.Database.DatabaseInteractionIncident)
     }
 
