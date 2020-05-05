@@ -10,9 +10,7 @@ class SavePeriodData private constructor(
     val period: Period
 ) {
     companion object {
-        fun tryCreate(period: Period) = SavePeriodData(
-            period
-        ).asSuccess<SavePeriodData, DataErrors>()
+        fun tryCreate(period: Period) = SavePeriodData(period).asSuccess<SavePeriodData, DataErrors>()
     }
 
     class Period private constructor(
@@ -30,10 +28,7 @@ class SavePeriodData private constructor(
                 val endDateParsed = parseDate(endDate, END_DATE_ATTRIBUTE_NAME)
                     .orForwardFail { error -> return error }
 
-                return Period(
-                    startDate = startDateParsed,
-                    endDate = endDateParsed
-                ).asSuccess()
+                return Period(startDate = startDateParsed, endDate = endDateParsed).asSuccess()
             }
         }
     }
