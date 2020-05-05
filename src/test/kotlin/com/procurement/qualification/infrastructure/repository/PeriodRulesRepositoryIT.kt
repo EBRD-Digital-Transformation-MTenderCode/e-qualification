@@ -81,7 +81,7 @@ class PeriodRulesRepositoryIT {
     }
 
     @Test
-    fun cnNotFound() {
+    fun ruleNotFound() {
         val actualValue = periodRulesRepository.findTermBy(pmd = PMD, country = COUNTRY).get
 
         assertTrue(actualValue == null)
