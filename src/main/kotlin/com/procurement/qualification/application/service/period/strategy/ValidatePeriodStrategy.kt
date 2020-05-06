@@ -38,7 +38,7 @@ class ValidatePeriodStrategy(private val periodRulesRepository: PeriodRulesRepos
         return this.asSuccess()
     }
 
-    private fun ValidatePeriodData.Period.checkDates(): Result<ValidatePeriodData.Period, Fail> {
+    private fun ValidatePeriodData.Period.checkDates(): Result<ValidatePeriodData.Period, ValidationError.CommandError.InvalidPeriod> {
         if (!startDate.isBefore(endDate))
             return failure(ValidationError.CommandError.InvalidPeriod())
 

@@ -29,12 +29,14 @@ class CheckPeriodStrategy(private val periodRepository: PeriodRepository) {
         return generateCheckPeriodResult(requestPeriod = requestPeriod, storedPeriod = storedPeriod).asSuccess()
     }
 
-    private fun CheckPeriodData.Period.checkDates(): Result<CheckPeriodData.Period, Fail> =
+    private fun CheckPeriodData.Period.checkDates()
+        : Result<CheckPeriodData.Period, ValidationError.CommandError.InvalidPeriodOnCheckPeriod> =
         if (!startDate.isBefore(endDate))
             failure(ValidationError.CommandError.InvalidPeriodOnCheckPeriod())
         else asSuccess()
 
-    private fun CheckPeriodData.Period.compareWith(storedPeriod: PeriodEntity): Result<CheckPeriodData.Period, Fail> =
+    private fun CheckPeriodData.Period.compareWith(storedPeriod: PeriodEntity)
+        : Result<CheckPeriodData.Period, ValidationError.CommandError.InvalidPeriodEndDate> =
         if (endDate.isBefore(storedPeriod.endDate))
             failure(ValidationError.CommandError.InvalidPeriodEndDate())
         else asSuccess()
