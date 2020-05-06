@@ -46,11 +46,11 @@ class PeriodService(
     fun checkPeriod(data: CheckPeriodData, context: CheckPeriodContext): Result<CheckPeriodResult, Fail> =
         checkPeriodStrategy.execute(data = data, context = context)
 
-    fun checkPeriodDate(data: CheckPeriod2Params): ValidationResult<Fail> {
-        val storedPeriod = periodRepository.findBy(cpid = data.cpid, ocid = data.ocid)
+    fun checkPeriodDate(params: CheckPeriod2Params): ValidationResult<Fail> {
+        val storedPeriod = periodRepository.findBy(cpid = params.cpid, ocid = params.ocid)
             .doReturn { incident -> return ValidationResult.error(incident) }!!
 
-        val requestDate = data.date
+        val requestDate = params.date
 
         if (!requestDate.isAfter(storedPeriod.startDate))
             return ValidationResult.error(ValidationError.CommandError.InvalidPeriodStartDateOnCheckPeriod2())
