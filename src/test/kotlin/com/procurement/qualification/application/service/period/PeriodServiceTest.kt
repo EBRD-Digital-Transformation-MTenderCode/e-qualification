@@ -7,6 +7,7 @@ import com.nhaarman.mockito_kotlin.whenever
 import com.procurement.qualification.application.model.period.check.CheckPeriodContext
 import com.procurement.qualification.application.model.period.check.CheckPeriodData
 import com.procurement.qualification.application.model.period.check.CheckPeriodResult
+import com.procurement.qualification.application.model.period.check.params.CheckPeriod2Params
 import com.procurement.qualification.application.model.period.save.SavePeriodContext
 import com.procurement.qualification.application.model.period.save.SavePeriodData
 import com.procurement.qualification.application.model.period.save.SavePeriodResult
@@ -21,6 +22,7 @@ import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.infrastructure.fail.Fail
+import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.model.entity.PeriodEntity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -175,5 +177,106 @@ internal class PeriodServiceTest {
         }
 
         private fun stubContext() = CheckPeriodContext(cpid = CPID, ocid = OCID)
+    }
+
+    @Nested
+    inner class CheckPeriodDate {
+        @Test
+        fun success() {
+            val requestDate = REQUEST_START_DATE
+            val periodEntity = stubPeriodEntity(
+                startDate = requestDate.minusDays(1),
+                endDate = requestDate.plusDays(1)
+            )
+            val params = createParams(requestDate)
+
+            whenever(periodRepository.findBy(cpid = params.cpid, ocid = params.ocid))
+                .thenReturn(periodEntity.asSuccess())
+
+            val actual = periodService.checkPeriodDate(params = params)
+
+            assertEquals(ValidationResult.Ok, actual)
+        }
+
+        @Test
+        fun requestDateIsBeforeStoredStartDate_fail() {
+            val requestDate = REQUEST_START_DATE
+            val periodEntity = stubPeriodEntity(
+                startDate = requestDate.plusSeconds(1),
+                endDate = requestDate.plusDays(1)
+            )
+            val params = createParams(requestDate)
+
+            whenever(periodRepository.findBy(cpid = params.cpid, ocid = params.ocid))
+                .thenReturn(periodEntity.asSuccess())
+
+            val actual = periodService.checkPeriodDate(params = params).error
+
+            assertTrue(actual is ValidationError.CommandError.InvalidPeriodStartDateOnCheckPeriod2)
+        }
+
+        @Test
+        fun requestDateEqualsStoredStartDate_fail() {
+            val requestDate = REQUEST_START_DATE
+            val periodEntity = stubPeriodEntity(
+                startDate = requestDate,
+                endDate = requestDate.plusDays(1)
+            )
+            val params = createParams(requestDate)
+
+            whenever(periodRepository.findBy(cpid = params.cpid, ocid = params.ocid))
+                .thenReturn(periodEntity.asSuccess())
+
+            val actual = periodService.checkPeriodDate(params = params).error
+
+            assertTrue(actual is ValidationError.CommandError.InvalidPeriodStartDateOnCheckPeriod2)
+        }
+
+        @Test
+        fun requestDateIsAfterStoredEndDate_fail() {
+            val requestDate = REQUEST_START_DATE
+            val periodEntity = stubPeriodEntity(
+                startDate = requestDate.minusDays(1),
+                endDate = requestDate.minusDays(1)
+            )
+            val params = createParams(requestDate)
+
+            whenever(periodRepository.findBy(cpid = params.cpid, ocid = params.ocid))
+                .thenReturn(periodEntity.asSuccess())
+
+            val actual = periodService.checkPeriodDate(params = params).error
+
+            assertTrue(actual is ValidationError.CommandError.InvalidPeriodEndDateOnCheckPeriod2)
+        }
+
+        @Test
+        fun requestDateEqualsStoredEndDate_fail() {
+            val requestDate = REQUEST_START_DATE
+            val periodEntity = stubPeriodEntity(startDate = requestDate.minusDays(1), endDate = requestDate)
+            val params = createParams(requestDate)
+
+            whenever(periodRepository.findBy(cpid = params.cpid, ocid = params.ocid))
+                .thenReturn(periodEntity.asSuccess())
+
+            val actual = periodService.checkPeriodDate(params = params).error
+
+            assertTrue(actual is ValidationError.CommandError.InvalidPeriodEndDateOnCheckPeriod2)
+        }
+
+        private fun createParams(date: LocalDateTime): CheckPeriod2Params {
+            return CheckPeriod2Params.tryCreate(
+                cpid = CPID.toString(),
+                ocid = OCID.toString(),
+                date = date.format(FORMATTER)
+            ).get
+        }
+
+        private fun stubPeriodEntity(startDate: LocalDateTime, endDate: LocalDateTime) =
+            PeriodEntity(
+                startDate = startDate,
+                endDate = endDate,
+                ocid = OCID,
+                cpid = CPID
+            )
     }
 }
