@@ -3,6 +3,7 @@ package com.procurement.qualification.application.service.period
 import com.procurement.qualification.application.model.period.check.CheckPeriodContext
 import com.procurement.qualification.application.model.period.check.CheckPeriodData
 import com.procurement.qualification.application.model.period.check.CheckPeriodResult
+import com.procurement.qualification.application.model.period.check.params.CheckPeriod2Params
 import com.procurement.qualification.application.model.period.save.SavePeriodContext
 import com.procurement.qualification.application.model.period.save.SavePeriodData
 import com.procurement.qualification.application.model.period.save.SavePeriodResult
@@ -16,6 +17,7 @@ import com.procurement.qualification.domain.functional.Result.Companion.failure
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.infrastructure.fail.Fail
+import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.model.entity.PeriodEntity
 import org.springframework.stereotype.Service
 
@@ -43,4 +45,19 @@ class PeriodService(
 
     fun checkPeriod(data: CheckPeriodData, context: CheckPeriodContext): Result<CheckPeriodResult, Fail> =
         checkPeriodStrategy.execute(data = data, context = context)
+
+    fun checkPeriodDate(data: CheckPeriod2Params): ValidationResult<Fail> {
+        val storedPeriod = periodRepository.findBy(cpid = data.cpid, ocid = data.ocid)
+            .doReturn { incident -> return ValidationResult.error(incident) }!!
+
+        val requestDate = data.date
+
+        if (!requestDate.isAfter(storedPeriod.startDate))
+            return ValidationResult.error(ValidationError.CommandError.InvalidPeriodStartDateOnCheckPeriod2())
+
+        if (!requestDate.isBefore(storedPeriod.endDate))
+            return ValidationResult.error(ValidationError.CommandError.InvalidPeriodEndDateOnCheckPeriod2())
+
+        return ValidationResult.ok()
+    }
 }
