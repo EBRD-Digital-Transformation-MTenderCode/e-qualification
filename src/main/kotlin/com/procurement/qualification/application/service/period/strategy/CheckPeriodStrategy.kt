@@ -10,7 +10,9 @@ import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.model.entity.PeriodEntity
+import org.springframework.stereotype.Component
 
+@Component
 class CheckPeriodStrategy(private val periodRepository: PeriodRepository) {
 
     fun execute(data: CheckPeriodData, context: CheckPeriodContext): Result<CheckPeriodResult, Fail> {

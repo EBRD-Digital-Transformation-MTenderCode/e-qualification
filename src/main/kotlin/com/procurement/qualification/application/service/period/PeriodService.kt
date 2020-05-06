@@ -9,7 +9,6 @@ import com.procurement.qualification.application.model.period.save.SavePeriodRes
 import com.procurement.qualification.application.model.period.validate.ValidatePeriodContext
 import com.procurement.qualification.application.model.period.validate.ValidatePeriodData
 import com.procurement.qualification.application.repository.PeriodRepository
-import com.procurement.qualification.application.repository.PeriodRulesRepository
 import com.procurement.qualification.application.service.period.strategy.CheckPeriodStrategy
 import com.procurement.qualification.application.service.period.strategy.ValidatePeriodStrategy
 import com.procurement.qualification.domain.functional.Result
@@ -22,11 +21,10 @@ import org.springframework.stereotype.Service
 
 @Service
 class PeriodService(
-    private val periodRepository: PeriodRepository, periodRulesRepository: PeriodRulesRepository
+    private val periodRepository: PeriodRepository,
+    private val validatePeriodStrategy: ValidatePeriodStrategy,
+    private val checkPeriodStrategy: CheckPeriodStrategy
 ) {
-    private val validatePeriodStrategy = ValidatePeriodStrategy(periodRulesRepository)
-    private val checkPeriodStrategy = CheckPeriodStrategy(periodRepository)
-
     fun validatePeriod(data: ValidatePeriodData, context: ValidatePeriodContext): ValidationResult<Fail> =
         validatePeriodStrategy.execute(data = data, context = context)
 

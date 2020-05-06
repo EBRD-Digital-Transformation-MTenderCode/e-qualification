@@ -9,8 +9,10 @@ import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import org.springframework.stereotype.Component
 import java.time.temporal.ChronoUnit
 
+@Component
 class ValidatePeriodStrategy(private val periodRulesRepository: PeriodRulesRepository) {
 
     fun execute(data: ValidatePeriodData, context: ValidatePeriodContext): ValidationResult<Fail> {
