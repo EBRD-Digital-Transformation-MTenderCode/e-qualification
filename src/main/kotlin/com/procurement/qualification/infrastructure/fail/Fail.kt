@@ -89,6 +89,15 @@ sealed class Fail {
                     logger.error(message = message, mdc = mapOf("column" to column, "value" to value))
                 }
             }
+
+            class Mapping(description: String, exception: Exception? = null) :
+                Transform(number = "2.4", description = description, exception = exception)
+
+            class Deserialization(description: String, exception: Exception) :
+                Transform(number = "2.5", description = description, exception = exception)
+
+            class Serialization(description: String, exception: Exception) :
+                Transform(number = "2.6", description = description, exception = exception)
         }
 
         enum class Level(override val key: String) : EnumElementProvider.Key {
