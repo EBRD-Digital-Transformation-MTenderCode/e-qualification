@@ -17,7 +17,10 @@ import org.springframework.stereotype.Component
 
 @Component
 class SavePeriodHandler(
-    private val periodService: PeriodService, logger: Logger, historyRepository: HistoryRepository, transform: Transform
+    private val periodService: PeriodService,
+    private val transform: Transform,
+    logger: Logger,
+    historyRepository: HistoryRepository
 ) : AbstractHistoricalHandler<CommandType, SavePeriodResult>(
     logger = logger, historyRepository = historyRepository, target = SavePeriodResult::class.java, transform = transform
 ) {
@@ -25,7 +28,7 @@ class SavePeriodHandler(
     override val action: CommandType = CommandType.SAVE_PERIOD
 
     override fun execute(cm: CommandMessage): Result<SavePeriodResult, Fail> {
-        val data = cm.data.tryGetData(SavePeriodRequest::class.java)
+        val data = cm.data.tryGetData(SavePeriodRequest::class.java, transform)
             .orForwardFail { error -> return error }
             .convert()
             .orForwardFail { errors -> return errors }

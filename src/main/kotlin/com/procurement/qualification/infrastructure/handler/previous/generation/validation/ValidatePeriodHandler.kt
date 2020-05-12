@@ -1,6 +1,7 @@
 package com.procurement.qualification.infrastructure.handler.previous.generation.validation
 
 import com.procurement.qualification.application.service.Logger
+import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.application.service.period.PeriodService
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.infrastructure.converter.convert
@@ -14,13 +15,13 @@ import org.springframework.stereotype.Component
 
 @Component
 class ValidatePeriodHandler(
-    private val periodService: PeriodService, logger: Logger
-) : AbstractValidationHandler<CommandType, Fail>(logger) {
+    private val periodService: PeriodService, private val transform: Transform, logger: Logger
+) : AbstractValidationHandler<CommandType, Fail>(transform, logger) {
 
     override val action: CommandType = CommandType.VALIDATE_PERIOD
 
     override fun execute(cm: CommandMessage): ValidationResult<Fail> {
-        val data = cm.data.tryGetData(ValidatePeriodRequest::class.java)
+        val data = cm.data.tryGetData(ValidatePeriodRequest::class.java, transform)
             .doReturn { error -> return ValidationResult.error(error) }
             .convert()
             .doReturn { errors -> return ValidationResult.error(errors) }

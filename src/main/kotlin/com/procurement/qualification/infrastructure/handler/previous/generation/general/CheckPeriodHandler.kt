@@ -2,6 +2,7 @@ package com.procurement.qualification.infrastructure.handler.previous.generation
 
 import com.procurement.qualification.application.model.period.check.CheckPeriodResult
 import com.procurement.qualification.application.service.Logger
+import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.application.service.period.PeriodService
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.infrastructure.converter.convert
@@ -15,13 +16,13 @@ import org.springframework.stereotype.Component
 
 @Component
 class CheckPeriodHandler(
-    private val periodService: PeriodService, logger: Logger
-) : AbstractHandler<CommandType, CheckPeriodResult>(logger) {
+    private val periodService: PeriodService, private val transform: Transform, logger: Logger
+) : AbstractHandler<CommandType, CheckPeriodResult>(logger = logger, transform = transform) {
 
     override val action: CommandType = CommandType.CHECK_PERIOD
 
     override fun execute(cm: CommandMessage): Result<CheckPeriodResult, Fail> {
-        val data = cm.data.tryGetData(CheckPeriodRequest::class.java)
+        val data = cm.data.tryGetData(CheckPeriodRequest::class.java, transform)
             .orForwardFail { error -> return error }
             .convert()
             .orForwardFail { error -> return error }
