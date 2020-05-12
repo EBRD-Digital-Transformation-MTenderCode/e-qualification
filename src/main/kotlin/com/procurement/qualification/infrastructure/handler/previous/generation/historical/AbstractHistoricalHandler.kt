@@ -9,7 +9,6 @@ import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.BadRequest
 import com.procurement.qualification.infrastructure.handler.Handler
 import com.procurement.qualification.infrastructure.utils.toJson
-import com.procurement.qualification.infrastructure.utils.tryToObject
 import com.procurement.qualification.infrastructure.web.dto.command.CommandMessage
 import com.procurement.qualification.infrastructure.web.dto.command.CommandType
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
@@ -24,7 +23,7 @@ abstract class AbstractHistoricalHandler<ACTION : CommandType, R : Any>(
 ) : Handler<ACTION, ApiResponse> {
 
     override fun handle(node: JsonNode): ApiResponse {
-        val cm = node.tryToObject(CommandMessage::class.java)
+        val cm = transform.tryMapping(node, CommandMessage::class.java)
             .doReturn { return generateResponseOnFailure(fail = BadRequest(), logger = logger) }
 
         val history = historyRepository.getHistory(cm.id, action.key)
