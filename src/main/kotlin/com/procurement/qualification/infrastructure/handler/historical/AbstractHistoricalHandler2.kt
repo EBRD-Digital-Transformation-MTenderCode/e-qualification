@@ -3,11 +3,11 @@ package com.procurement.qualification.infrastructure.handler.historical
 import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.repository.HistoryRepository
 import com.procurement.qualification.application.service.Logger
+import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.handler.Handler
 import com.procurement.qualification.infrastructure.utils.toJson
-import com.procurement.qualification.infrastructure.utils.tryToObject
 import com.procurement.qualification.infrastructure.web.dto.Action
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiSuccessResponse2
@@ -18,6 +18,7 @@ import com.procurement.qualification.infrastructure.web.response.generator.ApiRe
 abstract class AbstractHistoricalHandler2<ACTION : Action, R : Any>(
     private val target: Class<R>,
     private val historyRepository: HistoryRepository,
+    private val transform: Transform,
     private val logger: Logger
 ) : Handler<ACTION, ApiResponse2> {
 
@@ -34,7 +35,7 @@ abstract class AbstractHistoricalHandler2<ACTION : Action, R : Any>(
             .get
         if (history != null) {
             val data = history.jsonData
-            val result = data.tryToObject(target)
+            val result = transform.tryDeserialization(value = data, target = target)
                 .doReturn { incident ->
                     return generateResponseOnFailure(
                         fail = Fail.Incident.Transform.ParseFromDatabaseIncident(data, incident.exception),
