@@ -48,7 +48,7 @@ class CheckPeriodStrategy(private val periodRepository: PeriodRepository) {
         val isPreQualificationPeriodChanged = !requestPeriod.endDate.isEqual(storedPeriod.endDate)
 
         return CheckPeriodResult(
-            preQualificationPeriodChanged = isPreQualificationPeriodChanged,
+            isPreQualificationPeriodChanged = isPreQualificationPeriodChanged,
             preQualification = CheckPeriodResult.PreQualification(
                 period = CheckPeriodResult.PreQualification.Period(
                     startDate = storedPeriod.startDate,

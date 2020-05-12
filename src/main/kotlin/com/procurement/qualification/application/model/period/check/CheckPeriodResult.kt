@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime
 
 data class CheckPeriodResult(
-    @param:JsonProperty("isPreQualificationPeriodChanged") @field:JsonProperty("isPreQualificationPeriodChanged") val preQualificationPeriodChanged: Boolean,
+    @param:JsonProperty("isPreQualificationPeriodChanged") @get:JsonProperty("isPreQualificationPeriodChanged") val isPreQualificationPeriodChanged: Boolean,
     @param:JsonProperty("preQualification") @field:JsonProperty("preQualification") val preQualification: PreQualification
 ) {
     data class PreQualification(

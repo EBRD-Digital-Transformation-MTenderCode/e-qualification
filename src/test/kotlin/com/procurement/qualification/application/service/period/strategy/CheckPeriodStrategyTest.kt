@@ -52,7 +52,7 @@ internal class CheckPeriodStrategyTest {
             val actual = strategy.execute(data = data, context = stubContext()).get
 
             val expected = CheckPeriodResult(
-                preQualificationPeriodChanged = true,
+                isPreQualificationPeriodChanged = true,
                 preQualification = CheckPeriodResult.PreQualification(
                     period = CheckPeriodResult.PreQualification.Period(
                         startDate = periodEntity.startDate, endDate = endDate
@@ -76,7 +76,7 @@ internal class CheckPeriodStrategyTest {
             val actual = strategy.execute(data = data, context = stubContext()).get
 
             val expected = CheckPeriodResult(
-                preQualificationPeriodChanged = false,
+                isPreQualificationPeriodChanged = false,
                 preQualification = CheckPeriodResult.PreQualification(
                     period = CheckPeriodResult.PreQualification.Period(
                         startDate = periodEntity.startDate,

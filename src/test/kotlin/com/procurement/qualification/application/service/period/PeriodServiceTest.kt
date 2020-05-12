@@ -148,7 +148,7 @@ internal class PeriodServiceTest {
         @DisplayName("Check that result of checkPeriodStrategy.execute() call is returned")
         fun success() {
             val expected = CheckPeriodResult(
-                preQualificationPeriodChanged = true,
+                isPreQualificationPeriodChanged = true,
                 preQualification = CheckPeriodResult.PreQualification(
                     period = CheckPeriodResult.PreQualification.Period(
                         startDate = LocalDateTime.now(), endDate = LocalDateTime.now()
