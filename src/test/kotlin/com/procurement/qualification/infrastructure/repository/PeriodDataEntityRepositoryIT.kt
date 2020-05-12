@@ -14,12 +14,12 @@ import com.nhaarman.mockito_kotlin.whenever
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.util.extension.toDate
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
 import com.procurement.qualification.infrastructure.configuration.DatabaseTestConfiguration
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.PeriodEntity
-import com.procurement.qualification.infrastructure.utils.toDate
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

@@ -5,10 +5,10 @@ import com.procurement.qualification.application.repository.HistoryRepository
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.util.extension.nowDefaultUTC
+import com.procurement.qualification.domain.util.extension.toDate
 import com.procurement.qualification.infrastructure.extension.cassandra.tryExecute
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.HistoryEntity
-import com.procurement.qualification.infrastructure.utils.toDate
 import com.procurement.qualification.infrastructure.utils.toJson
 import org.springframework.stereotype.Repository
 

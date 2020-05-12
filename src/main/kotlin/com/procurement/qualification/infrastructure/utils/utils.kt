@@ -7,23 +7,11 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.infrastructure.bind.jackson.configuration
 import com.procurement.qualification.infrastructure.fail.Fail
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.util.*
 
 private object JsonMapper {
     val mapper: ObjectMapper = ObjectMapper().apply {
         configuration()
     }
-}
-
-/*Date utils*/
-fun LocalDateTime.toDate(): Date {
-    return Date.from(this.toInstant(ZoneOffset.UTC))
-}
-
-fun Date.toLocal(): LocalDateTime {
-    return LocalDateTime.ofInstant(this.toInstant(), ZoneOffset.UTC)
 }
 
 /**
