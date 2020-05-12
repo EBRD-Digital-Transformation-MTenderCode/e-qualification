@@ -1,7 +1,6 @@
 package com.procurement.qualification.json
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.procurement.qualification.infrastructure.utils.toJson
 import com.procurement.qualification.json.exception.JsonCompareException
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.fail

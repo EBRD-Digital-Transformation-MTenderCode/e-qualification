@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.BadRequest
 import com.procurement.qualification.infrastructure.handler.Handler
-import com.procurement.qualification.infrastructure.utils.toJson
 import com.procurement.qualification.infrastructure.web.dto.command.CommandMessage
 import com.procurement.qualification.infrastructure.web.dto.command.CommandType
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
@@ -26,7 +26,10 @@ abstract class AbstractHandler<ACTION : CommandType, R : Any>(
         return when (val result = execute(cm)) {
             is Result.Success -> {
                 if (logger.isDebugEnabled)
-                    logger.debug("${action.key} has been executed. Result: ${result.get.toJson()}")
+                    logger.debug(
+                        "${action.key} has been executed. Result: '${transform.trySerialization(result.get)
+                            .transformToString()}'"
+                    )
                 return ApiSuccessResponse(version = cm.version, id = cm.id, data = result.get)
             }
             is Result.Failure -> generateResponseOnFailure(

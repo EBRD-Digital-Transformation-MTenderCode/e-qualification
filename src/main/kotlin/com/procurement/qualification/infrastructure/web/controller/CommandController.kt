@@ -2,9 +2,9 @@ package com.procurement.qualification.infrastructure.web.controller
 
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.application.service.Transform
+import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.service.CommandService
-import com.procurement.qualification.infrastructure.utils.toJson
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
 import com.procurement.qualification.infrastructure.web.parser.tryGetNode
 import com.procurement.qualification.infrastructure.web.response.generator.ApiResponseGenerator.generateResponseOnFailure
@@ -37,7 +37,10 @@ class CommandController(
             commandService.execute(node)
                 .also { response ->
                     if (logger.isDebugEnabled)
-                        logger.debug("RESPONSE (id: '${response.id}'): '${response.toJson()}'.")
+                        logger.debug(
+                            "RESPONSE (id: '${response.id}'): '${transform.trySerialization(response)
+                                .transformToString()}'."
+                        )
                 }
 
         return ResponseEntity(response, HttpStatus.OK)

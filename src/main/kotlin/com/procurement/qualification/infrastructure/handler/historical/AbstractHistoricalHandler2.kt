@@ -5,9 +5,9 @@ import com.procurement.qualification.application.repository.HistoryRepository
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.handler.Handler
-import com.procurement.qualification.infrastructure.utils.toJson
 import com.procurement.qualification.infrastructure.web.dto.Action
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiSuccessResponse2
@@ -52,7 +52,10 @@ abstract class AbstractHistoricalHandler2<ACTION : Action, R : Any>(
                 val resultData = result.get
                 historyRepository.saveHistory(id.toString(), action.key, resultData)
                 if (logger.isDebugEnabled)
-                    logger.debug("${action.key} has been executed. Result: ${resultData.toJson()}")
+                    logger.debug(
+                        "${action.key} has been executed. Result: '${transform.trySerialization(result.get)
+                            .transformToString()}'"
+                    )
 
                 ApiSuccessResponse2(version = version, id = id, result = resultData)
             }

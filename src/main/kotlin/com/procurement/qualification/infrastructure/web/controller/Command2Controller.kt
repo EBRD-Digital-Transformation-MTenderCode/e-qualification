@@ -3,10 +3,10 @@ package com.procurement.qualification.infrastructure.web.controller
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.configuration.properties.GlobalProperties2
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.service.Command2Service
-import com.procurement.qualification.infrastructure.utils.toJson
 import com.procurement.qualification.infrastructure.web.dto.ApiVersion2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
 import com.procurement.qualification.infrastructure.web.parser.NaN
@@ -58,7 +58,10 @@ class Command2Controller(
             command2Service.execute(node)
                 .also { response ->
                     if (logger.isDebugEnabled)
-                        logger.debug("RESPONSE (id: '${id}'): '${response.toJson()}'.")
+                        logger.debug(
+                            "RESPONSE (id: '${id}'): '${transform.trySerialization(response)
+                                .transformToString()}'."
+                        )
                 }
 
         return ResponseEntity(response, HttpStatus.OK)

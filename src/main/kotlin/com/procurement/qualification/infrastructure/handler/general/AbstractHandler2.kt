@@ -2,10 +2,11 @@ package com.procurement.qualification.infrastructure.handler.general
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.service.Logger
+import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.handler.Handler
-import com.procurement.qualification.infrastructure.utils.toJson
 import com.procurement.qualification.infrastructure.web.dto.Action
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiSuccessResponse2
@@ -14,6 +15,7 @@ import com.procurement.qualification.infrastructure.web.parser.tryGetVersion
 import com.procurement.qualification.infrastructure.web.response.generator.ApiResponse2Generator.generateResponseOnFailure
 
 abstract class AbstractHandler2<ACTION : Action, R : Any>(
+    private val transform: Transform,
     private val logger: Logger
 ) : Handler<ACTION, ApiResponse2> {
 
@@ -24,7 +26,10 @@ abstract class AbstractHandler2<ACTION : Action, R : Any>(
         return when (val result = execute(node)) {
             is Result.Success -> {
                 if (logger.isDebugEnabled)
-                    logger.debug("${action.key} has been executed. Result: ${result.get.toJson()}")
+                    logger.debug(
+                        "${action.key} has been executed. Result: '${transform.trySerialization(result.get)
+                            .transformToString()}'"
+                    )
                 return ApiSuccessResponse2(
                     version = version,
                     id = id,
