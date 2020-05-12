@@ -1,6 +1,7 @@
 package com.procurement.qualification.infrastructure.web.controller
 
 import com.procurement.qualification.application.service.Logger
+import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.service.CommandService
 import com.procurement.qualification.infrastructure.utils.toJson
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/command")
 class CommandController(
     private val commandService: CommandService,
+    private val transform: Transform,
     private val logger: Logger
 ) {
 
@@ -28,7 +30,7 @@ class CommandController(
         if (logger.isDebugEnabled)
             logger.debug("RECEIVED COMMAND: '$requestBody'.")
 
-        val node = requestBody.tryGetNode()
+        val node = requestBody.tryGetNode(transform)
             .doReturn { error -> return generateResponseEntityOnFailure(fail = error) }
 
         val response =

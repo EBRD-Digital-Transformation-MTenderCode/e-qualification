@@ -1,6 +1,7 @@
 package com.procurement.qualification.infrastructure.web.controller
 
 import com.procurement.qualification.application.service.Logger
+import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.infrastructure.configuration.properties.GlobalProperties2
 import com.procurement.qualification.infrastructure.fail.Fail
@@ -25,6 +26,7 @@ import java.util.*
 @RequestMapping("/command2")
 class Command2Controller(
     private val command2Service: Command2Service,
+    private val transform: Transform,
     private val logger: Logger
 ) {
 
@@ -33,7 +35,7 @@ class Command2Controller(
         if (logger.isDebugEnabled)
             logger.debug("RECEIVED COMMAND: '$requestBody'.")
 
-        val node = requestBody.tryGetNode()
+        val node = requestBody.tryGetNode(transform)
             .doReturn { error -> return generateResponseEntityOnFailure(fail = error) }
 
         val version = when (val versionResult = node.tryGetVersion()) {

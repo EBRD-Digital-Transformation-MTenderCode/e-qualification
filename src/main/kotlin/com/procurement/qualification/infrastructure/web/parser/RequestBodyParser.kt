@@ -11,7 +11,6 @@ import com.procurement.qualification.infrastructure.extension.tryGetTextAttribut
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.BadRequest
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
-import com.procurement.qualification.infrastructure.utils.tryToNode
 import com.procurement.qualification.infrastructure.web.dto.ApiVersion2
 import com.procurement.qualification.infrastructure.web.dto.command.CommandType
 import com.procurement.qualification.infrastructure.web.enums.Command2Type
@@ -79,8 +78,8 @@ fun JsonNode.tryGetId(): Result<UUID, DataErrors> {
         }
 }
 
-fun String.tryGetNode(): Result<JsonNode, BadRequest> =
-    when (val result = this.tryToNode()) {
+fun String.tryGetNode(transform: Transform): Result<JsonNode, BadRequest> =
+    when (val result = transform.tryParse(this)) {
         is Result.Success -> result
         is Result.Failure -> Result.failure(BadRequest())
     }
