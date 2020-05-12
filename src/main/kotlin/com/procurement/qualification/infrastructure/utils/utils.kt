@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.infrastructure.bind.jackson.configuration
 import com.procurement.qualification.infrastructure.fail.Fail
-import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -21,10 +20,6 @@ private object JsonMapper {
 /*Date utils*/
 fun LocalDateTime.toDate(): Date {
     return Date.from(this.toInstant(ZoneOffset.UTC))
-}
-
-fun localNowUTC(): LocalDateTime {
-    return LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
 }
 
 fun Date.toLocal(): LocalDateTime {

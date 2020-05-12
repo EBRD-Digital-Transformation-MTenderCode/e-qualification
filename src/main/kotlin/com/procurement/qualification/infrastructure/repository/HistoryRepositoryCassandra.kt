@@ -4,10 +4,10 @@ import com.datastax.driver.core.Session
 import com.procurement.qualification.application.repository.HistoryRepository
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
+import com.procurement.qualification.domain.util.extension.nowDefaultUTC
 import com.procurement.qualification.infrastructure.extension.cassandra.tryExecute
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.HistoryEntity
-import com.procurement.qualification.infrastructure.utils.localNowUTC
 import com.procurement.qualification.infrastructure.utils.toDate
 import com.procurement.qualification.infrastructure.utils.toJson
 import org.springframework.stereotype.Repository
@@ -75,7 +75,7 @@ class HistoryRepositoryCassandra(private val session: Session) : HistoryReposito
         val entity = HistoryEntity(
             operationId = operationId,
             command = command,
-            operationDate = localNowUTC().toDate(),
+            operationDate = nowDefaultUTC().toDate(),
             jsonData = result.toJson()
         )
 
