@@ -7,7 +7,7 @@ import com.procurement.qualification.infrastructure.web.dto.Action
 
 enum class Command2Type(@JsonValue override val key: String) : Action, EnumElementProvider.Key {
 
-    CHECK_PERIOD_2("checkPeriod");
+    TODO("");
 
     override fun toString(): String = key
 

@@ -84,9 +84,7 @@ data class Context @JsonCreator constructor(
 
 enum class CommandType(@JsonValue override val key: String) : Action, EnumElementProvider.Key {
 
-    VALIDATE_PERIOD("validatePeriod"),
-    SAVE_PERIOD("savePeriod"),
-    CHECK_PERIOD("checkPeriod");
+    TODO("");
 
     override fun toString(): String = key
 
