@@ -6,7 +6,9 @@ import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.date.tryParseToLocalDateTime
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
+import java.time.LocalDateTime
 
 fun parseCpid(value: String): Result<Cpid, DataErrors.Validation.DataMismatchToPattern> =
     Cpid.tryCreateOrNull(value = value)
@@ -29,6 +31,20 @@ fun parseOcid(value: String): Result<Ocid, DataErrors.Validation.DataMismatchToP
                 actualValue = value
             )
         )
+
+fun parseDate(value: String, valueName: String): Result<LocalDateTime, DataErrors.Validation.DataFormatMismatch> =
+    value.tryParseToLocalDateTime()
+        .doOnError { expectedFormat ->
+            return Result.failure(
+                DataErrors.Validation.DataFormatMismatch(
+                    name = valueName,
+                    actualValue = value,
+                    expectedFormat = expectedFormat
+                )
+            )
+        }
+        .get
+        .asSuccess()
 
 private fun <T> parseEnum(
     value: String, allowedEnums: Set<T>, attributeName: String, target: EnumElementProvider<T>
