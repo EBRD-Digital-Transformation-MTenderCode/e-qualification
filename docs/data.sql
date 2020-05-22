@@ -20,12 +20,3 @@ CREATE TABLE IF NOT EXISTS  qualification.history
     json_data text,
     primary key(command_id, command)
 );
-
-CREATE TABLE IF NOT EXISTS  qualification.period_rules (
-    country text,
-    pmd text,
-    value bigint,
-    primary key(country, pmd)
-);
-
-INSERT INTO qualification.period_rules (country, pmd, value)  VALUES ('MD', 'GPA', 864000);
