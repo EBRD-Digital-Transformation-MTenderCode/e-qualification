@@ -48,7 +48,7 @@ sealed class Fail {
                 }
             }
 
-            class RecordIsNotExist(override val description: String) : Database(
+            class RecordDoesNotExist(override val description: String) : Database(
                 number = "1.2",
                 description = description
             )
