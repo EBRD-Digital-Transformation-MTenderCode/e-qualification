@@ -6,6 +6,6 @@ sealed class ValidationError(
     numberError: String,
     override val description: String,
     val entityId: String? = null
-) : Fail.Error("VR-") {
+) : Fail.Error("VR.COM-") {
     override val code: String = prefix + numberError
 }

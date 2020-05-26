@@ -11,11 +11,9 @@ import com.procurement.qualification.infrastructure.web.dto.ApiVersion2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiErrorResponse2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiIncidentResponse2
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
-import org.springframework.stereotype.Component
 import java.util.*
 
-@Component
-class ApiResponse2Generator {
+object ApiResponse2Generator {
 
     fun generateResponseOnFailure(
         fail: Fail, version: ApiVersion2, id: UUID, logger: Logger
@@ -43,14 +41,9 @@ class ApiResponse2Generator {
             id = id,
             result = listOf(
                 ApiErrorResponse2.Error(
-                    code = getFullErrorCode(
-                        dataError.code
-                    ),
+                    code = getFullErrorCode(dataError.code),
                     description = dataError.description,
-                    details = ApiErrorResponse2.Error.Detail.tryCreateOrNull(
-                        name = dataError.name
-                    ).toListOrEmpty()
-
+                    details = ApiErrorResponse2.Error.Detail.tryCreateOrNull(name = dataError.name).toListOrEmpty()
                 )
             )
         )
@@ -63,13 +56,9 @@ class ApiResponse2Generator {
             id = id,
             result = listOf(
                 ApiErrorResponse2.Error(
-                    code = getFullErrorCode(
-                        validationError.code
-                    ),
+                    code = getFullErrorCode(validationError.code),
                     description = validationError.description,
-                    details = ApiErrorResponse2.Error.Detail.tryCreateOrNull(
-                        id = validationError.entityId
-                    ).toListOrEmpty()
+                    details = ApiErrorResponse2.Error.Detail.tryCreateOrNull(id = validationError.entityId).toListOrEmpty()
 
                 )
             )
@@ -81,9 +70,7 @@ class ApiResponse2Generator {
             id = id,
             result = listOf(
                 ApiErrorResponse2.Error(
-                    code = getFullErrorCode(
-                        error.code
-                    ),
+                    code = getFullErrorCode(error.code),
                     description = error.description
                 )
             )
@@ -103,9 +90,7 @@ class ApiResponse2Generator {
                 ),
                 details = listOf(
                     ApiIncidentResponse2.Incident.Details(
-                        code = getFullErrorCode(
-                            incident.code
-                        ),
+                        code = getFullErrorCode(incident.code),
                         description = incident.description,
                         metadata = null
                     )

@@ -14,12 +14,12 @@ import com.nhaarman.mockito_kotlin.whenever
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.util.extension.toDate
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
 import com.procurement.qualification.infrastructure.configuration.DatabaseTestConfiguration
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.PeriodEntity
-import com.procurement.qualification.infrastructure.utils.toDate
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -98,7 +98,7 @@ class PeriodDataEntityRepositoryIT {
     }
 
     @Test
-    fun cnNotFound() {
+    fun periodNotFound() {
         val actualPeriod = periodRepository.findBy(
             cpid = Cpid.tryCreateOrNull("ocds-t1s2t3-MD-1565251033000")!!,
             ocid = OCID
@@ -115,7 +115,7 @@ class PeriodDataEntityRepositoryIT {
         val actual = periodRepository.saveNewPeriod(stubPeriod())
 
         assertTrue(actual.isFail)
-        assertTrue(actual.error is Fail.Incident.Database.DatabaseInteractionIncident)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
     }
 
     @Test
@@ -127,7 +127,44 @@ class PeriodDataEntityRepositoryIT {
         val actual = periodRepository.findBy(CPID, OCID)
 
         assertTrue(actual.isFail)
-        assertTrue(actual.error is Fail.Incident.Database.DatabaseInteractionIncident)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
+    }
+
+    @Test
+    fun saveOrUpdatePeriod_save() {
+        val period = stubPeriod()
+        periodRepository.saveOrUpdatePeriod(period)
+        val savedPeriod = periodRepository.findBy(cpid = period.cpid, ocid = period.ocid).get
+
+        assertEquals(savedPeriod, period)
+    }
+
+    @Test
+    fun saveOrUpdatePeriod_update() {
+        val period = stubPeriod()
+        insertPeriod(period)
+        val startDate = START_DATE.plusDays(10)
+        val endDate = END_DATE.plusDays(10)
+        val updatedPeriod = PeriodEntity(
+            ocid = period.ocid, cpid = period.cpid, startDate = startDate, endDate = endDate
+        )
+        periodRepository.saveOrUpdatePeriod(updatedPeriod)
+
+        val savedPeriod = periodRepository.findBy(cpid = period.cpid, ocid = period.ocid).get
+
+        assertEquals(updatedPeriod, savedPeriod)
+    }
+
+    @Test
+    fun `error while saving or updating`() {
+        doThrow(RuntimeException())
+            .whenever(session)
+            .execute(any<BoundStatement>())
+
+        val actual = periodRepository.saveOrUpdatePeriod(stubPeriod())
+
+        assertTrue(actual.isFail)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
     }
 
     private fun createKeyspace() {

@@ -12,8 +12,7 @@ import org.springframework.context.annotation.Configuration
     basePackages = [
         "com.procurement.qualification.infrastructure.service",
         "com.procurement.qualification.application.service",
-        "com.procurement.qualification.infrastructure.handler",
-        "com.procurement.qualification.infrastructure.web.response"
+        "com.procurement.qualification.infrastructure.handler"
     ]
 )
 class ServiceConfiguration {

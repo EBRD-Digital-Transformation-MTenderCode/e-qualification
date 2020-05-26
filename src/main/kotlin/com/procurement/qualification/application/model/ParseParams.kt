@@ -6,7 +6,7 @@ import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
-import com.procurement.qualification.domain.model.date.tryParseToLocalDateTime
+import com.procurement.qualification.domain.util.extension.tryParseLocalDateTime
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import java.time.LocalDateTime
 
@@ -32,20 +32,6 @@ fun parseOcid(value: String): Result<Ocid, DataErrors.Validation.DataMismatchToP
             )
         )
 
-fun parseDate(value: String, valueName: String): Result<LocalDateTime, DataErrors.Validation.DataFormatMismatch> =
-    value.tryParseToLocalDateTime()
-        .doOnError { expectedFormat ->
-            return Result.failure(
-                DataErrors.Validation.DataFormatMismatch(
-                    name = valueName,
-                    actualValue = value,
-                    expectedFormat = expectedFormat
-                )
-            )
-        }
-        .get
-        .asSuccess()
-
 private fun <T> parseEnum(
     value: String, allowedEnums: Set<T>, attributeName: String, target: EnumElementProvider<T>
 ): Result<T, DataErrors.Validation.UnknownValue> where T : Enum<T>,
@@ -60,3 +46,15 @@ private fun <T> parseEnum(
                 actualValue = value
             )
         )
+
+fun parseDate(value: String, attributeName: String): Result<LocalDateTime, DataErrors.Validation.DataFormatMismatch> =
+    value.tryParseLocalDateTime()
+        .doReturn { pattern ->
+            return Result.failure(
+                DataErrors.Validation.DataFormatMismatch(
+                    name = attributeName,
+                    actualValue = value,
+                    expectedFormat = pattern
+                )
+            )
+        }.asSuccess()

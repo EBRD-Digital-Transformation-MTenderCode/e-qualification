@@ -75,7 +75,6 @@ val CommandMessage.pmd: Result<ProcurementMethod, DataErrors>
     }
 
 data class Context @JsonCreator constructor(
-    val operationId: String,
     val cpid: String?,
     val ocid: String?,
     val stage: String?,

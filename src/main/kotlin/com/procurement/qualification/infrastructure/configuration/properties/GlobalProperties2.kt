@@ -12,7 +12,7 @@ object GlobalProperties2 {
     }
 
     class Service {
-        val id: String = ""  //TODO()
+        val id: String = "22"
         val name: String = "e-qualification"
         val version: String = loadVersion()
 
