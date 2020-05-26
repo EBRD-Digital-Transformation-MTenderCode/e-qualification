@@ -26,15 +26,14 @@ class JacksonJsonTransform(private val mapper: ObjectMapper) :
     /**
      * Mapping
      */
-    override fun <R> tryMapping(value: JsonNode, target: Class<R>): Result<R, Fail.Incident.Transform.Mapping> {
-        if (value is NullNode)
-            return failure(Fail.Incident.Transform.Mapping(description = "Object to map must not be null."))
-        return try {
-            success(mapper.treeToValue(value, target))
+    override fun <R> tryMapping(value: JsonNode, target: Class<R>): Result<R, Fail.Incident.Transform.Mapping> =
+        try {
+            if (value is NullNode)
+                failure(Fail.Incident.Transform.Mapping(description = "Object to map must not be null."))
+            else success(mapper.treeToValue(value, target))
         } catch (expected: Exception) {
             failure(Fail.Incident.Transform.Mapping(description = "Error of mapping.", exception = expected))
         }
-    }
 
     override fun <R> tryMapping(
         value: JsonNode,
