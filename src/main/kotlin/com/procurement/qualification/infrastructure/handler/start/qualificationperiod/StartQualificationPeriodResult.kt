@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.handler.start.period
+package com.procurement.qualification.infrastructure.handler.start.qualificationperiod
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime
