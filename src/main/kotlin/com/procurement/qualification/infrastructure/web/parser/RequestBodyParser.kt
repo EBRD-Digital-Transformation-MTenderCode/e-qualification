@@ -16,7 +16,6 @@ import com.procurement.qualification.infrastructure.web.dto.command.CommandType
 import com.procurement.qualification.infrastructure.web.enums.Command2Type
 import java.util.*
 
-
 fun JsonNode.tryGetVersion(): Result<ApiVersion2, DataErrors> {
     val name = "version"
     return tryGetTextAttribute(name).bind {
@@ -51,15 +50,13 @@ fun <T : Any> JsonNode.tryGetParams(target: Class<T>, transform: Transform): Res
     }
 }
 
-fun <T : Any> JsonNode.tryGetData(target: Class<T>, transform: Transform): Result<T, Fail.Error> {
-    return when (val result = transform.tryMapping(this, target)) {
-            is Result.Success -> result
-            is Result.Failure -> Result.failure(
-                BadRequest("Error parsing 'data'")
-            )
-        }
-}
-
+fun <T : Any> JsonNode.tryGetData(target: Class<T>, transform: Transform): Result<T, Fail.Error> =
+    when (val result = transform.tryMapping(this, target)) {
+        is Result.Success -> result
+        is Result.Failure -> Result.failure(
+            BadRequest("Error parsing 'data'")
+        )
+    }
 
 fun JsonNode.tryGetId(): Result<UUID, DataErrors> {
     val name = "id"
