@@ -67,6 +67,8 @@ sealed class Result<out T, out E> {
         override val get: T = value
         override val error: Nothing
             get() = throw NoSuchElementException("The result does not contain an error.")
+
+        override fun toString(): String = get.toString()
     }
 
     class Failure<out E> internal constructor(value: E) : Result<Nothing, E>() {
@@ -75,6 +77,8 @@ sealed class Result<out T, out E> {
         override val get: Nothing
             get() = throw NoSuchElementException("The result does not contain a value.")
         override val error: E = value
+
+        override fun toString(): String = error.toString()
     }
 }
 

@@ -5,10 +5,9 @@ import com.procurement.qualification.infrastructure.configuration.properties.Glo
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.web.dto.command.ApiVersion
 import com.procurement.qualification.infrastructure.web.dto.response.ApiErrorResponse
-import org.springframework.stereotype.Component
 
-@Component
-class ApiResponseGenerator {
+object ApiResponseGenerator {
+
     fun generateResponseOnFailure(
         fail: Fail, version: ApiVersion = GlobalProperties.App.apiVersion, logger: Logger, id: String = "N/A"
     ): ApiErrorResponse {
@@ -16,7 +15,7 @@ class ApiResponseGenerator {
         return ApiErrorResponse(
             errors = listOf(
                 ApiErrorResponse.Error(
-                    code = "400.${GlobalProperties.serviceId}." + fail.code,
+                    code = "${fail.code}/${GlobalProperties.serviceId}",
                     description = fail.description
                 )
             ),

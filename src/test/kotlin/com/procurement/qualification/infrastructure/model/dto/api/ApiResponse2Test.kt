@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.model.dto.amendment.proceed
+package com.procurement.qualification.infrastructure.model.dto.api
 
 import com.procurement.qualification.infrastructure.model.dto.AbstractDTOTestBase
 import com.procurement.qualification.infrastructure.web.dto.ApiVersion2

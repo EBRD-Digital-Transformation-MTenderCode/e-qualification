@@ -3,6 +3,7 @@ package com.procurement.qualification.infrastructure.repository
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.Session
 import com.procurement.qualification.application.repository.PeriodRepository
+import com.procurement.qualification.domain.functional.MaybeFail
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.Result.Companion.failure
 import com.procurement.qualification.domain.functional.Result.Companion.success
@@ -10,11 +11,11 @@ import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.functional.bind
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.util.extension.toDate
+import com.procurement.qualification.domain.util.extension.toLocal
 import com.procurement.qualification.infrastructure.extension.cassandra.tryExecute
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.PeriodEntity
-import com.procurement.qualification.infrastructure.utils.toDate
-import com.procurement.qualification.infrastructure.utils.toLocal
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -28,7 +29,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         private const val columnStartDate = "start_date"
         private const val columnEndDate = "end_date"
 
-        private const val SAVE_NEW_PERIOD = """
+        private const val SAVE_NEW_PERIOD_CQL = """
                INSERT INTO $keySpace.$tableName(
                       $columnCpid,
                       $columnOcid,
@@ -37,6 +38,16 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
                )
                VALUES(?, ?, ?, ?)
                IF NOT EXISTS
+            """
+
+        private const val SAVE_OR_UPDATE_PERIOD_CQL = """
+               INSERT INTO $keySpace.$tableName(
+                      $columnCpid,
+                      $columnOcid,
+                      $columnStartDate,
+                      $columnEndDate
+               )
+               VALUES(?, ?, ?, ?)
             """
 
         private const val FIND_BY_CPID_AND_OCID_CQL = """
@@ -51,7 +62,8 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
     }
 
     private val preparedFindByCpidAndOcidCQL = session.prepare(FIND_BY_CPID_AND_OCID_CQL)
-    private val preparedSaveNewPeriodCQL = session.prepare(SAVE_NEW_PERIOD)
+    private val preparedSaveNewPeriodCQL = session.prepare(SAVE_NEW_PERIOD_CQL)
+    private val preparedSaveOrUpdatePeriodCQL = session.prepare(SAVE_OR_UPDATE_PERIOD_CQL)
 
     override fun findBy(cpid: Cpid, ocid: Ocid): Result<PeriodEntity?, Fail.Incident> {
         val query = preparedFindByCpidAndOcidCQL.bind()
@@ -72,7 +84,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         val cpid = row.getString(columnCpid)
         val cpidParsed = Cpid.tryCreateOrNull(cpid)
             ?: return failure(
-                Fail.Incident.Database.ParseFromDatabaseColumnIncident(
+                Fail.Incident.Database.Parsing(
                     column = columnCpid, value = cpid
                 )
             )
@@ -80,7 +92,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         val ocid = row.getString(columnOcid)
         val ocidParsed = Ocid.tryCreateOrNull(ocid)
             ?: return failure(
-                Fail.Incident.Database.ParseFromDatabaseColumnIncident(
+                Fail.Incident.Database.Parsing(
                     column = columnOcid, value = ocid
                 )
             )
@@ -105,5 +117,20 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         return statements.tryExecute(session).bind { resultSet ->
             success(resultSet.wasApplied())
         }
+    }
+
+    override fun saveOrUpdatePeriod(period: PeriodEntity): MaybeFail<Fail.Incident> {
+        val statements = preparedSaveOrUpdatePeriodCQL.bind()
+            .apply {
+                setString(columnCpid, period.cpid.toString())
+                setString(columnOcid, period.ocid.toString())
+                setTimestamp(columnStartDate, period.startDate.toDate())
+                setTimestamp(columnEndDate, period.endDate.toDate())
+            }
+
+        statements.tryExecute(session)
+            .doOnError { incident -> return MaybeFail.fail(incident) }
+
+        return MaybeFail.none()
     }
 }

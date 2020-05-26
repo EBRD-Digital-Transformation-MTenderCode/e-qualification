@@ -2,18 +2,18 @@ package com.procurement.qualification.infrastructure.repository
 
 import com.datastax.driver.core.Session
 import com.procurement.qualification.application.repository.HistoryRepository
+import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
+import com.procurement.qualification.domain.util.extension.nowDefaultUTC
+import com.procurement.qualification.domain.util.extension.toDate
 import com.procurement.qualification.infrastructure.extension.cassandra.tryExecute
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.HistoryEntity
-import com.procurement.qualification.infrastructure.utils.localNowUTC
-import com.procurement.qualification.infrastructure.utils.toDate
-import com.procurement.qualification.infrastructure.utils.toJson
 import org.springframework.stereotype.Repository
 
 @Repository
-class HistoryRepositoryCassandra(private val session: Session) : HistoryRepository {
+class HistoryRepositoryCassandra(private val session: Session, private val transform: Transform) : HistoryRepository {
 
     companion object {
         private const val KEYSPACE = "qualification"
@@ -21,7 +21,7 @@ class HistoryRepositoryCassandra(private val session: Session) : HistoryReposito
         private const val COMMAND_ID = "command_id"
         private const val COMMAND = "command"
         private const val COMMAND_DATE = "command_date"
-        private const val JSON_DATA = "json_data"
+        const val JSON_DATA = "json_data"
 
         private const val SAVE_HISTORY_CQL = """
                INSERT INTO $KEYSPACE.$HISTORY_TABLE(
@@ -75,8 +75,8 @@ class HistoryRepositoryCassandra(private val session: Session) : HistoryReposito
         val entity = HistoryEntity(
             operationId = operationId,
             command = command,
-            operationDate = localNowUTC().toDate(),
-            jsonData = result.toJson()
+            operationDate = nowDefaultUTC().toDate(),
+            jsonData = transform.trySerialization(result).orForwardFail { fail -> return fail }
         )
 
         val insert = preparedSaveHistoryCQL.bind()
