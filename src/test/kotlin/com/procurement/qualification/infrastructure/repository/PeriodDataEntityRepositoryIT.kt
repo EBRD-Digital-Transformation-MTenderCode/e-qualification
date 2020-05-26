@@ -115,7 +115,7 @@ class PeriodDataEntityRepositoryIT {
         val actual = periodRepository.saveNewPeriod(stubPeriod())
 
         assertTrue(actual.isFail)
-        assertTrue(actual.error is Fail.Incident.Database.DatabaseInteractionIncident)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
     }
 
     @Test
@@ -127,7 +127,7 @@ class PeriodDataEntityRepositoryIT {
         val actual = periodRepository.findBy(CPID, OCID)
 
         assertTrue(actual.isFail)
-        assertTrue(actual.error is Fail.Incident.Database.DatabaseInteractionIncident)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
     }
 
     @Test
@@ -164,7 +164,7 @@ class PeriodDataEntityRepositoryIT {
         val actual = periodRepository.saveOrUpdatePeriod(stubPeriod())
 
         assertTrue(actual.isError)
-        assertTrue(actual.error is Fail.Incident.Database.DatabaseInteractionIncident)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
     }
 
     private fun createKeyspace() {
