@@ -163,7 +163,7 @@ class PeriodDataEntityRepositoryIT {
 
         val actual = periodRepository.saveOrUpdatePeriod(stubPeriod())
 
-        assertTrue(actual.isError)
+        assertTrue(actual.isFail)
         assertTrue(actual.error is Fail.Incident.Database.Interaction)
     }
 

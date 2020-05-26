@@ -3,10 +3,10 @@ package com.procurement.qualification.infrastructure.repository
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.Session
 import com.procurement.qualification.application.repository.PeriodRepository
+import com.procurement.qualification.domain.functional.MaybeFail
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.Result.Companion.failure
 import com.procurement.qualification.domain.functional.Result.Companion.success
-import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.functional.bind
 import com.procurement.qualification.domain.model.Cpid
@@ -119,7 +119,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         }
     }
 
-    override fun saveOrUpdatePeriod(period: PeriodEntity): ValidationResult<Fail.Incident> {
+    override fun saveOrUpdatePeriod(period: PeriodEntity): MaybeFail<Fail.Incident> {
         val statements = preparedSaveOrUpdatePeriodCQL.bind()
             .apply {
                 setString(columnCpid, period.cpid.toString())
@@ -129,8 +129,8 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
             }
 
         statements.tryExecute(session)
-            .doOnError { incident -> return ValidationResult.error(incident) }
+            .doOnError { incident -> return MaybeFail.fail(incident) }
 
-        return ValidationResult.ok()
+        return MaybeFail.none()
     }
 }
