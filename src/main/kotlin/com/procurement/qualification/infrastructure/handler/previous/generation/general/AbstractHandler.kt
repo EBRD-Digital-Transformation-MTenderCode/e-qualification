@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
-import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.BadRequest
 import com.procurement.qualification.infrastructure.handler.Handler
@@ -27,8 +26,7 @@ abstract class AbstractHandler<ACTION : CommandType, R : Any>(
             is Result.Success -> {
                 if (logger.isDebugEnabled)
                     logger.debug(
-                        "${action.key} has been executed. Result: '${transform.trySerialization(result.get)
-                            .transformToString()}'"
+                        "${action.key} has been executed. Result: '${transform.trySerialization(result.get)}'"
                     )
                 return ApiSuccessResponse(version = cm.version, id = cm.id, data = result.get)
             }

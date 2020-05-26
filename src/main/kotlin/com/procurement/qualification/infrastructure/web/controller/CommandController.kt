@@ -2,7 +2,6 @@ package com.procurement.qualification.infrastructure.web.controller
 
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.application.service.Transform
-import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.service.CommandService
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
@@ -37,10 +36,7 @@ class CommandController(
             commandService.execute(node)
                 .also { response ->
                     if (logger.isDebugEnabled)
-                        logger.debug(
-                            "RESPONSE (id: '${response.id}'): '${transform.trySerialization(response)
-                                .transformToString()}'."
-                        )
+                        logger.debug("RESPONSE (id: '${response.id}'): '${transform.trySerialization(response)}'.")
                 }
 
         return ResponseEntity(response, HttpStatus.OK)

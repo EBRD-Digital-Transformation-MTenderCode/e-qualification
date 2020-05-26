@@ -5,7 +5,6 @@ import com.procurement.qualification.application.repository.HistoryRepository
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
-import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.BadRequest
 import com.procurement.qualification.infrastructure.handler.Handler
@@ -38,7 +37,9 @@ abstract class AbstractHistoricalHandler<ACTION : CommandType, R : Any>(
                 .doReturn { incident ->
                     return generateResponseOnFailure(
                         fail = Fail.Incident.Database.Parsing(
-                            column = HistoryRepositoryCassandra.JSON_DATA, value = jsonData, exception = incident.exception
+                            column = HistoryRepositoryCassandra.JSON_DATA,
+                            value = jsonData,
+                            exception = incident.exception
                         ),
                         id = cm.id,
                         version = cm.version,
@@ -54,8 +55,7 @@ abstract class AbstractHistoricalHandler<ACTION : CommandType, R : Any>(
                 historyRepository.saveHistory(cm.id, action.key, data)
                 if (logger.isDebugEnabled)
                     logger.debug(
-                        "${action.key} has been executed. Result: '${transform.trySerialization(result.get)
-                            .transformToString()}'"
+                        "${action.key} has been executed. Result: '${transform.trySerialization(result.get)}'"
                     )
 
                 ApiSuccessResponse(id = cm.id, version = cm.version, data = data)

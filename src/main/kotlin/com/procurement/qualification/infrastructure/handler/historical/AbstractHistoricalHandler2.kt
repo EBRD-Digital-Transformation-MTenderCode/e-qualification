@@ -5,7 +5,6 @@ import com.procurement.qualification.application.repository.HistoryRepository
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.application.service.Transform
 import com.procurement.qualification.domain.functional.Result
-import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.handler.Handler
 import com.procurement.qualification.infrastructure.repository.HistoryRepositoryCassandra
@@ -55,10 +54,7 @@ abstract class AbstractHistoricalHandler2<ACTION : Action, R : Any>(
                 val resultData = result.get
                 historyRepository.saveHistory(id.toString(), action.key, resultData)
                 if (logger.isDebugEnabled)
-                    logger.debug(
-                        "${action.key} has been executed. Result: '${transform.trySerialization(result.get)
-                            .transformToString()}'"
-                    )
+                    logger.debug("${action.key} has been executed. Result: '${transform.trySerialization(result.get)}'")
 
                 ApiSuccessResponse2(version = version, id = id, result = resultData)
             }
