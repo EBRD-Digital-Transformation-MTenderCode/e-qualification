@@ -9,6 +9,7 @@ import com.procurement.qualification.domain.util.extension.transformToString
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.BadRequest
 import com.procurement.qualification.infrastructure.handler.Handler
+import com.procurement.qualification.infrastructure.repository.HistoryRepositoryCassandra
 import com.procurement.qualification.infrastructure.web.dto.command.CommandMessage
 import com.procurement.qualification.infrastructure.web.dto.command.CommandType
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse
@@ -36,7 +37,9 @@ abstract class AbstractHistoricalHandler<ACTION : CommandType, R : Any>(
             val data = transform.tryDeserialization(value = jsonData, target = target)
                 .doReturn { incident ->
                     return generateResponseOnFailure(
-                        fail = Fail.Incident.Transform.ParseFromDatabaseIncident(jsonData, incident.exception),
+                        fail = Fail.Incident.Database.Parsing(
+                            column = HistoryRepositoryCassandra.JSON_DATA, value = jsonData, exception = incident.exception
+                        ),
                         id = cm.id,
                         version = cm.version,
                         logger = logger

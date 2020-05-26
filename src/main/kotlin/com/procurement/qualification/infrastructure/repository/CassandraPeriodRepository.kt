@@ -84,7 +84,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         val cpid = row.getString(columnCpid)
         val cpidParsed = Cpid.tryCreateOrNull(cpid)
             ?: return failure(
-                Fail.Incident.Transform.ParseFromDatabaseColumnIncident(
+                Fail.Incident.Database.Parsing(
                     column = columnCpid, value = cpid
                 )
             )
@@ -92,7 +92,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         val ocid = row.getString(columnOcid)
         val ocidParsed = Ocid.tryCreateOrNull(ocid)
             ?: return failure(
-                Fail.Incident.Transform.ParseFromDatabaseColumnIncident(
+                Fail.Incident.Database.Parsing(
                     column = columnOcid, value = ocid
                 )
             )
