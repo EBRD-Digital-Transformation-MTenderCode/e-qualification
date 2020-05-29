@@ -100,7 +100,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         return PeriodEntity(
             cpid = cpidParsed,
             ocid = ocidParsed,
-            endDate = row.getTimestamp(columnEndDate).toLocal(),
+            endDate = row.getTimestamp(columnEndDate)?.toLocal(),
             startDate = row.getTimestamp(columnStartDate).toLocal()
         ).asSuccess()
     }

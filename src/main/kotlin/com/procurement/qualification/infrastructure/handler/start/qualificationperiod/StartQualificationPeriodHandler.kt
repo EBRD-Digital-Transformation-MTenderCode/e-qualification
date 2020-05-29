@@ -14,16 +14,15 @@ import org.springframework.stereotype.Component
 
 @Component
 class StartQualificationPeriodHandler(
-    target: Class<StartQualificationPeriodResult>,
     historyRepository: HistoryRepository,
     transform: Transform,
     logger: Logger,
     private val periodService: PeriodService
 ) : AbstractHistoricalHandler2<Command2Type, StartQualificationPeriodResult>(
-    target,
-    historyRepository,
-    transform,
-    logger
+    target = StartQualificationPeriodResult::class.java,
+    historyRepository = historyRepository,
+    transform = transform,
+    logger = logger
 ) {
     override fun execute(node: JsonNode): Result<StartQualificationPeriodResult, Fail> {
 
