@@ -62,6 +62,20 @@ class CassandraQualificationRepository(private val session: Session) : Qualifica
             .asSuccess()
     }
 
+    override fun save(entity: QualificationEntity): MaybeFail<Fail.Incident> {
+        val statements = preparedSaveCQL.bind()
+            .apply {
+                setString(COLUMN_CPID, entity.cpid.toString())
+                setString(COLUMN_OCID, entity.ocid.toString())
+                setString(COLUMN_JSON_DATA, entity.jsonData)
+            }
+
+        statements.tryExecute(session)
+            .doOnError { fail -> return MaybeFail.fail(fail) }
+
+        return MaybeFail.none()
+    }
+
     private fun converter(row: Row): Result<QualificationEntity, Fail.Incident> {
         val cpid = row.getString(COLUMN_CPID)
         val cpidParsed = Cpid.tryCreateOrNull(cpid)
@@ -81,19 +95,5 @@ class CassandraQualificationRepository(private val session: Session) : Qualifica
 
         return QualificationEntity(cpid = cpidParsed, ocid = ocidParsed, jsonData = row.getString(COLUMN_JSON_DATA))
             .asSuccess()
-    }
-
-    override fun save(entity: QualificationEntity): MaybeFail<Fail.Incident> {
-        val statements = preparedSaveCQL.bind()
-            .apply {
-                setString(COLUMN_CPID, entity.cpid.toString())
-                setString(COLUMN_OCID, entity.ocid.toString())
-                setString(COLUMN_JSON_DATA, entity.jsonData)
-            }
-
-        statements.tryExecute(session)
-            .doOnError { fail -> MaybeFail.fail(fail) }
-
-        return MaybeFail.none()
     }
 }
