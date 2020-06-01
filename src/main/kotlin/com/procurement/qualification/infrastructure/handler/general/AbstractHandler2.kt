@@ -14,7 +14,7 @@ import com.procurement.qualification.infrastructure.web.parser.tryGetVersion
 import com.procurement.qualification.infrastructure.web.response.generator.ApiResponse2Generator.generateResponseOnFailure
 
 abstract class AbstractHandler2<ACTION : Action, R : Any>(
-    private val transform: Transform,
+    val transform: Transform,
     private val logger: Logger
 ) : Handler<ACTION, ApiResponse2> {
 
