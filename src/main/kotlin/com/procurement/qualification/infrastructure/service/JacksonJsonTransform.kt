@@ -45,6 +45,13 @@ class JacksonJsonTransform(private val mapper: ObjectMapper) :
         failure(Fail.Incident.Transform.Mapping(description = "Error of mapping.", exception = expected))
     }
 
+    override fun <R> tryMapping(value: String, target: Class<R>): Result<R, Fail.Incident.Transform.Mapping> =
+        try {
+            success(mapper.readValue(value, target))
+        } catch (expected: Exception) {
+            failure(Fail.Incident.Transform.Mapping(description = "Error of mapping.", exception = expected))
+        }
+
     /**
      * Deserialization
      */
