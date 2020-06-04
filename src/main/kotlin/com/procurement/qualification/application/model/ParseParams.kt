@@ -32,8 +32,11 @@ fun parseOcid(value: String): Result<Ocid, DataErrors.Validation.DataMismatchToP
             )
         )
 
-private fun <T> parseEnum(
-    value: String, allowedEnums: Set<T>, attributeName: String, target: EnumElementProvider<T>
+fun <T> parseEnum(
+    value: String,
+    allowedEnums: Set<T>,
+    attributeName: String,
+    target: EnumElementProvider<T>
 ): Result<T, DataErrors.Validation.UnknownValue> where T : Enum<T>,
                                                        T : EnumElementProvider.Key =
     target.orNull(value)

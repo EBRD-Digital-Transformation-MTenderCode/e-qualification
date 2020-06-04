@@ -1,6 +1,7 @@
 package com.procurement.qualification.domain.functional
 
 fun <T, E> T.asSuccess(): Result<T, E> = Result.success(this)
+fun <T, E> E.asFailure(): Result<T, E> = Result.failure(this)
 
 sealed class Result<out T, out E> {
     companion object {
