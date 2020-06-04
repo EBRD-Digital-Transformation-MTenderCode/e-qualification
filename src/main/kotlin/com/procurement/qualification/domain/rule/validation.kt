@@ -9,7 +9,7 @@ import java.math.BigDecimal
 fun scaleValidationRule(className: String, availableScale: Int) =
     ValidationRule { value: BigDecimal ->
         val scale = value.scale()
-        if (scale >= availableScale)
+        if (scale > availableScale)
             DomainErrors.InvalidScale(className = className, currentScale = scale, availableScale = availableScale)
                 .toValidationResult()
         else
