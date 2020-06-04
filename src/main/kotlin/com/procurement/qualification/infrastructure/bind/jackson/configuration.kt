@@ -5,10 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.infrastructure.bind.apiversion.ApiVersion2Deserializer
 import com.procurement.qualification.infrastructure.bind.apiversion.ApiVersion2Serializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
+import com.procurement.qualification.infrastructure.bind.measure.ScoringDeserializer
+import com.procurement.qualification.infrastructure.bind.measure.ScoringSerializer
 import com.procurement.qualification.infrastructure.web.dto.ApiVersion2
 import java.time.LocalDateTime
 
@@ -25,6 +28,12 @@ fun ObjectMapper.configuration() {
          */
         addSerializer(ApiVersion2::class.java, ApiVersion2Serializer())
         addDeserializer(ApiVersion2::class.java, ApiVersion2Deserializer())
+
+        /**
+         * Serializer/Deserializer for measure Scoring
+         */
+        addSerializer(Scoring::class.java, ScoringSerializer())
+        addDeserializer(Scoring::class.java, ScoringDeserializer())
     }
 
     this.registerModule(module)

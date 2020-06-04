@@ -6,8 +6,8 @@ import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
+import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.submission.SubmissionId
-import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class Qualification(
@@ -22,5 +22,5 @@ data class Qualification(
     @param:JsonProperty("relatedSubmission") @field:JsonProperty("relatedSubmission") val relatedSubmission: SubmissionId,
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @param:JsonProperty("scoring") @field:JsonProperty("scoring") val scoring: BigDecimal?
+    @param:JsonProperty("scoring") @field:JsonProperty("scoring") val scoring: Scoring?
 )
