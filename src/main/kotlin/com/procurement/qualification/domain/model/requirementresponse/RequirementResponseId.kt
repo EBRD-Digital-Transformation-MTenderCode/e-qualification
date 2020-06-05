@@ -1,4 +1,4 @@
-package com.procurement.qualification.domain.model.submission
+package com.procurement.qualification.domain.model.requirementresponse
 
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
@@ -6,9 +6,9 @@ import com.procurement.qualification.domain.util.extension.tryUUID
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import java.util.*
 
-typealias SubmissionId = UUID
+typealias RequirementResponseId = UUID
 
-fun tryCreateSubmissionId(value: String): Result<SubmissionId, DataErrors.Validation.DataFormatMismatch> = value.tryUUID()
+fun tryCreateRequirementResponseId(value: String): Result<RequirementResponseId, DataErrors.Validation.DataFormatMismatch> = value.tryUUID()
     .doReturn {
         return Result.failure(
             DataErrors.Validation.DataFormatMismatch(
@@ -19,3 +19,4 @@ fun tryCreateSubmissionId(value: String): Result<SubmissionId, DataErrors.Valida
         )
     }
     .asSuccess()
+
