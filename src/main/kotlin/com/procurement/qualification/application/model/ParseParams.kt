@@ -6,6 +6,8 @@ import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.Owner
+import com.procurement.qualification.domain.model.tryOwner
 import com.procurement.qualification.domain.util.extension.tryParseLocalDateTime
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import java.time.LocalDateTime
@@ -61,3 +63,16 @@ fun parseDate(value: String, attributeName: String): Result<LocalDateTime, DataE
                 )
             )
         }.asSuccess()
+
+fun parseOwner(value: String): Result<Owner, DataErrors.Validation.DataFormatMismatch> =
+    value.tryOwner()
+        .doReturn {
+            return Result.failure(
+                DataErrors.Validation.DataFormatMismatch(
+                    name = "owner",
+                    actualValue = value,
+                    expectedFormat = "uuid"
+                )
+            )
+        }
+        .asSuccess()
