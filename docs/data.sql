@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS  qualification.qualification
 (
     cpid text,
     ocid text,
+    qualification_id text,
     json_data text,
-    primary key(cpid, ocid)
+    primary key(cpid, ocid, qualification_id)
 );
