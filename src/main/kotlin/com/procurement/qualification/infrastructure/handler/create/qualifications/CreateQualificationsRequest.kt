@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.handler.create.qualification
+package com.procurement.qualification.infrastructure.handler.create.qualifications
 
 
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -7,7 +7,7 @@ import com.procurement.qualification.domain.model.requirement.RequirementRespons
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientValue
 
-data class CreateQualificationRequest(
+data class CreateQualificationsRequest(
     @field:JsonProperty("cpid") @param:JsonProperty("cpid") val cpid: String,
     @field:JsonProperty("ocid") @param:JsonProperty("ocid") val ocid: String, 
     @field:JsonProperty("date") @param:JsonProperty("date") val date: String,

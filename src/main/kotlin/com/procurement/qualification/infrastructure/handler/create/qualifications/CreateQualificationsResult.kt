@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.handler.create.qualification
+package com.procurement.qualification.infrastructure.handler.create.qualifications
 
 
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -10,7 +10,7 @@ import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import java.time.LocalDateTime
 
-data class CreateQualificationResult(
+data class CreateQualificationsResult(
     @field:JsonProperty("id") @param:JsonProperty("id") val id: QualificationId,
     @field:JsonProperty("status") @param:JsonProperty("status") val status: QualificationStatus,
     @field:JsonProperty("relatedSubmission") @param:JsonProperty("relatedSubmission") val relatedSubmission: SubmissionId,

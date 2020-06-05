@@ -5,5 +5,5 @@ import java.math.BigDecimal
 
 data class CoefficientRate(val rate: BigDecimal) : Serializable {
 
-    operator fun plus(other: BigDecimal) = rate + other
+    operator fun plus(other: CoefficientRate) = CoefficientRate(rate + other.rate)
 }
