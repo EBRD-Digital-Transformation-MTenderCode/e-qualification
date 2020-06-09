@@ -2,9 +2,11 @@ package com.procurement.qualification.application.service
 
 import com.procurement.qualification.application.model.params.CreateQualificationsParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
+import com.procurement.qualification.application.model.params.GetNextsForQualificationParams
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationStatus
+import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
 import com.procurement.qualification.domain.functional.Result
@@ -17,7 +19,9 @@ import com.procurement.qualification.domain.model.requirement.RequirementRespons
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientValue
 import com.procurement.qualification.infrastructure.fail.Fail
+import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
+import com.procurement.qualification.infrastructure.handler.get.nextforqualification.GetNextsForQualificationResult
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -27,6 +31,8 @@ interface QualificationService {
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
 
     fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail>
+
+    fun getNextsForQualification(params: GetNextsForQualificationParams): Result<List<GetNextsForQualificationResult>, Fail>
 }
 
 @Service
@@ -135,6 +141,105 @@ class QualificationServiceImpl(
         }
             .asSuccess()
     }
+
+    override fun getNextsForQualification(params: GetNextsForQualificationParams): Result<List<GetNextsForQualificationResult>, Fail> {
+
+        val qualificationEntities = qualificationRepository.findBy(cpid = params.cpid, ocid = params.ocid)
+            .orForwardFail { fail -> return fail }
+
+        val qualifications = qualificationEntities
+            .map {
+                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
+                    .doOnError { fail ->
+                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
+                            .asFailure()
+                    }
+                    .get
+            }
+
+        val qualificationsIds = qualifications
+            .associateBy { it.id }
+
+        val filteredQualifications = params.qualifications
+            .map {
+                qualificationsIds[it.id]
+                    ?: return ValidationError.QualificationNotFoundOnGetNextsForQualification(
+                        cpid = params.cpid,
+                        ocid = params.ocid,
+                        id = it.id
+                    )
+                        .asFailure()
+            }
+
+        val updatedQualifications = when (params.reductionCriteria) {
+            ReductionCriteria.SCORING -> {
+                when (params.qualificationSystemMethod) {
+                    QualificationSystemMethod.AUTOMATED -> {
+                        val requestQualificationWithMinScoring = findMinScoring(qualifications = params.qualifications)!!
+                        if (countScoringDuplicate(
+                                qualifications = params.qualifications,
+                                scoring = requestQualificationWithMinScoring.scoring!!
+                            ) > 1) {
+                            val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
+                            val qualificationRelatedToSubmission = filteredQualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }!!
+                            setStatusDetails(
+                                statusDetails = QualificationStatusDetails.AWAITING,
+                                qualifications = listOf(qualificationRelatedToSubmission)
+                            )
+                        } else {
+                            val qualificationWithMinScoring = filteredQualifications.find { q -> q.id == requestQualificationWithMinScoring.id }!!
+                            setStatusDetails(
+                                statusDetails = QualificationStatusDetails.AWAITING,
+                                qualifications = listOf(qualificationWithMinScoring)
+                            )
+                        }
+                    }
+                    QualificationSystemMethod.MANUAL -> setStatusDetails(
+                        statusDetails = QualificationStatusDetails.AWAITING,
+                        qualifications = filteredQualifications
+                    )
+                }
+            }
+            ReductionCriteria.NONE -> {
+                when (params.qualificationSystemMethod) {
+                    QualificationSystemMethod.AUTOMATED,
+                    QualificationSystemMethod.MANUAL -> setStatusDetails(
+                        statusDetails = QualificationStatusDetails.AWAITING,
+                        qualifications = filteredQualifications
+                    )
+                }
+            }
+        }
+
+        val updatedQualificationEntities = updatedQualifications.map {
+            QualificationEntity(
+                cpid = params.cpid,
+                ocid = params.ocid,
+                id = it.id,
+                jsonData = transform.trySerialization(it)
+                    .orForwardFail { fail -> return fail }
+            )
+        }
+        qualificationRepository.saveAll(updatedQualificationEntities)
+
+        return updatedQualifications
+            .map { GetNextsForQualificationResult(id = it.id, statusDetails = it.statusDetails!!) }
+            .asSuccess()
+    }
+
+    private fun findMinScoring(qualifications: List<GetNextsForQualificationParams.Qualification>) = qualifications.minBy { it.scoring!! }
+    private fun countScoringDuplicate(
+        qualifications: List<GetNextsForQualificationParams.Qualification>,
+        scoring: Scoring
+    ) = qualifications
+        .filter { scoring == it.scoring }
+        .count()
+
+    private fun findMinDate(submissions: List<GetNextsForQualificationParams.Submission>) =
+        submissions.minBy { it.date }
+
+    private fun setStatusDetails(statusDetails: QualificationStatusDetails, qualifications: List<Qualification>) =
+        qualifications.map { it.copy(statusDetails = statusDetails) }
 
     private fun isMatchCoefficientValueAndRequirementValue(
         coefficientValue: CoefficientValue,
