@@ -7,7 +7,8 @@ enum class QualificationStatus(@JsonValue override val key: String) : EnumElemen
 
     PENDING("pending"),
     ACTIVE("active"),
-    UNSUCCESSFUL("unsuccessful");
+    UNSUCCESSFUL("unsuccessful"),
+    AWAITING("awaiting");
 
     override fun toString(): String = key
 
