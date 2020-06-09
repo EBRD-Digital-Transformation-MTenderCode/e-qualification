@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsHandler
 import com.procurement.qualification.infrastructure.handler.find.qualificationids.FindQualificationIdsHandler
+import com.procurement.qualification.infrastructure.handler.get.nextforqualification.GetNextsForQualificationHandler
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
 import com.procurement.qualification.infrastructure.web.enums.Command2Type
 import com.procurement.qualification.infrastructure.web.parser.tryGetAction
@@ -16,7 +17,8 @@ import org.springframework.stereotype.Service
 class Command2Service(
     private val logger: Logger,
     private val findQualificationIdsHandler: FindQualificationIdsHandler,
-    private val createQualificationsHandler: CreateQualificationsHandler
+    private val createQualificationsHandler: CreateQualificationsHandler,
+    private val getNextsForQualificationHandler: GetNextsForQualificationHandler
 ) {
 
     fun execute(node: JsonNode): ApiResponse2 {
@@ -41,6 +43,7 @@ class Command2Service(
         return when (action) {
             Command2Type.FIND_QUALIFICATION_IDS -> findQualificationIdsHandler.handle(node = node)
             Command2Type.CREATE_QUALIFICATIONS -> createQualificationsHandler.handle(node = node)
+            Command2Type.GET_NEXTS_FOR_QUALIFICATION -> getNextsForQualificationHandler.handle(node = node)
         }
     }
 }

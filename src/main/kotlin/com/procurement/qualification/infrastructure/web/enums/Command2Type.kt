@@ -8,7 +8,8 @@ import com.procurement.qualification.infrastructure.web.dto.Action
 enum class Command2Type(@JsonValue override val key: String) : Action, EnumElementProvider.Key {
 
     FIND_QUALIFICATION_IDS("findQualificationIds"),
-    CREATE_QUALIFICATIONS("createQualifications");
+    CREATE_QUALIFICATIONS("createQualifications"),
+    GET_NEXTS_FOR_QUALIFICATION("getNextsForQualification");
 
     override fun toString(): String = key
 
