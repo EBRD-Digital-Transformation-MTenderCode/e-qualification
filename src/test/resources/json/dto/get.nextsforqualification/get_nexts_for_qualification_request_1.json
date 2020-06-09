@@ -1,0 +1,21 @@
+{
+  "cpid": "ocds-b3wdp1-MD-1580458690892",
+  "ocid": "ocds-b3wdp1-MD-1580458690892-EV-1580458791896",
+  "reductionCriteria": "scoring",
+  "qualificationSystemMethods": [
+    "automated"
+  ],
+  "qualifications": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "date": "2020-06-05T13:58:18Z",
+      "relatedSubmission": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    }
+  ],
+  "submissions": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "date": "2020-06-05T13:58:18Z"
+    }
+  ]
+}
