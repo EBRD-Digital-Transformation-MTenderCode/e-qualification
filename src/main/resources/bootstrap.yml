@@ -1,0 +1,10 @@
+server:
+  port: @project.service.port@
+
+spring:
+  application:
+    name: @artifactId@
+  cloud:
+    config:
+      failFast: true
+      name: @artifactId@

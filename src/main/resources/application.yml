@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: e-qualification
+
+cassandra:
+  contact-points: 127.0.0.1
+  keyspace-name: qualification
+  port: 9042
