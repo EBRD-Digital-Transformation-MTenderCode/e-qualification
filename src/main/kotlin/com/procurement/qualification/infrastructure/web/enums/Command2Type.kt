@@ -9,7 +9,7 @@ enum class Command2Type(@JsonValue override val key: String) : Action, EnumEleme
 
     FIND_QUALIFICATION_IDS("findQualificationIds"),
     CREATE_QUALIFICATIONS("createQualifications"),
-    GET_NEXTS_FOR_QUALIFICATION("getNextsForQualification");
+    DETERMINE_NEXTS_FOR_QUALIFICATION("determineNextsForQualification");
 
     override fun toString(): String = key
 
