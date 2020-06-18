@@ -30,7 +30,7 @@ interface QualificationService {
 
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
 
-    fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail>
+    fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident>
 
     fun determineNextsForQualification(params: DetermineNextsForQualificationParams): Result<List<DetermineNextsForQualificationResult>, Fail>
 }
@@ -50,11 +50,10 @@ class QualificationServiceImpl(
         val qualifications = qualificationEntities
             .map {
                 transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
-                    .doOnError { fail ->
+                    .doReturn { fail ->
                         return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
                             .asFailure()
                     }
-                    .get
             }
 
         if (params.states.isEmpty())
@@ -69,7 +68,7 @@ class QualificationServiceImpl(
             .asSuccess()
     }
 
-    override fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail> {
+    override fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident> {
 
         val qualifications = params.submissions
             .map { submission ->
@@ -107,7 +106,7 @@ class QualificationServiceImpl(
                     ReductionCriteria.NONE -> null
                 }
                 Qualification(
-                    id = generationService.generateQualificationId(),
+                    id = QualificationId.generate(),
                     date = params.date,
                     owner = params.owner,
                     relatedSubmission = submission.id,
