@@ -88,16 +88,17 @@ class QualificationServiceImpl(
                                         .map { requirementResponse ->
                                             conversionsRelatesToRequirement[requirementResponse.requirement.id]
                                                 ?.coefficients
-                                                ?.find {
+                                                ?.filter {
                                                     isMatchCoefficientValueAndRequirementValue(
                                                         coefficientValue = it.value,
                                                         requirementValue = requirementResponse.value
                                                     )
                                                 }
-                                                ?.coefficient
+                                                ?.map { it.coefficient }
+                                                ?.reduce { start, next -> start * next }
                                                 ?: CoefficientRate(BigDecimal.ONE)
                                         }
-                                        .reduce { start, next -> start + next }
+                                        .reduce { start, next -> start * next }
                                         .rate
                                 )
                             }
