@@ -164,49 +164,72 @@ class QualificationServiceImpl(
             return ValidationError.QualificationsNotFoundOnDetermineNextsForQualification(cpid = cpid, ocid = ocid)
                 .asFailure()
 
-        val reductionCriteria = params.otherCriteria.reductionCriteria
-        val qualificationSystemMethod = params.otherCriteria.qualificationSystemMethod
+        val reductionCriteria = params.tender.otherCriteria.reductionCriteria
+        val qualificationSystemMethod = params.tender.otherCriteria.qualificationSystemMethod
+        val criteria = params.tender.criteria
 
         val updatedQualifications = when (reductionCriteria) {
             ReductionCriteria.SCORING -> {
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED -> {
                         val requestQualificationWithMinScoring = findMinScoring(qualifications = qualifications)!!
-                        if (countScoringDuplicate(
-                                qualifications = qualifications,
-                                scoring = requestQualificationWithMinScoring.scoring!!
-                            ) > 1) {
-                            val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
-                            val qualificationRelatedToSubmission = qualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }
-                                ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
-                                    submissionId = submissionWithMinDate.id
-                                )
-                                    .asFailure()
+                        val qualificationsToUpdate =
+                            if (countScoringDuplicate(
+                                    qualifications = qualifications,
+                                    scoring = requestQualificationWithMinScoring.scoring!!
+                                ) > 1) {
+                                val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
+                                val qualificationRelatedToSubmission = qualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }
+                                    ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
+                                        submissionId = submissionWithMinDate.id
+                                    )
+                                        .asFailure()
+
+                                listOf(qualificationRelatedToSubmission)
+                            } else {
+                                val qualificationWithMinScoring = qualifications.find { q -> q.id == requestQualificationWithMinScoring.id }!!
+                                listOf(qualificationWithMinScoring)
+                            }
+
+                        if (criteria.isNullOrEmpty()) {
                             setStatusDetails(
-                                statusDetails = QualificationStatusDetails.AWAITING,
-                                qualifications = listOf(qualificationRelatedToSubmission)
+                                statusDetails = QualificationStatusDetails.CONSIDERATION,
+                                qualifications = qualificationsToUpdate
                             )
                         } else {
-                            val qualificationWithMinScoring = qualifications.find { q -> q.id == requestQualificationWithMinScoring.id }!!
                             setStatusDetails(
                                 statusDetails = QualificationStatusDetails.AWAITING,
-                                qualifications = listOf(qualificationWithMinScoring)
+                                qualifications = qualificationsToUpdate
                             )
                         }
                     }
-                    QualificationSystemMethod.MANUAL -> setStatusDetails(
-                        statusDetails = QualificationStatusDetails.AWAITING,
-                        qualifications = qualifications
-                    )
+                    QualificationSystemMethod.MANUAL -> if (criteria.isNullOrEmpty()) {
+                        setStatusDetails(
+                            statusDetails = QualificationStatusDetails.CONSIDERATION,
+                            qualifications = qualifications
+                        )
+                    } else {
+                        setStatusDetails(
+                            statusDetails = QualificationStatusDetails.AWAITING,
+                            qualifications = qualifications
+                        )
+                    }
                 }
             }
             ReductionCriteria.NONE -> {
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED,
-                    QualificationSystemMethod.MANUAL -> setStatusDetails(
-                        statusDetails = QualificationStatusDetails.AWAITING,
-                        qualifications = qualifications
-                    )
+                    QualificationSystemMethod.MANUAL -> if (criteria.isNullOrEmpty()) {
+                        setStatusDetails(
+                            statusDetails = QualificationStatusDetails.CONSIDERATION,
+                            qualifications = qualifications
+                        )
+                    } else {
+                        setStatusDetails(
+                            statusDetails = QualificationStatusDetails.AWAITING,
+                            qualifications = qualifications
+                        )
+                    }
                 }
             }
         }
