@@ -160,45 +160,17 @@ class QualificationServiceImpl(
                                 listOf(qualificationWithMinScoring)
                             }
 
-                        if (criteria.isNullOrEmpty()) {
-                            setStatusDetails(
-                                statusDetails = QualificationStatusDetails.CONSIDERATION,
-                                qualifications = qualificationsToUpdate
-                            )
-                        } else {
-                            setStatusDetails(
-                                statusDetails = QualificationStatusDetails.AWAITING,
-                                qualifications = qualificationsToUpdate
-                            )
-                        }
+                        setStatusDetailsByCriteria(criteria = criteria, qualifications = qualificationsToUpdate)
                     }
-                    QualificationSystemMethod.MANUAL -> if (criteria.isNullOrEmpty()) {
-                        setStatusDetails(
-                            statusDetails = QualificationStatusDetails.CONSIDERATION,
-                            qualifications = qualifications
-                        )
-                    } else {
-                        setStatusDetails(
-                            statusDetails = QualificationStatusDetails.AWAITING,
-                            qualifications = qualifications
-                        )
-                    }
+                    QualificationSystemMethod.MANUAL ->
+                        setStatusDetailsByCriteria(criteria = criteria, qualifications = qualifications)
                 }
             }
             ReductionCriteria.NONE -> {
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED,
-                    QualificationSystemMethod.MANUAL -> if (criteria.isNullOrEmpty()) {
-                        setStatusDetails(
-                            statusDetails = QualificationStatusDetails.CONSIDERATION,
-                            qualifications = qualifications
-                        )
-                    } else {
-                        setStatusDetails(
-                            statusDetails = QualificationStatusDetails.AWAITING,
-                            qualifications = qualifications
-                        )
-                    }
+                    QualificationSystemMethod.MANUAL ->
+                        setStatusDetailsByCriteria(criteria = criteria, qualifications = qualifications)
                 }
             }
         }
@@ -219,6 +191,21 @@ class QualificationServiceImpl(
                 DetermineNextsForQualificationResult(id = qualification.id, statusDetails = qualification.statusDetails)
             }
             .asSuccess()
+    }
+
+    private fun setStatusDetailsByCriteria(
+        qualifications: List<Qualification>,
+        criteria: List<DetermineNextsForQualificationParams.Tender.Criteria>?
+    ) = if (criteria.isNullOrEmpty()) {
+        setStatusDetails(
+            statusDetails = QualificationStatusDetails.CONSIDERATION,
+            qualifications = qualifications
+        )
+    } else {
+        setStatusDetails(
+            statusDetails = QualificationStatusDetails.AWAITING,
+            qualifications = qualifications
+        )
     }
 
     private fun calculateScoring(
