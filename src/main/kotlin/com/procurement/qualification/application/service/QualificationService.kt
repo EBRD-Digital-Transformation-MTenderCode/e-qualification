@@ -72,39 +72,8 @@ class QualificationServiceImpl(
 
         val qualifications = params.submissions
             .map { submission ->
-                val scoring: Scoring? = when (params.tender.otherCriteria.reductionCriteria) {
-                    ReductionCriteria.SCORING -> {
-                        when (params.tender.otherCriteria.qualificationSystemMethod) {
-                            QualificationSystemMethod.MANUAL -> null
-                            QualificationSystemMethod.AUTOMATED -> {
+                val scoring: Scoring? = calculateScoring(submission = submission, params = params)
 
-                                val conversionsRelatesToRequirement = params.tender.conversions
-                                    .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
-                                    .associateBy { it.relatedItem }
-
-                                Scoring.invoke(
-                                    value = submission.requirementResponses
-                                        .map { requirementResponse ->
-                                            conversionsRelatesToRequirement[requirementResponse.requirement.id]
-                                                ?.coefficients
-                                                ?.filter {
-                                                    isMatchCoefficientValueAndRequirementValue(
-                                                        coefficientValue = it.value,
-                                                        requirementValue = requirementResponse.value
-                                                    )
-                                                }
-                                                ?.map { it.coefficient }
-                                                ?.reduce { start, next -> start * next }
-                                                ?: CoefficientRate(BigDecimal.ONE)
-                                        }
-                                        .reduce { start, next -> start * next }
-                                        .rate
-                                )
-                            }
-                        }
-                    }
-                    ReductionCriteria.NONE -> null
-                }
                 Qualification(
                     id = QualificationId.generate(),
                     date = params.date,
@@ -250,6 +219,49 @@ class QualificationServiceImpl(
                 DetermineNextsForQualificationResult(id = qualification.id, statusDetails = qualification.statusDetails)
             }
             .asSuccess()
+    }
+
+    private fun calculateScoring(
+        submission: CreateQualificationsParams.Submission,
+        params: CreateQualificationsParams
+    ): Scoring? = when (params.tender.otherCriteria.reductionCriteria) {
+        ReductionCriteria.SCORING -> {
+            when (params.tender.otherCriteria.qualificationSystemMethod) {
+                QualificationSystemMethod.MANUAL -> null
+                QualificationSystemMethod.AUTOMATED -> {
+                    calculateAutomatedScoring(submission = submission, conversions = params.tender.conversions)
+                }
+            }
+        }
+        ReductionCriteria.NONE -> null
+    }
+
+    private fun calculateAutomatedScoring(
+        conversions: List<CreateQualificationsParams.Tender.Conversion>,
+        submission: CreateQualificationsParams.Submission
+    ): Scoring {
+        val conversionsRelatesToRequirement = conversions
+            .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
+            .associateBy { it.relatedItem }
+
+        return Scoring.invoke(
+            value = submission.requirementResponses
+                .map { requirementResponse ->
+                    conversionsRelatesToRequirement[requirementResponse.requirement.id]
+                        ?.coefficients
+                        ?.filter {
+                            isMatchCoefficientValueAndRequirementValue(
+                                coefficientValue = it.value,
+                                requirementValue = requirementResponse.value
+                            )
+                        }
+                        ?.map { it.coefficient }
+                        ?.reduce { start, next -> start * next }
+                        ?: CoefficientRate(BigDecimal.ONE)
+                }
+                .reduce { start, next -> start * next }
+                .rate
+        )
     }
 
     private fun findMinScoring(qualifications: List<Qualification>) = qualifications.minBy { it.scoring!! }
