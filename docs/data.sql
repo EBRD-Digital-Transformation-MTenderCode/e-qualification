@@ -28,3 +28,13 @@ CREATE TABLE IF NOT EXISTS  qualification.qualification
     json_data text,
     primary key(cpid, ocid)
 );
+
+CREATE TABLE IF NOT EXISTS  qualification.qualification_states
+(
+    country text,
+    pmd text,
+    operationType text,
+    status text,
+    status_details text,
+    primary key(country, pmd, operationType)
+);
