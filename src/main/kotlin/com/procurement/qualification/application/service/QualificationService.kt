@@ -1,8 +1,10 @@
 package com.procurement.qualification.application.service
 
 import com.procurement.qualification.application.model.params.CheckAccessToQualificationParams
+import com.procurement.qualification.application.model.params.CheckQualificationStateParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.repository.QualificationRepository
+import com.procurement.qualification.application.repository.QualificationStateRepository
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asFailure
@@ -18,11 +20,13 @@ interface QualificationService {
 
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
     fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail>
+    fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
 }
 
 @Service
 class QualificationServiceImpl(
     val qualificationRepository: QualificationRepository,
+    val qualificationStateRepository: QualificationStateRepository,
     val transform: Transform
 ) : QualificationService {
 
@@ -86,8 +90,59 @@ class QualificationServiceImpl(
             return ValidationError.InvalidTokenOnCheckAccessToQualification(cpid = params.cpid, token = params.token)
                 .asValidationFailure()
 
-        if(params.owner != qualification.owner)
+        if (params.owner != qualification.owner)
             return ValidationError.InvalidOwnerOnCheckAccessToQualification(cpid = params.cpid, owner = params.owner)
+                .asValidationFailure()
+
+        return ValidationResult.ok()
+    }
+
+    override fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail> {
+
+        val cpid = params.cpid
+        val ocid = params.ocid
+        val qualificationId = params.qualificationId
+
+        val qualificationEntity = qualificationRepository.findBy(
+            cpid = cpid,
+            ocid = ocid,
+            qualificationId = qualificationId
+        )
+            .doReturn { fail -> return ValidationResult.error(fail) }
+            ?: return ValidationError.QualificationNotFoundByCheckQualificationState(
+                cpid = cpid,
+                ocid = ocid,
+                qualificationId = qualificationId
+            )
+                .asValidationFailure()
+
+        val qualification = qualificationEntity
+            .let {
+                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
+                    .doReturn { fail ->
+                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
+                            .asValidationFailure()
+                    }
+            }
+
+        val stateEntities = qualificationStateRepository.findBy(
+            country = params.country,
+            operationType = params.operationType,
+            pmd = params.pmd
+        )
+            .doReturn { fail -> return ValidationResult.error(fail) }
+
+
+        if (stateEntities.isEmpty())
+            return ValidationError.QualificationStatesNotFoundOnCheckQualificationState(
+                country = params.country,
+                operationType = params.operationType,
+                pmd = params.pmd
+            )
+                .asValidationFailure()
+
+        if (stateEntities.any { it.status != qualification.status || it.statusDetails != qualification.statusDetails })
+            return ValidationError.QualificationStatesIsInvalidOnCheckQualificationState(qualificationId = qualification.id)
                 .asValidationFailure()
 
         return ValidationResult.ok()
