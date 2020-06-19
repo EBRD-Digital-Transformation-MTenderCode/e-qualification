@@ -9,6 +9,7 @@ import com.procurement.qualification.domain.functional.Result.Companion.failure
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.infrastructure.extension.cassandra.tryExecute
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
@@ -60,6 +61,14 @@ class CassandraQualificationRepository(private val session: Session) : Qualifica
                     .orForwardFail { error -> return error }
             }
             .asSuccess()
+    }
+
+    override fun findBy(
+        cpid: Cpid,
+        ocid: Ocid,
+        qualificationId: QualificationId
+    ): Result<QualificationEntity?, Fail.Incident> {
+        TODO("Not yet implemented")
     }
 
     override fun save(entity: QualificationEntity): MaybeFail<Fail.Incident> {
