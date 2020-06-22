@@ -51,4 +51,10 @@ sealed class ValidationError(
         numberError = "7.17.2",
         description = "Qualification with id='$qualificationId' has invalid states."
     )
+
+    class QualificationNotFoundOnDoDeclaration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+        ValidationError(
+            numberError = "7.19.1",
+            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
+        )
 }

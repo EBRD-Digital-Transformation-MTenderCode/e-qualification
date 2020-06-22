@@ -2,6 +2,7 @@ package com.procurement.qualification.application.service
 
 import com.procurement.qualification.application.model.params.CheckAccessToQualificationParams
 import com.procurement.qualification.application.model.params.CheckQualificationStateParams
+import com.procurement.qualification.application.model.params.DoDeclarationParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.application.repository.QualificationStateRepository
@@ -14,6 +15,8 @@ import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
+import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
 import org.springframework.stereotype.Service
 
 interface QualificationService {
@@ -21,6 +24,7 @@ interface QualificationService {
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
     fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail>
     fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
+    fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail>
 }
 
 @Service
@@ -147,6 +151,114 @@ class QualificationServiceImpl(
 
         return ValidationResult.ok()
     }
+
+    override fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail> {
+        val cpid = params.cpid
+        val ocid = params.ocid
+
+        val qualificationEntities = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
+            .orForwardFail { fail -> return fail }
+
+        val dbQualificationsById = qualificationEntities.associateBy { it.qualificationId }
+
+        val filteredQualifications = params.qualifications
+            .map {
+                dbQualificationsById[it.id]
+                    ?: return ValidationError.QualificationNotFoundOnDoDeclaration(
+                        cpid = cpid,
+                        ocid = ocid,
+                        qualificationId = it.id
+                    )
+                        .asFailure()
+            }
+            .map {
+                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
+                    .doReturn { fail ->
+                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
+                            .asFailure()
+                    }
+            }
+
+        val filteredDbQualificationsById = filteredQualifications.associateBy { it.id }
+
+        val updatedQualifications = params.qualifications
+            .map { rqQualification ->
+
+                val qualification = filteredDbQualificationsById.getValue(rqQualification.id)
+
+                val dbRequirementResponsesById = qualification.requirementResponses
+                    .associateBy { it.id }
+
+                val updatedRR = rqQualification
+                    .requirementResponses
+                    .map { rqRR ->
+                        dbRequirementResponsesById[rqRR.id]
+                            ?.copy(value = rqRR.value)
+                            ?: buildRequirementResponse(rr = rqRR)
+                    }
+                qualification.copy(requirementResponses = updatedRR)
+            }
+
+        val updatedQualificationsEntity = updatedQualifications.map {
+            QualificationEntity(
+                cpid = cpid,
+                ocid = ocid,
+                qualificationId = it.id,
+                jsonData = transform.trySerialization(value = it)
+                    .doReturn { fail ->
+                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
+                            .asFailure()
+                    }
+            )
+        }
+
+        qualificationRepository.save(entities = updatedQualificationsEntity)
+            .orForwardFail { fail -> return fail }
+
+        return updatedQualifications.convertQualificationsToDoDeclarationResult()
+            .asSuccess()
+    }
+
+    private fun List<Qualification>.convertQualificationsToDoDeclarationResult() : DoDeclarationResult =
+        DoDeclarationResult(
+            qualifications = this.map {qualification->
+                DoDeclarationResult.Qualification(
+                    id = qualification.id,
+                    requirementResponses = qualification.requirementResponses
+                        .map { rr ->
+                            DoDeclarationResult.Qualification.RequirementResponse(
+                                id = rr.id,
+                                value = rr.value,
+                                relatedTenderer = rr.relatedTenderer
+                                    .let { DoDeclarationResult.Qualification.RequirementResponse.RelatedTenderer(id = it.id) },
+                                requirement = rr.requirement
+                                    .let { DoDeclarationResult.Qualification.RequirementResponse.Requirement(id = it.id) },
+                                responder = rr.responder
+                                    .let {
+                                        DoDeclarationResult.Qualification.RequirementResponse.Responder(
+                                            id = it.id,
+                                            name = it.name
+                                        )
+                                    }
+                            )
+                        }
+                )
+            }
+        )
+
+    private fun buildRequirementResponse(rr: DoDeclarationParams.Qualification.RequirementResponse): Qualification.RequirementResponse =
+        Qualification.RequirementResponse(
+            id = rr.id,
+            value = rr.value,
+            relatedTenderer = rr.relatedTenderer
+                .let { Qualification.RequirementResponse.RelatedTenderer(id = it.id) },
+            requirement = rr.requirement
+                .let { Qualification.RequirementResponse.Requirement(id = it.id) },
+            responder = rr.responder
+                .let {
+                    Qualification.RequirementResponse.Responder(id = it.id, name = it.name)
+                }
+        )
 
     private fun compareStatuses(qualification: Qualification, states: List<FindQualificationIdsParams.State>): Boolean {
         return states.any { state ->
