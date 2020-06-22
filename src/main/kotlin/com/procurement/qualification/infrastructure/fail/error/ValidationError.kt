@@ -2,11 +2,13 @@ package com.procurement.qualification.infrastructure.fail.error
 
 import com.procurement.qualification.domain.enums.OperationType
 import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.enums.RequirementDataType
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
 import com.procurement.qualification.infrastructure.fail.Fail
 
 sealed class ValidationError(
@@ -56,5 +58,29 @@ sealed class ValidationError(
         ValidationError(
             numberError = "7.19.1",
             description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
+        )
+
+    class QualificationNotFoundOnCheckDeclaration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+        ValidationError(
+            numberError = "7.16.1",
+            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
+        )
+
+    class RequirementNotFoundOnCheckDeclaration(requirementId: String) :
+        ValidationError(
+            numberError = "7.16.2",
+            description = "Requirement with id='$requirementId' not found."
+        )
+
+    class ValueDataTypeMismatchOnCheckDeclaration(actual: RequirementResponseValue, expected: RequirementDataType) :
+        ValidationError(
+            numberError = "7.16.3",
+            description = "Requirement datatype mismatch, expected='$expected' , actual='$actual'."
+        )
+
+    class InvalidRequirementResponseIdOnCheckDeclaration(actualId: String, expected: String) :
+        ValidationError(
+            numberError = "7.16.4",
+            description = "Invalid Requirement Response Id, actual='$actualId', expected='$expected'."
         )
 }

@@ -1,11 +1,13 @@
 package com.procurement.qualification.application.service
 
 import com.procurement.qualification.application.model.params.CheckAccessToQualificationParams
+import com.procurement.qualification.application.model.params.CheckDeclarationParams
 import com.procurement.qualification.application.model.params.CheckQualificationStateParams
 import com.procurement.qualification.application.model.params.DoDeclarationParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.application.repository.QualificationStateRepository
+import com.procurement.qualification.domain.enums.RequirementDataType
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asFailure
@@ -13,6 +15,7 @@ import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.functional.asValidationFailure
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
@@ -25,6 +28,7 @@ interface QualificationService {
     fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail>
     fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
     fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail>
+    fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
 }
 
 @Service
@@ -219,9 +223,82 @@ class QualificationServiceImpl(
             .asSuccess()
     }
 
-    private fun List<Qualification>.convertQualificationsToDoDeclarationResult() : DoDeclarationResult =
+    override fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail> {
+
+        val cpid = params.cpid
+        val ocid = params.ocid
+        val qualificationId = params.qualificationId
+
+        val qualificationEntity = qualificationRepository.findBy(
+            cpid = cpid,
+            ocid = ocid,
+            qualificationId = qualificationId
+        )
+            .doReturn { fail -> return ValidationResult.error(fail) }
+            ?: return ValidationError.QualificationNotFoundOnCheckDeclaration(
+                cpid = cpid,
+                ocid = ocid,
+                qualificationId = qualificationId
+            )
+                .asValidationFailure()
+
+        val qualification = qualificationEntity
+            .let {
+                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
+                    .doReturn { fail ->
+                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
+                            .asValidationFailure()
+                    }
+            }
+
+        val requirement = params.criteria
+            .asSequence()
+            .flatMap {
+                it.requirementGroups.asSequence()
+            }
+            .flatMap {
+                it.requirements.asSequence()
+            }
+            .find { it.id == params.requirementResponse.requirementId }
+            ?: return ValidationError.RequirementNotFoundOnCheckDeclaration(requirementId = params.requirementResponse.requirementId)
+                .asValidationFailure()
+
+        if (!isMatchingDataType(datatype = requirement.dataType, value = params.requirementResponse.value))
+            return ValidationError.ValueDataTypeMismatchOnCheckDeclaration(
+                actual = params.requirementResponse.value,
+                expected = requirement.dataType
+            )
+                .asValidationFailure()
+
+        qualification.requirementResponses
+            .find {
+                it.responder.id == params.requirementResponse.responderId
+                    && it.relatedTenderer.id == params.requirementResponse.relatedTendererId
+                    && it.requirement.id == params.requirementResponse.requirementId
+            }
+            ?.apply {
+                if (this.id != params.requirementResponse.id)
+                    return ValidationError.InvalidRequirementResponseIdOnCheckDeclaration(
+                        expected = params.requirementResponse.id,
+                        actualId = this.id
+                    )
+                        .asValidationFailure()
+            }
+
+        return ValidationResult.ok()
+    }
+
+    private fun isMatchingDataType(datatype: RequirementDataType, value: RequirementResponseValue) =
+        when (value) {
+            is RequirementResponseValue.AsString -> datatype == RequirementDataType.STRING
+            is RequirementResponseValue.AsBoolean -> datatype == RequirementDataType.BOOLEAN
+            is RequirementResponseValue.AsNumber -> datatype == RequirementDataType.NUMBER
+            is RequirementResponseValue.AsInteger -> datatype == RequirementDataType.INTEGER
+        }
+
+    private fun List<Qualification>.convertQualificationsToDoDeclarationResult(): DoDeclarationResult =
         DoDeclarationResult(
-            qualifications = this.map {qualification->
+            qualifications = this.map { qualification ->
                 DoDeclarationResult.Qualification(
                     id = qualification.id,
                     requirementResponses = qualification.requirementResponses
