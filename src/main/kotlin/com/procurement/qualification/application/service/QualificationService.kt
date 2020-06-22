@@ -142,11 +142,12 @@ class QualificationServiceImpl(
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED -> {
                         val requestQualificationWithMinScoring = findMinScoring(qualifications = qualifications)!!
+                        val hasSameScoring = countScoringDuplicate(
+                            qualifications = qualifications,
+                            scoring = requestQualificationWithMinScoring.scoring!!
+                        ) > 1
                         val qualificationsToUpdate =
-                            if (countScoringDuplicate(
-                                    qualifications = qualifications,
-                                    scoring = requestQualificationWithMinScoring.scoring!!
-                                ) > 1) {
+                            if (hasSameScoring) {
                                 val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
                                 val qualificationRelatedToSubmission = qualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }
                                     ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
