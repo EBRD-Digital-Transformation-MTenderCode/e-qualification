@@ -67,6 +67,15 @@ sealed class Fail {
                     logger.error(message = message, mdc = mapOf("column" to column, "value" to value), exception = exception)
                 }
             }
+
+            class DatabaseParsing(val exception: Exception? = null) : Database(
+                number = "1.5",
+                description = "Internal Server Error."
+            ){
+                override fun logging(logger: Logger) {
+                    logger.error(message = message, exception = exception)
+                }
+            }
         }
 
         sealed class Transform(val number: String, override val description: String, val exception: Exception? = null) :

@@ -45,6 +45,7 @@ class JacksonJsonTransform(private val mapper: ObjectMapper) :
         failure(Fail.Incident.Transform.Mapping(description = "Error of mapping.", exception = expected))
     }
 
+
     /**
      * Deserialization
      */
