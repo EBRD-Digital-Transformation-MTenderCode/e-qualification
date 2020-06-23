@@ -83,4 +83,10 @@ sealed class ValidationError(
             numberError = "7.16.4",
             description = "Invalid Requirement Response Id, actual='$actualId', expected='$expected'."
         )
+
+    class QualificationNotFoundOnFindRequirementResponseByIds(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+        ValidationError(
+            numberError = "7.18.1",
+            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
+        )
 }

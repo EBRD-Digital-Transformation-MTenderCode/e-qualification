@@ -5,6 +5,7 @@ import com.procurement.qualification.application.model.params.CheckDeclarationPa
 import com.procurement.qualification.application.model.params.CheckQualificationStateParams
 import com.procurement.qualification.application.model.params.DoDeclarationParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
+import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.application.repository.QualificationStateRepository
 import com.procurement.qualification.domain.enums.RequirementDataType
@@ -19,6 +20,7 @@ import com.procurement.qualification.domain.model.qualification.RequirementRespo
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
+import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
 import org.springframework.stereotype.Service
 
@@ -29,6 +31,7 @@ interface QualificationService {
     fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
     fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail>
     fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
+    fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult, Fail>
 }
 
 @Service
@@ -45,12 +48,8 @@ class QualificationServiceImpl(
 
         val qualifications = qualificationEntities
             .map {
-                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
-                    .doOnError { fail ->
-                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                            .asFailure()
-                    }
-                    .get
+                it.convert()
+                    .orForwardFail { fail -> return fail }
             }
 
         if (params.states.isEmpty())
@@ -86,11 +85,8 @@ class QualificationServiceImpl(
 
         val qualification = qualificationEntity
             .let {
-                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
-                    .doReturn { fail ->
-                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                            .asValidationFailure()
-                    }
+                it.convert()
+                    .doReturn { fail -> return ValidationResult.error(fail) }
             }
 
 
@@ -126,11 +122,8 @@ class QualificationServiceImpl(
 
         val qualification = qualificationEntity
             .let {
-                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
-                    .doReturn { fail ->
-                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                            .asValidationFailure()
-                    }
+                it.convert()
+                    .doReturn { fail -> return ValidationResult.error(fail) }
             }
 
         val stateEntities = qualificationStateRepository.findBy(
@@ -176,11 +169,8 @@ class QualificationServiceImpl(
                         .asFailure()
             }
             .map {
-                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
-                    .doReturn { fail ->
-                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                            .asFailure()
-                    }
+                it.convert()
+                    .orForwardFail { fail -> return fail }
             }
 
         val filteredDbQualificationsById = filteredQualifications.associateBy { it.id }
@@ -242,14 +232,8 @@ class QualificationServiceImpl(
             )
                 .asValidationFailure()
 
-        val qualification = qualificationEntity
-            .let {
-                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
-                    .doReturn { fail ->
-                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                            .asValidationFailure()
-                    }
-            }
+        val qualification = qualificationEntity.convert()
+            .doReturn { fail -> return ValidationResult.error(fail) }
 
         val requirement = params.criteria
             .asSequence()
@@ -287,6 +271,74 @@ class QualificationServiceImpl(
 
         return ValidationResult.ok()
     }
+
+    override fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult, Fail> {
+
+        val cpid = params.cpid
+        val ocid = params.ocid
+        val qualificationId = params.qualificationId
+
+        val qualificationEntity = qualificationRepository.findBy(
+            cpid = cpid,
+            ocid = ocid,
+            qualificationId = qualificationId
+        )
+            .orForwardFail { fail -> return fail }
+            ?: return ValidationError.QualificationNotFoundOnFindRequirementResponseByIds(cpid, ocid, qualificationId)
+                .asFailure()
+
+        val qualification = qualificationEntity.convert()
+            .orForwardFail { fail -> return fail }
+
+        val rqRequirementResponsesByIds = params.requirementResponseIds
+            .associateBy { it }
+
+        val filteredRequirementResponses = qualification.requirementResponses
+            .filter { rqRequirementResponsesByIds[it.id] != null }
+
+        return FindRequirementResponseByIdsResult(
+            qualification = FindRequirementResponseByIdsResult.Qualification(
+                id = params.qualificationId,
+                requirementResponses = filteredRequirementResponses.map { requirementResponse ->
+                    requirementResponse.convertToFindRequirementResponseByIdsResultRR()
+                }
+            )
+        )
+            .asSuccess()
+    }
+
+    private fun QualificationEntity.convert(): Result<Qualification, Fail.Incident.Database.DatabaseParsing> =
+        this.let {
+            transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
+                .doReturn { fail ->
+                    return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
+                        .asFailure()
+                }
+        }
+            .asSuccess()
+
+    private fun Qualification.RequirementResponse.convertToFindRequirementResponseByIdsResultRR() =
+        this.let { requirementResponse ->
+            FindRequirementResponseByIdsResult.Qualification.RequirementResponse(
+                id = requirementResponse.id,
+                value = requirementResponse.value,
+                relatedTenderer = requirementResponse.relatedTenderer
+                    .let {
+                        FindRequirementResponseByIdsResult.Qualification.RequirementResponse.RelatedTenderer(
+                            id = it.id
+                        )
+                    },
+                requirement = requirementResponse.requirement
+                    .let { FindRequirementResponseByIdsResult.Qualification.RequirementResponse.Requirement(id = it.id) },
+                responder = requirementResponse.responder
+                    .let {
+                        FindRequirementResponseByIdsResult.Qualification.RequirementResponse.Responder(
+                            id = it.id,
+                            name = it.name
+                        )
+                    }
+            )
+        }
 
     private fun isMatchingDataType(datatype: RequirementDataType, value: RequirementResponseValue) =
         when (value) {
