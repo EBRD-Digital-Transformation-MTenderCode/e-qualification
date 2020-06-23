@@ -10,6 +10,7 @@ enum class Command2Type(@JsonValue override val key: String) : Action, EnumEleme
     FIND_QUALIFICATION_IDS("findQualificationIds"),
     CREATE_QUALIFICATIONS("createQualifications"),
     DETERMINE_NEXTS_FOR_QUALIFICATION("determineNextsForQualification"),
+    START_QUALIFICATION_PERIOD("startQualificationPeriod"),
     CHECK_ACCESS_TO_QUALIFICATION("checkAccessToQualification"),
     CHECK_QUALIFICATION_STATE("checkQualificationState"),
     DO_DECLARATION("doDeclaration"),
