@@ -119,6 +119,10 @@ class QualificationServiceImpl(
         val qualificationEntities = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
             .orForwardFail { fail -> return fail }
 
+        if (qualificationEntities.isEmpty())
+            return ValidationError.QualificationsNotFoundOnDetermineNextsForQualification(cpid = cpid, ocid = ocid)
+                .asFailure()
+
         val qualifications = qualificationEntities
             .map {
                 transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
@@ -129,9 +133,11 @@ class QualificationServiceImpl(
                     .get
             }
 
-        if (qualificationEntities.isEmpty())
-            return ValidationError.QualificationsNotFoundOnDetermineNextsForQualification(cpid = cpid, ocid = ocid)
-                .asFailure()
+        val filteredQualifications = filterByRelatedSubmissions(
+            qualifications = qualifications,
+            submissions = params.submissions
+        )
+            .orForwardFail { fail -> return fail }
 
         val reductionCriteria = params.tender.otherCriteria.reductionCriteria
         val qualificationSystemMethod = params.tender.otherCriteria.qualificationSystemMethod
@@ -141,20 +147,15 @@ class QualificationServiceImpl(
             ReductionCriteria.SCORING -> {
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED -> {
-                        val qualificationWithMinScoring = findMinScoring(qualifications = qualifications)!!
+                        val qualificationWithMinScoring = findMinScoring(qualifications = filteredQualifications)!!
                         val hasSameScoring = countScoringDuplicate(
-                            qualifications = qualifications,
+                            qualifications = filteredQualifications,
                             scoring = qualificationWithMinScoring.scoring!!
                         ) > 1
                         val qualificationsToUpdate =
                             if (hasSameScoring) {
                                 val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
-                                val qualificationRelatedToSubmission = qualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }
-                                    ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
-                                        submissionId = submissionWithMinDate.id
-                                    )
-                                        .asFailure()
-
+                                val qualificationRelatedToSubmission = filteredQualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }!!
                                 listOf(qualificationRelatedToSubmission)
                             } else {
                                 listOf(qualificationWithMinScoring)
@@ -163,14 +164,14 @@ class QualificationServiceImpl(
                         setStatusDetailsByCriteria(criteria = criteria, qualifications = qualificationsToUpdate)
                     }
                     QualificationSystemMethod.MANUAL ->
-                        setStatusDetailsByCriteria(criteria = criteria, qualifications = qualifications)
+                        setStatusDetailsByCriteria(criteria = criteria, qualifications = filteredQualifications)
                 }
             }
             ReductionCriteria.NONE -> {
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED,
                     QualificationSystemMethod.MANUAL ->
-                        setStatusDetailsByCriteria(criteria = criteria, qualifications = qualifications)
+                        setStatusDetailsByCriteria(criteria = criteria, qualifications = filteredQualifications)
                 }
             }
         }
@@ -190,6 +191,22 @@ class QualificationServiceImpl(
             .map { qualification ->
                 DetermineNextsForQualificationResult(id = qualification.id, statusDetails = qualification.statusDetails)
             }
+            .asSuccess()
+    }
+
+    private fun filterByRelatedSubmissions(
+        qualifications: List<Qualification>,
+        submissions: List<DetermineNextsForQualificationParams.Submission>
+    ): Result<List<Qualification>, ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification> {
+
+        val qualificationByRelatedSubmission = qualifications.associateBy { it.relatedSubmission }
+        return submissions.map {
+            qualificationByRelatedSubmission[it.id]
+                ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
+                    submissionId = it.id
+                )
+                    .asFailure()
+        }
             .asSuccess()
     }
 
