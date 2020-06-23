@@ -18,7 +18,7 @@ data class Qualification(
     @param:JsonProperty("owner") @field:JsonProperty("owner") val owner: Owner,
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @param:JsonProperty("statusDetails") @field:JsonProperty("statusDetails") val statusDetails: QualificationStatusDetails?,
+    @param:JsonProperty("statusDetails") @field:JsonProperty("statusDetails") val statusDetails: QualificationStatusDetails? = null,
     @param:JsonProperty("relatedSubmission") @field:JsonProperty("relatedSubmission") val relatedSubmission: SubmissionId,
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -9,10 +9,13 @@ import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
 import com.procurement.qualification.infrastructure.bind.apiversion.ApiVersion2Deserializer
 import com.procurement.qualification.infrastructure.bind.apiversion.ApiVersion2Serializer
+import com.procurement.qualification.infrastructure.bind.coefficient.rate.CoefficientRateModule
+import com.procurement.qualification.infrastructure.bind.coefficient.value.CoefficientValueModule
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
 import com.procurement.qualification.infrastructure.bind.measure.ScoringDeserializer
 import com.procurement.qualification.infrastructure.bind.measure.ScoringSerializer
+import com.procurement.qualification.infrastructure.bind.requirement.value.RequirementValueModule
 import com.procurement.qualification.infrastructure.bind.requirement.RequirementValueDeserializer
 import com.procurement.qualification.infrastructure.bind.requirement.RequirementValueSerializer
 import com.procurement.qualification.infrastructure.web.dto.ApiVersion2
@@ -46,6 +49,9 @@ fun ObjectMapper.configuration() {
     }
 
     this.registerModule(module)
+    this.registerModule(RequirementValueModule())
+    this.registerModule(CoefficientValueModule())
+    this.registerModule(CoefficientRateModule())
     this.registerModule(KotlinModule())
     this.configure(DeserializationFeature.USE_BIG_INTEGER_FOR_INTS, true)
     this.configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true)
