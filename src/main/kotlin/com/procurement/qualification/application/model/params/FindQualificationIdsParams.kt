@@ -46,7 +46,6 @@ class FindQualificationIdsParams private constructor(
                         QualificationStatus.PENDING,
                         QualificationStatus.ACTIVE,
                         QualificationStatus.UNSUCCESSFUL -> true
-                        QualificationStatus.AWAITING -> false
                     }
                 }
                 .toSetBy { it }
