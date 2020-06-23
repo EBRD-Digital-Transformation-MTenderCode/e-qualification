@@ -185,7 +185,7 @@ class QualificationServiceImpl(
                     .orForwardFail { fail -> return fail }
             )
         }
-        qualificationRepository.saveAll(updatedQualificationEntities)
+        qualificationRepository.updateAll(updatedQualificationEntities)
 
         return updatedQualifications
             .map { qualification ->

@@ -41,10 +41,10 @@ class QualificationRepositoryIT {
         private val QUALIFICATION_JSON = loadJson(QUALIFICATION_PATH)
 
         private const val KEYSPACE = "qualification"
-        private const val TABLE_NAME = "qualification"
+        private const val TABLE_NAME = "qualifications"
         private const val COLUMN_CPID = "cpid"
         private const val COLUMN_OCID = "ocid"
-        private const val COLUMN_ID = "qualification_id"
+        private const val COLUMN_ID = "id"
         private const val COLUMN_JSON_DATA = "json_data"
     }
 
@@ -126,11 +126,25 @@ class QualificationRepositoryIT {
         val expectedQualifications = listOf(qual1, qual2)
         qualificationRepository.saveAll(expectedQualifications)
         val savedQualifications = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
-        expectedQualifications.forEach {expected->
+        expectedQualifications.forEach { expected ->
             val actualQualification = savedQualifications.find { it.id == expected.id }!!
             assertEquals(expected, actualQualification)
         }
+    }
 
+    @Test
+    fun updateAll() {
+        val qual1 = createQualification()
+        val qual2 = createQualification()
+        insertQualification(qual1)
+        insertQualification(qual2)
+        val updatedQualifications = listOf(qual1.copy(jsonData = "new json"), qual2.copy(jsonData = "new json2"))
+        qualificationRepository.updateAll(updatedQualifications)
+        val updated = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
+        updated.forEach { expected ->
+            val actualQualification = updatedQualifications.find { it.id == expected.id }!!
+            assertEquals(expected, actualQualification)
+        }
     }
 
     @Test

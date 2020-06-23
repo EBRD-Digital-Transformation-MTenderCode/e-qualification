@@ -14,4 +14,6 @@ interface QualificationRepository {
     fun save(entity: QualificationEntity): MaybeFail<Fail.Incident>
 
     fun saveAll(entities: List<QualificationEntity>): MaybeFail<Fail.Incident>
+
+    fun updateAll(entities: List<QualificationEntity>): MaybeFail<Fail.Incident>
 }
