@@ -10,7 +10,7 @@ import java.io.Serializable
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class Scoring private constructor(val value: BigDecimal) : Serializable {
+class Scoring private constructor(val value: BigDecimal) : Serializable, Comparable<Scoring> {
 
     companion object {
         private val CLASS_NAME = Scoring::javaClass.name
@@ -48,4 +48,6 @@ class Scoring private constructor(val value: BigDecimal) : Serializable {
     }
 
     override fun hashCode(): Int = value.hashCode()
+
+    override fun compareTo(other: Scoring): Int = value.compareTo(other = other.value)
 }
