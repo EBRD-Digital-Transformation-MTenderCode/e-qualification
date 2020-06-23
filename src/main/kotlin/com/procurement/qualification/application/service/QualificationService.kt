@@ -148,10 +148,10 @@ class QualificationServiceImpl(
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED -> {
                         val qualificationWithMinScoring = findMinScoring(qualifications = filteredQualifications)!!
-                        val hasSameScoring = countScoringDuplicate(
+                        val hasSameScoring = hasSameScoring(
                             qualifications = filteredQualifications,
                             scoring = qualificationWithMinScoring.scoring!!
-                        ) > 1
+                        )
                         val qualificationsToUpdate =
                             if (hasSameScoring) {
                                 val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
@@ -269,9 +269,9 @@ class QualificationServiceImpl(
     }
 
     private fun findMinScoring(qualifications: List<Qualification>) = qualifications.minBy { it.scoring!! }
-    private fun countScoringDuplicate(qualifications: List<Qualification>, scoring: Scoring) = qualifications
+    private fun hasSameScoring(qualifications: List<Qualification>, scoring: Scoring) = qualifications
         .filter { scoring == it.scoring }
-        .count()
+        .count() >  1
 
     private fun findMinDate(submissions: List<DetermineNextsForQualificationParams.Submission>) =
         submissions.minBy { it.date }
