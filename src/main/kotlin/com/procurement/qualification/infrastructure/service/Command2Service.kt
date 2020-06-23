@@ -9,8 +9,8 @@ import com.procurement.qualification.infrastructure.handler.create.declaration.D
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsHandler
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationHandler
 import com.procurement.qualification.infrastructure.handler.find.qualificationids.FindQualificationIdsHandler
-import com.procurement.qualification.infrastructure.handler.start.qualificationperiod.StartQualificationPeriodHandler
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsHandler
+import com.procurement.qualification.infrastructure.handler.start.qualificationperiod.StartQualificationPeriodHandler
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
 import com.procurement.qualification.infrastructure.web.enums.Command2Type
 import com.procurement.qualification.infrastructure.web.parser.tryGetAction
@@ -25,7 +25,7 @@ class Command2Service(
     private val findQualificationIdsHandler: FindQualificationIdsHandler,
     private val createQualificationsHandler: CreateQualificationsHandler,
     private val determineNextsForQualificationHandler: DetermineNextsForQualificationHandler,
-    private val startQualificationPeriodHandler: StartQualificationPeriodHandler
+    private val startQualificationPeriodHandler: StartQualificationPeriodHandler,
     private val checkAccessToQualificationHandler: CheckAccessToQualificationHandler,
     private val checkQualificationStateHandler: CheckQualificationStateHandler,
     private val doDeclarationHandler: DoDeclarationHandler,
