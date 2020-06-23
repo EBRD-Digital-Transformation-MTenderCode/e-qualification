@@ -1,5 +1,6 @@
 package com.procurement.qualification.infrastructure.repository
 
+import com.datastax.driver.core.BatchStatement
 import com.datastax.driver.core.BoundStatement
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.HostDistance
@@ -14,6 +15,7 @@ import com.nhaarman.mockito_kotlin.whenever
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.infrastructure.configuration.DatabaseTestConfiguration
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
@@ -39,9 +41,10 @@ class QualificationRepositoryIT {
         private val QUALIFICATION_JSON = loadJson(QUALIFICATION_PATH)
 
         private const val KEYSPACE = "qualification"
-        private const val TABLE_NAME = "qualification"
+        private const val TABLE_NAME = "qualifications"
         private const val COLUMN_CPID = "cpid"
         private const val COLUMN_OCID = "ocid"
+        private const val COLUMN_ID = "id"
         private const val COLUMN_JSON_DATA = "json_data"
     }
 
@@ -116,6 +119,45 @@ class QualificationRepositoryIT {
         assertTrue(actual.error is Fail.Incident.Database.Interaction)
     }
 
+    @Test
+    fun saveAll() {
+        val qual1 = createQualification()
+        val qual2 = createQualification()
+        val expectedQualifications = listOf(qual1, qual2)
+        qualificationRepository.saveAll(expectedQualifications)
+        val savedQualifications = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
+        expectedQualifications.forEach { expected ->
+            val actualQualification = savedQualifications.find { it.id == expected.id }!!
+            assertEquals(expected, actualQualification)
+        }
+    }
+
+    @Test
+    fun updateAll() {
+        val qual1 = createQualification()
+        val qual2 = createQualification()
+        insertQualification(qual1)
+        insertQualification(qual2)
+        val updatedQualifications = listOf(qual1.copy(jsonData = "new json"), qual2.copy(jsonData = "new json2"))
+        qualificationRepository.updateAll(updatedQualifications)
+        val updated = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
+        updated.forEach { expected ->
+            val actualQualification = updatedQualifications.find { it.id == expected.id }!!
+            assertEquals(expected, actualQualification)
+        }
+    }
+
+    @Test
+    fun `error while saving all`() {
+        doThrow(RuntimeException())
+            .whenever(session)
+            .execute(any<BatchStatement>())
+
+        val actual = qualificationRepository.saveAll(listOf(createQualification()))
+
+        assertTrue(actual.isFail)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
+    }
 
     private fun createKeyspace() {
         session.execute(
@@ -135,8 +177,9 @@ class QualificationRepositoryIT {
                     (
                         $COLUMN_CPID text,
                         $COLUMN_OCID text,
+                        $COLUMN_ID text,
                         $COLUMN_JSON_DATA text,
-                        primary key($COLUMN_CPID, $COLUMN_OCID)
+                        primary key($COLUMN_CPID, $COLUMN_OCID, $COLUMN_ID)
                     );
             """
         )
@@ -146,6 +189,7 @@ class QualificationRepositoryIT {
         val record = QueryBuilder.insertInto(KEYSPACE, TABLE_NAME)
             .value(COLUMN_CPID, qualificationEntity.cpid.toString())
             .value(COLUMN_OCID, qualificationEntity.ocid.toString())
+            .value(COLUMN_ID, qualificationEntity.id.toString())
             .value(COLUMN_JSON_DATA, qualificationEntity.jsonData)
 
 
@@ -155,6 +199,7 @@ class QualificationRepositoryIT {
     private fun createQualification() = QualificationEntity(
         cpid = CPID,
         ocid = OCID,
+        id = QualificationId.generate(),
         jsonData = QUALIFICATION_JSON
     )
 }

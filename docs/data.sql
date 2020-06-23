@@ -21,10 +21,11 @@ CREATE TABLE IF NOT EXISTS  qualification.history
     primary key(command_id, command)
 );
 
-CREATE TABLE IF NOT EXISTS  qualification.qualification
+CREATE TABLE IF NOT EXISTS  qualification.qualifications
 (
     cpid text,
     ocid text,
+    id text,
     json_data text,
-    primary key(cpid, ocid)
+    primary key(cpid, ocid, id)
 );

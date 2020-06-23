@@ -15,8 +15,14 @@ import java.util.*
 
 object ApiResponse2Generator {
 
+    private val NaN: UUID
+        get() = UUID(0, 0)
+
     fun generateResponseOnFailure(
-        fail: Fail, version: ApiVersion2, id: UUID, logger: Logger
+        fail: Fail,
+        version: ApiVersion2 = GlobalProperties2.App.apiVersion,
+        id: UUID = NaN,
+        logger: Logger
     ): ApiResponse2 {
         fail.logging(logger)
         return when (fail) {
@@ -33,9 +39,7 @@ object ApiResponse2Generator {
         }
     }
 
-    private fun generateDataErrorResponse(
-        dataError: DataErrors.Validation, version: ApiVersion2, id: UUID
-    ) =
+    private fun generateDataErrorResponse(dataError: DataErrors.Validation, version: ApiVersion2, id: UUID) =
         ApiErrorResponse2(
             version = version,
             id = id,
@@ -48,9 +52,7 @@ object ApiResponse2Generator {
             )
         )
 
-    private fun generateValidationErrorResponse(
-        validationError: ValidationError, version: ApiVersion2, id: UUID
-    ) =
+    private fun generateValidationErrorResponse(validationError: ValidationError, version: ApiVersion2, id: UUID) =
         ApiErrorResponse2(
             version = version,
             id = id,
@@ -58,7 +60,8 @@ object ApiResponse2Generator {
                 ApiErrorResponse2.Error(
                     code = getFullErrorCode(validationError.code),
                     description = validationError.description,
-                    details = ApiErrorResponse2.Error.Detail.tryCreateOrNull(id = validationError.entityId).toListOrEmpty()
+                    details = ApiErrorResponse2.Error.Detail.tryCreateOrNull(id = validationError.entityId)
+                        .toListOrEmpty()
 
                 )
             )
