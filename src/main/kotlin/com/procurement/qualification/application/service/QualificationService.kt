@@ -141,10 +141,10 @@ class QualificationServiceImpl(
             ReductionCriteria.SCORING -> {
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED -> {
-                        val requestQualificationWithMinScoring = findMinScoring(qualifications = qualifications)!!
+                        val qualificationWithMinScoring = findMinScoring(qualifications = qualifications)!!
                         val hasSameScoring = countScoringDuplicate(
                             qualifications = qualifications,
-                            scoring = requestQualificationWithMinScoring.scoring!!
+                            scoring = qualificationWithMinScoring.scoring!!
                         ) > 1
                         val qualificationsToUpdate =
                             if (hasSameScoring) {
@@ -157,7 +157,6 @@ class QualificationServiceImpl(
 
                                 listOf(qualificationRelatedToSubmission)
                             } else {
-                                val qualificationWithMinScoring = qualifications.find { q -> q.id == requestQualificationWithMinScoring.id }!!
                                 listOf(qualificationWithMinScoring)
                             }
 
