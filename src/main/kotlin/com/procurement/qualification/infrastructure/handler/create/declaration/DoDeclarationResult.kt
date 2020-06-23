@@ -3,7 +3,7 @@ package com.procurement.qualification.infrastructure.handler.create.declaration
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.procurement.qualification.domain.model.qualification.QualificationId
-import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
+import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 
 data class DoDeclarationResult(
     @param:JsonProperty("qualifications") @field:JsonProperty("qualifications") val qualifications: List<Qualification>

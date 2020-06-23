@@ -1,40 +1,37 @@
 package com.procurement.qualification.application.service
 
-import com.procurement.qualification.application.model.params.CreateQualificationsParams
-import com.procurement.qualification.application.model.params.DetermineNextsForQualificationParams
 import com.procurement.qualification.application.model.params.CheckAccessToQualificationParams
 import com.procurement.qualification.application.model.params.CheckDeclarationParams
 import com.procurement.qualification.application.model.params.CheckQualificationStateParams
+import com.procurement.qualification.application.model.params.CreateQualificationsParams
+import com.procurement.qualification.application.model.params.DetermineNextsForQualificationParams
 import com.procurement.qualification.application.model.params.DoDeclarationParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
 import com.procurement.qualification.application.repository.QualificationRepository
+import com.procurement.qualification.application.repository.QualificationStateRepository
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
-import com.procurement.qualification.application.repository.QualificationStateRepository
 import com.procurement.qualification.domain.enums.RequirementDataType
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
-import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.functional.asValidationFailure
+import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientValue
-import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationResult
-import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
-import com.procurement.qualification.infrastructure.fail.error.ValidationError
-import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
 import org.springframework.stereotype.Service
@@ -43,9 +40,7 @@ import java.math.BigDecimal
 interface QualificationService {
 
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
-
     fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident>
-
     fun determineNextsForQualification(params: DetermineNextsForQualificationParams): Result<List<DetermineNextsForQualificationResult>, Fail>
     fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail>
     fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
@@ -58,7 +53,7 @@ interface QualificationService {
 class QualificationServiceImpl(
     val qualificationRepository: QualificationRepository,
     val transform: Transform,
-    val generationService: GenerationService
+    val generationService: GenerationService,
     val qualificationStateRepository: QualificationStateRepository
 ) : QualificationService {
 
@@ -203,6 +198,7 @@ class QualificationServiceImpl(
             )
         }
         qualificationRepository.updateAll(updatedQualificationEntities)
+            .doOnFail { fail-> return fail.asFailure() }
 
         return updatedQualifications
             .map { qualification ->
@@ -418,7 +414,7 @@ class QualificationServiceImpl(
         val qualificationEntities = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
             .orForwardFail { fail -> return fail }
 
-        val dbQualificationsById = qualificationEntities.associateBy { it.qualificationId }
+        val dbQualificationsById = qualificationEntities.associateBy { it.id }
 
         val filteredQualifications = params.qualifications
             .map {
@@ -459,7 +455,7 @@ class QualificationServiceImpl(
             QualificationEntity(
                 cpid = cpid,
                 ocid = ocid,
-                qualificationId = it.id,
+                id = it.id,
                 jsonData = transform.trySerialization(value = it)
                     .doReturn { fail ->
                         return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
@@ -468,8 +464,8 @@ class QualificationServiceImpl(
             )
         }
 
-        qualificationRepository.save(entities = updatedQualificationsEntity)
-            .orForwardFail { fail -> return fail }
+        qualificationRepository.updateAll(entities = updatedQualificationsEntity)
+            .doOnFail { fail -> return fail.asFailure() }
 
         return updatedQualifications.convertQualificationsToDoDeclarationResult()
             .asSuccess()

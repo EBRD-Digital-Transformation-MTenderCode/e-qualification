@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.procurement.qualification.domain.model.measure.Scoring
-import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
 import com.procurement.qualification.infrastructure.bind.apiversion.ApiVersion2Deserializer
 import com.procurement.qualification.infrastructure.bind.apiversion.ApiVersion2Serializer
 import com.procurement.qualification.infrastructure.bind.coefficient.rate.CoefficientRateModule
@@ -16,8 +15,6 @@ import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTim
 import com.procurement.qualification.infrastructure.bind.measure.ScoringDeserializer
 import com.procurement.qualification.infrastructure.bind.measure.ScoringSerializer
 import com.procurement.qualification.infrastructure.bind.requirement.value.RequirementValueModule
-import com.procurement.qualification.infrastructure.bind.requirement.RequirementValueDeserializer
-import com.procurement.qualification.infrastructure.bind.requirement.RequirementValueSerializer
 import com.procurement.qualification.infrastructure.web.dto.ApiVersion2
 import java.time.LocalDateTime
 
@@ -41,11 +38,6 @@ fun ObjectMapper.configuration() {
         addSerializer(Scoring::class.java, ScoringSerializer())
         addDeserializer(Scoring::class.java, ScoringDeserializer())
 
-        /**
-         * Serializer/Deserializer for RequirementResponseValue
-         */
-        addSerializer(RequirementResponseValue::class.java, RequirementValueSerializer())
-        addDeserializer(RequirementResponseValue::class.java, RequirementValueDeserializer())
     }
 
     this.registerModule(module)

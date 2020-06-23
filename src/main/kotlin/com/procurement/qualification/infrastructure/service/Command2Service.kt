@@ -2,9 +2,14 @@ package com.procurement.qualification.infrastructure.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.service.Logger
+import com.procurement.qualification.infrastructure.handler.check.accesstoqualification.CheckAccessToQualificationHandler
+import com.procurement.qualification.infrastructure.handler.check.declaration.CheckDeclarationHandler
+import com.procurement.qualification.infrastructure.handler.check.qualificationstate.CheckQualificationStateHandler
+import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationHandler
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsHandler
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationHandler
 import com.procurement.qualification.infrastructure.handler.find.qualificationids.FindQualificationIdsHandler
+import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsHandler
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
 import com.procurement.qualification.infrastructure.web.enums.Command2Type
 import com.procurement.qualification.infrastructure.web.parser.tryGetAction
@@ -18,7 +23,12 @@ class Command2Service(
     private val logger: Logger,
     private val findQualificationIdsHandler: FindQualificationIdsHandler,
     private val createQualificationsHandler: CreateQualificationsHandler,
-    private val determineNextsForQualificationHandler: DetermineNextsForQualificationHandler
+    private val determineNextsForQualificationHandler: DetermineNextsForQualificationHandler,
+    private val checkAccessToQualificationHandler: CheckAccessToQualificationHandler,
+    private val checkQualificationStateHandler: CheckQualificationStateHandler,
+    private val doDeclarationHandler: DoDeclarationHandler,
+    private val checkDeclarationHandler: CheckDeclarationHandler,
+    private val findRequirementResponseByIdsHandler: FindRequirementResponseByIdsHandler
 ) {
 
     fun execute(node: JsonNode): ApiResponse2 {
@@ -44,6 +54,11 @@ class Command2Service(
             Command2Type.FIND_QUALIFICATION_IDS -> findQualificationIdsHandler.handle(node = node)
             Command2Type.CREATE_QUALIFICATIONS -> createQualificationsHandler.handle(node = node)
             Command2Type.DETERMINE_NEXTS_FOR_QUALIFICATION -> determineNextsForQualificationHandler.handle(node = node)
+            Command2Type.CHECK_ACCESS_TO_QUALIFICATION -> checkAccessToQualificationHandler.handle(node = node)
+            Command2Type.CHECK_QUALIFICATION_STATE -> checkQualificationStateHandler.handle(node = node)
+            Command2Type.DO_DECLARATION -> doDeclarationHandler.handle(node = node)
+            Command2Type.CHECK_DECLARATION -> checkDeclarationHandler.handle(node = node)
+            Command2Type.FIND_REQUIREMENT_RESPONSE_BY_IDS -> findRequirementResponseByIdsHandler.handle(node = node)
         }
     }
 }

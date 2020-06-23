@@ -5,11 +5,11 @@ import com.procurement.qualification.domain.enums.Pmd
 import com.procurement.qualification.domain.enums.RequirementDataType
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
-import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
 import com.procurement.qualification.domain.model.qualification.QualificationId
-import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
+import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
+import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.infrastructure.fail.Fail
 
 sealed class ValidationError(

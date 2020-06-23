@@ -1,7 +1,7 @@
 package com.procurement.qualification.infrastructure.handler.create.declaration
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
+import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 
 data class DoDeclarationRequest(
     @param:JsonProperty("cpid") @field:JsonProperty("cpid") val cpid: String,

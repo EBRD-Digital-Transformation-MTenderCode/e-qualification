@@ -3,7 +3,7 @@ package com.procurement.qualification.infrastructure.handler.find.requirementres
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.procurement.qualification.domain.model.qualification.QualificationId
-import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
+import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 
 data class FindRequirementResponseByIdsResult(
     @field:JsonProperty("qualification") @param:JsonProperty("qualification") val qualification: Qualification

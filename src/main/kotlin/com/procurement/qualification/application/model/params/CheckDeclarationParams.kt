@@ -10,7 +10,7 @@ import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.qualification.QualificationId
-import com.procurement.qualification.domain.model.qualification.RequirementResponseValue
+import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 class CheckDeclarationParams private constructor(
