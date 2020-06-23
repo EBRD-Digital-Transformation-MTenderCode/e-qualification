@@ -13,7 +13,7 @@ fun LocalDateTime.format(): String = this.format(formatter)
 
 fun String.parse(): LocalDateTime = LocalDateTime.parse(this, formatter)
 
-fun String.tryParse(): Result<LocalDateTime, String> = try {
+fun String.tryParseToLocalDateTime(): Result<LocalDateTime, String> = try {
     Result.success(LocalDateTime.parse(this, formatter))
 } catch (ignore: Exception) {
     Result.failure(formatPattern)

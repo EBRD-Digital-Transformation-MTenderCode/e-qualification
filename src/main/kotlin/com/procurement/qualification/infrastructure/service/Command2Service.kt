@@ -5,6 +5,7 @@ import com.procurement.qualification.application.service.Logger
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsHandler
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationHandler
 import com.procurement.qualification.infrastructure.handler.find.qualificationids.FindQualificationIdsHandler
+import com.procurement.qualification.infrastructure.handler.start.qualificationperiod.StartQualificationPeriodHandler
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
 import com.procurement.qualification.infrastructure.web.enums.Command2Type
 import com.procurement.qualification.infrastructure.web.parser.tryGetAction
@@ -18,7 +19,8 @@ class Command2Service(
     private val logger: Logger,
     private val findQualificationIdsHandler: FindQualificationIdsHandler,
     private val createQualificationsHandler: CreateQualificationsHandler,
-    private val determineNextsForQualificationHandler: DetermineNextsForQualificationHandler
+    private val determineNextsForQualificationHandler: DetermineNextsForQualificationHandler,
+    private val startQualificationPeriodHandler: StartQualificationPeriodHandler
 ) {
 
     fun execute(node: JsonNode): ApiResponse2 {
@@ -44,6 +46,7 @@ class Command2Service(
             Command2Type.FIND_QUALIFICATION_IDS -> findQualificationIdsHandler.handle(node = node)
             Command2Type.CREATE_QUALIFICATIONS -> createQualificationsHandler.handle(node = node)
             Command2Type.DETERMINE_NEXTS_FOR_QUALIFICATION -> determineNextsForQualificationHandler.handle(node = node)
+            Command2Type.START_QUALIFICATION_PERIOD -> startQualificationPeriodHandler.handle(node = node)
         }
     }
 }

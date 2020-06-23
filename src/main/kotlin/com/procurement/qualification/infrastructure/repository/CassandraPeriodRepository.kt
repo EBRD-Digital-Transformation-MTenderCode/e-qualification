@@ -100,7 +100,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
         return PeriodEntity(
             cpid = cpidParsed,
             ocid = ocidParsed,
-            endDate = row.getTimestamp(columnEndDate).toLocal(),
+            endDate = row.getTimestamp(columnEndDate)?.toLocal(),
             startDate = row.getTimestamp(columnStartDate).toLocal()
         ).asSuccess()
     }
@@ -111,7 +111,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
                 setString(columnCpid, period.cpid.toString())
                 setString(columnOcid, period.ocid.toString())
                 setTimestamp(columnStartDate, period.startDate.toDate())
-                setTimestamp(columnEndDate, period.endDate.toDate())
+                setTimestamp(columnEndDate, period.endDate?.toDate())
             }
 
         return statements.tryExecute(session).bind { resultSet ->
@@ -125,7 +125,7 @@ class CassandraPeriodRepository(private val session: Session) : PeriodRepository
                 setString(columnCpid, period.cpid.toString())
                 setString(columnOcid, period.ocid.toString())
                 setTimestamp(columnStartDate, period.startDate.toDate())
-                setTimestamp(columnEndDate, period.endDate.toDate())
+                setTimestamp(columnEndDate, period.endDate?.toDate())
             }
 
         statements.tryExecute(session)

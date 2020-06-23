@@ -18,7 +18,7 @@ import com.procurement.qualification.infrastructure.web.response.generator.ApiRe
 abstract class AbstractHistoricalHandler2<ACTION : Action, R : Any>(
     private val target: Class<R>,
     private val historyRepository: HistoryRepository,
-    private val transform: Transform,
+    val transform: Transform,
     private val logger: Logger
 ) : Handler<ACTION, ApiResponse2> {
 
