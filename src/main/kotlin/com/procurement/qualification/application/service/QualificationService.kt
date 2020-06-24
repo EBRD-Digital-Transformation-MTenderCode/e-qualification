@@ -432,7 +432,7 @@ class QualificationServiceImpl(
             .associateBy { it }
 
         val filteredRequirementResponses = qualification.requirementResponses
-            .filter { rqRequirementResponsesByIds[it.id] != null }
+            .filter { rqRequirementResponsesByIds.containsKey(it.id) }
 
         return FindRequirementResponseByIdsResult(
             qualification = FindRequirementResponseByIdsResult.Qualification(
