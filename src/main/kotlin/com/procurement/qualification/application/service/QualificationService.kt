@@ -326,7 +326,7 @@ class QualificationServiceImpl(
                     .map { rqRR ->
                         dbRequirementResponsesById[rqRR.id]
                             ?.copy(value = rqRR.value)
-                            ?: buildRequirementResponse(rr = rqRR)
+                            ?: buildRequirementResponse(requirementResponse = rqRR)
                     }
                 qualification.copy(requirementResponses = updatedRR)
             }
@@ -638,15 +638,15 @@ class QualificationServiceImpl(
             }
         )
 
-    private fun buildRequirementResponse(rr: DoDeclarationParams.Qualification.RequirementResponse): Qualification.RequirementResponse =
+    private fun buildRequirementResponse(requirementResponse: DoDeclarationParams.Qualification.RequirementResponse): Qualification.RequirementResponse =
         Qualification.RequirementResponse(
-            id = rr.id,
-            value = rr.value,
-            relatedTenderer = rr.relatedTenderer
+            id = requirementResponse.id,
+            value = requirementResponse.value,
+            relatedTenderer = requirementResponse.relatedTenderer
                 .let { Qualification.RequirementResponse.RelatedTenderer(id = it.id) },
-            requirement = rr.requirement
+            requirement = requirementResponse.requirement
                 .let { Qualification.RequirementResponse.Requirement(id = it.id) },
-            responder = rr.responder
+            responder = requirementResponse.responder
                 .let {
                     Qualification.RequirementResponse.Responder(id = it.id, name = it.name)
                 }
