@@ -207,121 +207,6 @@ class QualificationServiceImpl(
             .asSuccess()
     }
 
-    private fun filterByRelatedSubmissions(
-        qualifications: List<Qualification>,
-        submissions: List<DetermineNextsForQualificationParams.Submission>
-    ): Result<List<Qualification>, ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification> {
-
-        val qualificationByRelatedSubmission = qualifications.associateBy { it.relatedSubmission }
-        return submissions.map {
-            qualificationByRelatedSubmission[it.id]
-                ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
-                    submissionId = it.id
-                )
-                    .asFailure()
-        }
-            .asSuccess()
-    }
-
-    private fun setStatusDetailsByCriteria(
-        qualifications: List<Qualification>,
-        criteria: List<DetermineNextsForQualificationParams.Tender.Criteria>?
-    ) = if (criteria.isNullOrEmpty()) {
-        setStatusDetails(
-            statusDetails = QualificationStatusDetails.CONSIDERATION,
-            qualifications = qualifications
-        )
-    } else {
-        setStatusDetails(
-            statusDetails = QualificationStatusDetails.AWAITING,
-            qualifications = qualifications
-        )
-    }
-
-    private fun calculateScoring(
-        submission: CreateQualificationsParams.Submission,
-        params: CreateQualificationsParams
-    ): Scoring? = when (params.tender.otherCriteria.reductionCriteria) {
-        ReductionCriteria.SCORING -> {
-            when (params.tender.otherCriteria.qualificationSystemMethod) {
-                QualificationSystemMethod.MANUAL -> null
-                QualificationSystemMethod.AUTOMATED -> {
-                    calculateAutomatedScoring(submission = submission, conversions = params.tender.conversions)
-                }
-            }
-        }
-        ReductionCriteria.NONE -> null
-    }
-
-    private fun calculateAutomatedScoring(
-        conversions: List<CreateQualificationsParams.Tender.Conversion>,
-        submission: CreateQualificationsParams.Submission
-    ): Scoring {
-        val conversionsRelatesToRequirement = conversions
-            .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
-            .associateBy { it.relatedItem }
-
-        return Scoring.invoke(
-            value = submission.requirementResponses
-                .map { requirementResponse ->
-                    conversionsRelatesToRequirement[requirementResponse.requirement.id]
-                        ?.coefficients
-                        ?.filter {
-                            isMatchCoefficientValueAndRequirementValue(
-                                coefficientValue = it.value,
-                                requirementValue = requirementResponse.value
-                            )
-                        }
-                        ?.map { it.coefficient }
-                        ?.reduce { start, next -> start * next }
-                        ?: CoefficientRate(BigDecimal.ONE)
-                }
-                .reduce { start, next -> start * next }
-                .rate
-        )
-    }
-
-    private fun findMinScoring(qualifications: List<Qualification>) = qualifications.minBy { it.scoring!! }
-    private fun hasSameScoring(qualifications: List<Qualification>, scoring: Scoring) = qualifications
-        .filter { scoring == it.scoring }
-        .count() >  1
-
-    private fun findMinDate(submissions: List<DetermineNextsForQualificationParams.Submission>) =
-        submissions.minBy { it.date }
-
-    private fun setStatusDetails(statusDetails: QualificationStatusDetails, qualifications: List<Qualification>) =
-        qualifications.map { it.copy(statusDetails = statusDetails) }
-
-    private fun isMatchCoefficientValueAndRequirementValue(
-        coefficientValue: CoefficientValue,
-        requirementValue: RequirementResponseValue
-    ): Boolean = when (coefficientValue) {
-        is CoefficientValue.AsBoolean -> when (requirementValue) {
-            is RequirementResponseValue.AsBoolean -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsString,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsString -> when (requirementValue) {
-            is RequirementResponseValue.AsString -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsNumber -> when (requirementValue) {
-            is RequirementResponseValue.AsNumber -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsString,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsInteger -> when (requirementValue) {
-            is RequirementResponseValue.AsInteger -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsString -> false
-        }
-    }
-
     override fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail> {
 
         val cpid = params.cpid
@@ -418,16 +303,14 @@ class QualificationServiceImpl(
 
         val filteredQualifications = params.qualifications
             .map {
-                dbQualificationsById[it.id]
+               val qualification =  dbQualificationsById[it.id]
                     ?: return ValidationError.QualificationNotFoundOnDoDeclaration(
                         cpid = cpid,
                         ocid = ocid,
                         qualificationId = it.id
                     )
                         .asFailure()
-            }
-            .map {
-                it.convert()
+                qualification.convert()
                     .orForwardFail { fail -> return fail }
             }
 
@@ -563,6 +446,121 @@ class QualificationServiceImpl(
             )
         )
             .asSuccess()
+    }
+
+    private fun filterByRelatedSubmissions(
+        qualifications: List<Qualification>,
+        submissions: List<DetermineNextsForQualificationParams.Submission>
+    ): Result<List<Qualification>, ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification> {
+
+        val qualificationByRelatedSubmission = qualifications.associateBy { it.relatedSubmission }
+        return submissions.map {
+            qualificationByRelatedSubmission[it.id]
+                ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
+                    submissionId = it.id
+                )
+                    .asFailure()
+        }
+            .asSuccess()
+    }
+
+    private fun setStatusDetailsByCriteria(
+        qualifications: List<Qualification>,
+        criteria: List<DetermineNextsForQualificationParams.Tender.Criteria>?
+    ) = if (criteria.isNullOrEmpty()) {
+        setStatusDetails(
+            statusDetails = QualificationStatusDetails.CONSIDERATION,
+            qualifications = qualifications
+        )
+    } else {
+        setStatusDetails(
+            statusDetails = QualificationStatusDetails.AWAITING,
+            qualifications = qualifications
+        )
+    }
+
+    private fun calculateScoring(
+        submission: CreateQualificationsParams.Submission,
+        params: CreateQualificationsParams
+    ): Scoring? = when (params.tender.otherCriteria.reductionCriteria) {
+        ReductionCriteria.SCORING -> {
+            when (params.tender.otherCriteria.qualificationSystemMethod) {
+                QualificationSystemMethod.MANUAL -> null
+                QualificationSystemMethod.AUTOMATED -> {
+                    calculateAutomatedScoring(submission = submission, conversions = params.tender.conversions)
+                }
+            }
+        }
+        ReductionCriteria.NONE -> null
+    }
+
+    private fun calculateAutomatedScoring(
+        conversions: List<CreateQualificationsParams.Tender.Conversion>,
+        submission: CreateQualificationsParams.Submission
+    ): Scoring {
+        val conversionsRelatesToRequirement = conversions
+            .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
+            .associateBy { it.relatedItem }
+
+        return Scoring.invoke(
+            value = submission.requirementResponses
+                .map { requirementResponse ->
+                    conversionsRelatesToRequirement[requirementResponse.requirement.id]
+                        ?.coefficients
+                        ?.filter {
+                            isMatchCoefficientValueAndRequirementValue(
+                                coefficientValue = it.value,
+                                requirementValue = requirementResponse.value
+                            )
+                        }
+                        ?.map { it.coefficient }
+                        ?.reduce { start, next -> start * next }
+                        ?: CoefficientRate(BigDecimal.ONE)
+                }
+                .reduce { start, next -> start * next }
+                .rate
+        )
+    }
+
+    private fun findMinScoring(qualifications: List<Qualification>) = qualifications.minBy { it.scoring!! }
+    private fun hasSameScoring(qualifications: List<Qualification>, scoring: Scoring) = qualifications
+        .filter { scoring == it.scoring }
+        .count() >  1
+
+    private fun findMinDate(submissions: List<DetermineNextsForQualificationParams.Submission>) =
+        submissions.minBy { it.date }
+
+    private fun setStatusDetails(statusDetails: QualificationStatusDetails, qualifications: List<Qualification>) =
+        qualifications.map { it.copy(statusDetails = statusDetails) }
+
+    private fun isMatchCoefficientValueAndRequirementValue(
+        coefficientValue: CoefficientValue,
+        requirementValue: RequirementResponseValue
+    ): Boolean = when (coefficientValue) {
+        is CoefficientValue.AsBoolean -> when (requirementValue) {
+            is RequirementResponseValue.AsBoolean -> coefficientValue.value == requirementValue.value
+            is RequirementResponseValue.AsString,
+            is RequirementResponseValue.AsNumber,
+            is RequirementResponseValue.AsInteger -> false
+        }
+        is CoefficientValue.AsString -> when (requirementValue) {
+            is RequirementResponseValue.AsString -> coefficientValue.value == requirementValue.value
+            is RequirementResponseValue.AsBoolean,
+            is RequirementResponseValue.AsNumber,
+            is RequirementResponseValue.AsInteger -> false
+        }
+        is CoefficientValue.AsNumber -> when (requirementValue) {
+            is RequirementResponseValue.AsNumber -> coefficientValue.value == requirementValue.value
+            is RequirementResponseValue.AsBoolean,
+            is RequirementResponseValue.AsString,
+            is RequirementResponseValue.AsInteger -> false
+        }
+        is CoefficientValue.AsInteger -> when (requirementValue) {
+            is RequirementResponseValue.AsInteger -> coefficientValue.value == requirementValue.value
+            is RequirementResponseValue.AsBoolean,
+            is RequirementResponseValue.AsNumber,
+            is RequirementResponseValue.AsString -> false
+        }
     }
 
     private fun QualificationEntity.convert(): Result<Qualification, Fail.Incident.Database.DatabaseParsing> =
