@@ -137,12 +137,8 @@ class QualificationServiceImpl(
 
         val qualifications = qualificationEntities
             .map {
-                transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
-                    .doOnError { fail ->
-                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                            .asFailure()
-                    }
-                    .get
+                it.convert()
+                    .orForwardFail { fail -> return fail }
             }
 
         val filteredQualifications = filterByRelatedSubmissions(
@@ -198,7 +194,7 @@ class QualificationServiceImpl(
             )
         }
         qualificationRepository.updateAll(updatedQualificationEntities)
-            .doOnFail { fail-> return fail.asFailure() }
+            .doOnFail { fail -> return fail.asFailure() }
 
         return updatedQualifications
             .map { qualification ->
@@ -227,10 +223,8 @@ class QualificationServiceImpl(
                 .asValidationFailure()
 
         val qualification = qualificationEntity
-            .let {
-                it.convert()
-                    .doReturn { fail -> return ValidationResult.error(fail) }
-            }
+            .convert()
+            .doReturn { fail -> return ValidationResult.error(fail) }
 
 
         if (params.token != qualification.token)
@@ -303,7 +297,7 @@ class QualificationServiceImpl(
 
         val filteredQualifications = params.qualifications
             .map {
-               val qualification =  dbQualificationsById[it.id]
+                val qualification = dbQualificationsById[it.id]
                     ?: return ValidationError.QualificationNotFoundOnDoDeclaration(
                         cpid = cpid,
                         ocid = ocid,
@@ -525,7 +519,7 @@ class QualificationServiceImpl(
     private fun findMinScoring(qualifications: List<Qualification>) = qualifications.minBy { it.scoring!! }
     private fun hasSameScoring(qualifications: List<Qualification>, scoring: Scoring) = qualifications
         .filter { scoring == it.scoring }
-        .count() >  1
+        .count() > 1
 
     private fun findMinDate(submissions: List<DetermineNextsForQualificationParams.Submission>) =
         submissions.minBy { it.date }
