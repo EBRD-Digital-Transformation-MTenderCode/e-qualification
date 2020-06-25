@@ -1,0 +1,84 @@
+{
+  "cpid": "ocds-b3wdp1-MD-1580458690892",
+  "ocid": "ocds-b3wdp1-MD-1580458690892-EV-1580458791896",
+  "date": "2020-06-05T07:27:39Z",
+  "owner": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "submissions": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "requirementResponses": [
+        {
+          "id": "2404399b-2b3f-4d6e-bc2a-dcfb414963ee",
+          "value": "STRING",
+          "requirement": {
+            "id": "string"
+          },
+          "relatedCandidate": {
+            "id": "string",
+            "name": "string"
+          }
+        },
+        {
+          "id": "503e333b-769e-432e-9e57-66400a84c9cb",
+          "value": 1,
+          "requirement": {
+            "id": "string"
+          },
+          "relatedCandidate": {
+            "id": "string",
+            "name": "string"
+          }
+        },
+        {
+          "id": "6e3941c7-f531-4f7c-ae0f-26bc13a01eac",
+          "value": 0.001,
+          "requirement": {
+            "id": "string"
+          },
+          "relatedCandidate": {
+            "id": "string",
+            "name": "string"
+          }
+        }
+      ]
+    }
+  ],
+  "tender": {
+    "conversions": [
+      {
+        "id": "93a024c3-7ea2-4076-b278-a5a5093b4d44",
+        "relatedItem": "string",
+        "relatesTo": "requirement",
+        "rationale": "string",
+        "coefficients": [
+          {
+            "value": "Unknown Type: string,number,boolean,integer",
+            "id": "string",
+            "coefficient": 0.001
+          },
+          {
+            "value": "String",
+            "id": "string",
+            "coefficient": 0.001
+          },
+          {
+            "value": 1,
+            "id": "string",
+            "coefficient": 0.001
+          },
+          {
+            "value": true,
+            "id": "string",
+            "coefficient": 0.001
+          }
+        ]
+      }
+    ],
+    "otherCriteria": {
+      "reductionCriteria": "scoring",
+      "qualificationSystemMethods": [
+        "automated"
+      ]
+    }
+  }
+}

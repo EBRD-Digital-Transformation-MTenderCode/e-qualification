@@ -198,7 +198,7 @@ class PeriodDataEntityRepositoryIT {
             .value(COLUMN_CPID, periodEntity.cpid.toString())
             .value(COLUMN_OCID, periodEntity.ocid.toString())
             .value(COLUMN_START_DATE, periodEntity.startDate.toDate())
-            .value(COLUMN_END_DATE, periodEntity.endDate.toDate())
+            .value(COLUMN_END_DATE, periodEntity.endDate?.toDate())
         session.execute(record)
     }
 
