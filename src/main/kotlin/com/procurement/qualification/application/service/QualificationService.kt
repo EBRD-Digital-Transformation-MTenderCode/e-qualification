@@ -282,8 +282,8 @@ class QualificationServiceImpl(
             )
                 .asValidationFailure()
 
-        if (states.any { it.status != qualification.status || it.statusDetails != qualification.statusDetails })
-            return ValidationError.QualificationStatesIsInvalidOnCheckQualificationState(qualificationId = qualification.id)
+        states.find { it.status == qualification.status && it.statusDetails == qualification.statusDetails }
+            ?: return ValidationError.QualificationStatesIsInvalidOnCheckQualificationState(qualificationId = qualification.id)
                 .asValidationFailure()
 
         return ValidationResult.ok()
