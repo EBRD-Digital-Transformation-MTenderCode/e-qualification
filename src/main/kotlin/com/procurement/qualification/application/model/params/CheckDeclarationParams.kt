@@ -10,6 +10,7 @@ import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
 import com.procurement.qualification.domain.model.requirementresponse.tryCreateRequirementResponseId
@@ -108,7 +109,7 @@ class CheckDeclarationParams private constructor(
             }
 
             class Requirement private constructor(
-                val id: String,
+                val id: RequirementId,
                 val dataType: RequirementDataType
             ) {
                 companion object {

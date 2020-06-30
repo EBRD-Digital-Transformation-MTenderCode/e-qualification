@@ -118,9 +118,7 @@ class CreateQualificationsParams private constructor(
                 }
             }
 
-            class Requirement private constructor(
-                val id: RequirementId
-            ) {
+            class Requirement private constructor(val id: RequirementId) {
                 companion object {
                     fun tryCreate(id: String): Result<Requirement, DataErrors> {
                         return Requirement(id = id)

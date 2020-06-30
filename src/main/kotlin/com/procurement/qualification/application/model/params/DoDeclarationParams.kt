@@ -7,7 +7,10 @@ import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.organization.OrganizationId
+import com.procurement.qualification.domain.model.person.PersonId
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
 import com.procurement.qualification.domain.model.requirementresponse.tryCreateRequirementResponseId
@@ -84,7 +87,7 @@ class DoDeclarationParams private constructor(
                 }
             }
 
-            class RelatedTenderer private constructor(val id: String) {
+            class RelatedTenderer private constructor(val id: OrganizationId) {
                 companion object {
                     fun tryCreate(id: String): Result<RelatedTenderer, DataErrors> {
                         return RelatedTenderer(id = id)
@@ -93,7 +96,7 @@ class DoDeclarationParams private constructor(
                 }
             }
 
-            class Requirement private constructor(val id: String) {
+            class Requirement private constructor(val id: RequirementId) {
                 companion object {
                     fun tryCreate(id: String): Result<Requirement, DataErrors> {
                         return Requirement(id = id)
@@ -102,7 +105,7 @@ class DoDeclarationParams private constructor(
                 }
             }
 
-            class Responder private constructor(val id: String, val name: String) {
+            class Responder private constructor(val id: PersonId, val name: String) {
                 companion object {
                     fun tryCreate(id: String, name: String): Result<Responder, DataErrors> {
                         return Responder(id = id, name = name)

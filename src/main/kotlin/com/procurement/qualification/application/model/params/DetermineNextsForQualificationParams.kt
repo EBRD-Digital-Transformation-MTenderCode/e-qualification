@@ -13,6 +13,7 @@ import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.domain.model.submission.tryCreateSubmissionId
 import com.procurement.qualification.domain.util.extension.getElementIfOnlyOne
@@ -208,7 +209,7 @@ class DetermineNextsForQualificationParams private constructor(
                 }
 
                 class Requirement private constructor(
-                    val id: String,
+                    val id: RequirementId,
                     val title: String,
                     val dataType: RequirementDataType,
                     val description: String?
