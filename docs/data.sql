@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS  qualification.qualifications
     primary key(cpid, ocid, id)
 );
 
-CREATE TABLE IF NOT EXISTS  qualification.qualification_states
+CREATE TABLE IF NOT EXISTS  qualification.qualification_rules
 (
     country text,
     pmd text,

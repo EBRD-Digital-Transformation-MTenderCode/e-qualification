@@ -17,7 +17,7 @@ class CassandraQualificationStateRepository(private val session: Session) : Qual
 
     companion object {
         private const val KEYSPACE = "qualification"
-        private const val TABLE_NAME = "qualification_states"
+        private const val TABLE_NAME = "qualification_rules"
         private const val COLUMN_COUNTRY = "country"
         private const val COLUMN_PMD = "pmd"
         private const val COLUMN_OPERATION_TYPE = "operation_type"
