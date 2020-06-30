@@ -8,6 +8,7 @@ import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
 import com.procurement.qualification.domain.model.submission.SubmissionId
@@ -80,7 +81,7 @@ sealed class ValidationError(
             description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
         )
 
-    class RequirementNotFoundOnCheckDeclaration(requirementId: String) :
+    class RequirementNotFoundOnCheckDeclaration(requirementId: RequirementId) :
         ValidationError(
             numberError = "7.16.2",
             description = "Requirement with id='$requirementId' not found."

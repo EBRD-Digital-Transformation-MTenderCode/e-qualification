@@ -9,7 +9,6 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
-import com.procurement.qualification.domain.model.requirementresponse.tryCreateRequirementResponseId
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 class FindRequirementResponseByIdsParams private constructor(
@@ -37,7 +36,7 @@ class FindRequirementResponseByIdsParams private constructor(
 
             val parsedRequirementResponseIds = requirementResponseIds
                 .map {
-                    tryCreateRequirementResponseId(value = it)
+                    RequirementResponseId.tryCreate(text = it)
                         .orForwardFail { fail -> return fail }
                 }
             return FindRequirementResponseByIdsParams(

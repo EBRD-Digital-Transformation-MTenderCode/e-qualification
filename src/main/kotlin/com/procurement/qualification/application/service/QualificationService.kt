@@ -489,7 +489,7 @@ class QualificationServiceImpl(
         return Scoring.invoke(
             value = submission.requirementResponses
                 .map { requirementResponse ->
-                    conversionsRelatesToRequirement[requirementResponse.requirement.id]
+                    conversionsRelatesToRequirement[requirementResponse.requirement.id.toString()]
                         ?.coefficients
                         ?.filter {
                             isMatchCoefficientValueAndRequirementValue(

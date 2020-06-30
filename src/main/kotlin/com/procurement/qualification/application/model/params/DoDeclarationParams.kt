@@ -4,6 +4,7 @@ import com.procurement.qualification.application.model.parseCpid
 import com.procurement.qualification.application.model.parseOcid
 import com.procurement.qualification.application.model.parseQualificationId
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
@@ -13,7 +14,6 @@ import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
-import com.procurement.qualification.domain.model.requirementresponse.tryCreateRequirementResponseId
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 class DoDeclarationParams private constructor(
@@ -73,7 +73,7 @@ class DoDeclarationParams private constructor(
                     responder: Responder
                 ): Result<RequirementResponse, DataErrors> {
 
-                    val parsedId = tryCreateRequirementResponseId(value = id)
+                    val parsedId = RequirementResponseId.tryCreate(text = id)
                         .orForwardFail { fail -> return fail }
 
                     return RequirementResponse(
@@ -90,7 +90,12 @@ class DoDeclarationParams private constructor(
             class RelatedTenderer private constructor(val id: OrganizationId) {
                 companion object {
                     fun tryCreate(id: String): Result<RelatedTenderer, DataErrors> {
-                        return RelatedTenderer(id = id)
+
+                        val parsedOrganizationId = OrganizationId.parse(id)
+                            ?: return DataErrors.Validation.EmptyString(name = id)
+                                .asFailure()
+
+                        return RelatedTenderer(id = parsedOrganizationId)
                             .asSuccess()
                     }
                 }
@@ -99,7 +104,12 @@ class DoDeclarationParams private constructor(
             class Requirement private constructor(val id: RequirementId) {
                 companion object {
                     fun tryCreate(id: String): Result<Requirement, DataErrors> {
-                        return Requirement(id = id)
+
+                        val parsedRequirementId = RequirementId.parse(id)
+                            ?: return DataErrors.Validation.EmptyString(name = id)
+                                .asFailure()
+
+                        return Requirement(id = parsedRequirementId)
                             .asSuccess()
                     }
                 }
@@ -108,7 +118,12 @@ class DoDeclarationParams private constructor(
             class Responder private constructor(val id: PersonId, val name: String) {
                 companion object {
                     fun tryCreate(id: String, name: String): Result<Responder, DataErrors> {
-                        return Responder(id = id, name = name)
+
+                        val parsedId = PersonId.parse(id)
+                            ?: return DataErrors.Validation.EmptyString(name = id)
+                                .asFailure()
+
+                        return Responder(id = parsedId, name = name)
                             .asSuccess()
                     }
                 }

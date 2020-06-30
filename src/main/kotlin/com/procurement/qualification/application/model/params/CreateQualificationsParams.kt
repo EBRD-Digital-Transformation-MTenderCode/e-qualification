@@ -9,6 +9,7 @@ import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
@@ -16,7 +17,6 @@ import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
-import com.procurement.qualification.domain.model.requirementresponse.tryCreateRequirementResponseId
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.domain.model.submission.tryCreateSubmissionId
 import com.procurement.qualification.domain.model.tender.conversion.ConversionId
@@ -105,7 +105,7 @@ class CreateQualificationsParams private constructor(
                     relatedCandidate: RelatedCandidate
                 ): Result<RequirementResponse, DataErrors> {
 
-                    val parsedId = tryCreateRequirementResponseId(value = id)
+                    val parsedId = RequirementResponseId.tryCreate(text = id)
                         .orForwardFail { fail -> return fail }
 
                     return RequirementResponse(
@@ -121,7 +121,12 @@ class CreateQualificationsParams private constructor(
             class Requirement private constructor(val id: RequirementId) {
                 companion object {
                     fun tryCreate(id: String): Result<Requirement, DataErrors> {
-                        return Requirement(id = id)
+
+                        val parsedRequirementId = RequirementId.parse(id)
+                            ?: return DataErrors.Validation.EmptyString(name = id)
+                                .asFailure()
+
+                        return Requirement(id = parsedRequirementId)
                             .asSuccess()
                     }
                 }

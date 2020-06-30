@@ -6,14 +6,16 @@ import com.procurement.qualification.application.model.parseOcid
 import com.procurement.qualification.application.model.parseQualificationId
 import com.procurement.qualification.domain.enums.RequirementDataType
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.organization.OrganizationId
+import com.procurement.qualification.domain.model.person.PersonId
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
-import com.procurement.qualification.domain.model.requirementresponse.tryCreateRequirementResponseId
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 class CheckDeclarationParams private constructor(
@@ -56,9 +58,9 @@ class CheckDeclarationParams private constructor(
     class RequirementResponse private constructor(
         val id: RequirementResponseId,
         val value: RequirementResponseValue,
-        val relatedTendererId: String,
-        val responderId: String,
-        val requirementId: String
+        val relatedTendererId: OrganizationId,
+        val responderId: PersonId,
+        val requirementId: RequirementId
     ) {
         companion object {
             fun tryCreate(
@@ -69,10 +71,22 @@ class CheckDeclarationParams private constructor(
                 requirementId: String
             ): Result<RequirementResponse, DataErrors> {
 
-                val parsedId = tryCreateRequirementResponseId(value = id)
+                val parsedId = RequirementResponseId.tryCreate(text = id)
                     .orForwardFail { fail -> return fail }
 
-                return RequirementResponse(parsedId, value, relatedTendererId, responderId, requirementId)
+                val parsedPersonId = PersonId.parse(responderId)
+                    ?: return DataErrors.Validation.EmptyString(name = responderId)
+                        .asFailure()
+
+                val parsedOrganizationId = OrganizationId.parse(relatedTendererId)
+                    ?: return DataErrors.Validation.EmptyString(name = relatedTendererId)
+                        .asFailure()
+
+                val parsedRequirementId = RequirementId.parse(requirementId)
+                    ?: return DataErrors.Validation.EmptyString(name = requirementId)
+                        .asFailure()
+
+                return RequirementResponse(parsedId, value, parsedOrganizationId, parsedPersonId, parsedRequirementId)
                     .asSuccess()
             }
         }
@@ -130,6 +144,10 @@ class CheckDeclarationParams private constructor(
                         dataType: String
                     ): Result<Requirement, DataErrors> {
 
+                        val parsedRequirementId = RequirementId.parse(id)
+                            ?: return DataErrors.Validation.EmptyString(name = id)
+                                .asFailure()
+
                         val parsedDataType = parseEnum(
                             value = dataType,
                             attributeName = "dataType",
@@ -138,7 +156,7 @@ class CheckDeclarationParams private constructor(
                         )
                             .orForwardFail { fail -> return fail }
 
-                        return Requirement(id, parsedDataType)
+                        return Requirement(parsedRequirementId, parsedDataType)
                             .asSuccess()
                     }
                 }
