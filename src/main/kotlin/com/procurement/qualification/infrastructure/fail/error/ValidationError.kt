@@ -9,6 +9,7 @@ import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
+import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.infrastructure.fail.Fail
 
@@ -91,7 +92,7 @@ sealed class ValidationError(
             description = "Requirement datatype mismatch, expected='$expected' , actual='$actual'."
         )
 
-    class InvalidRequirementResponseIdOnCheckDeclaration(actualId: String, expected: String) :
+    class InvalidRequirementResponseIdOnCheckDeclaration(actualId: RequirementResponseId, expected: RequirementResponseId) :
         ValidationError(
             numberError = "7.16.4",
             description = "Invalid Requirement Response Id, actual='$actualId', expected='$expected'."

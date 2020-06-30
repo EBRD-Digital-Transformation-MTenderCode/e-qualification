@@ -11,6 +11,8 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
+import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
+import com.procurement.qualification.domain.model.requirementresponse.tryCreateRequirementResponseId
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 class CheckDeclarationParams private constructor(
@@ -51,7 +53,7 @@ class CheckDeclarationParams private constructor(
     }
 
     class RequirementResponse private constructor(
-        val id: String,
+        val id: RequirementResponseId,
         val value: RequirementResponseValue,
         val relatedTendererId: String,
         val responderId: String,
@@ -65,7 +67,11 @@ class CheckDeclarationParams private constructor(
                 responderId: String,
                 requirementId: String
             ): Result<RequirementResponse, DataErrors> {
-                return RequirementResponse(id, value, relatedTendererId, responderId, requirementId)
+
+                val parsedId = tryCreateRequirementResponseId(value = id)
+                    .orForwardFail { fail -> return fail }
+
+                return RequirementResponse(parsedId, value, relatedTendererId, responderId, requirementId)
                     .asSuccess()
             }
         }
