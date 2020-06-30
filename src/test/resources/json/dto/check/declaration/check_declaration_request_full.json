@@ -1,0 +1,28 @@
+{
+  "cpid": "ocds-b3wdp1-MD-1580458690892",
+  "ocid": "ocds-b3wdp1-MD-1580458690892-EV-1580458791896",
+  "qualificationId": "string",
+  "requirementResponse": {
+    "id": "string",
+    "value": "string",
+    "relatedTendererId": "string",
+    "responderId": "string",
+    "requirementId": "string"
+  },
+  "criteria": [
+    {
+      "id": "string",
+      "requirementGroups": [
+        {
+          "id": "string",
+          "requirements": [
+            {
+              "id": "string",
+              "dataType": "number"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

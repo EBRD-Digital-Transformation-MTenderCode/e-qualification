@@ -37,6 +37,7 @@ fun ObjectMapper.configuration() {
          */
         addSerializer(Scoring::class.java, ScoringSerializer())
         addDeserializer(Scoring::class.java, ScoringDeserializer())
+
     }
 
     this.registerModule(module)

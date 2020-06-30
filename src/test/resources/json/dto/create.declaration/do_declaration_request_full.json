@@ -1,0 +1,25 @@
+{
+  "cpid": "ocds-b3wdp1-MD-1580458690892",
+  "ocid": "ocds-b3wdp1-MD-1580458690892-EV-1580458791896",
+  "qualifications": [
+    {
+      "id": "67689f09-20dd-41bf-9ad2-d71110708c25",
+      "requirementResponses": [
+        {
+          "id": "string",
+          "value": "Unknown Type: string,number,integer,boolean",
+          "relatedTenderer": {
+            "id": "string"
+          },
+          "requirement": {
+            "id": "string"
+          },
+          "responder": {
+            "id": "string",
+            "name": "string"
+          }
+        }
+      ]
+    }
+  ]
+}

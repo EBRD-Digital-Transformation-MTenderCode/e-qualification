@@ -1,5 +1,8 @@
 package com.procurement.qualification.domain.functional
 
+
+fun <E> E.asValidationFailure(): ValidationResult<E> = ValidationResult.error(this)
+
 sealed class ValidationResult<out E> {
 
     companion object {

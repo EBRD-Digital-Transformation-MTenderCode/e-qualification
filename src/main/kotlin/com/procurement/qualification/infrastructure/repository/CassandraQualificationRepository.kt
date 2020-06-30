@@ -55,11 +55,23 @@ class CassandraQualificationRepository(private val session: Session) : Qualifica
                 WHERE $COLUMN_CPID=? 
                   AND $COLUMN_OCID=?
             """
+
+        private const val FIND_BY_CPID_AND_OCID_AND_ID_CQL = """
+               SELECT $COLUMN_CPID,
+                      $COLUMN_OCID,
+                      $COLUMN_ID,
+                      $COLUMN_JSON_DATA
+                 FROM $KEYSPACE.$TABLE_NAME
+                WHERE $COLUMN_CPID=? 
+                  AND $COLUMN_OCID=?
+                  AND $COLUMN_ID=?
+            """
     }
 
     private val preparedFindByCpidAndOcidCQL = session.prepare(FIND_BY_CPID_AND_OCID_CQL)
     private val preparedSaveCQL = session.prepare(SAVE_QUALIFICATION_CQL)
     private val updateAll = session.prepare(UPDATE_QUALIFICATION_CQL)
+    private val preparedFindByCpidAndOcidAndIdCQL = session.prepare(FIND_BY_CPID_AND_OCID_AND_ID_CQL)
 
     override fun findBy(cpid: Cpid, ocid: Ocid): Result<List<QualificationEntity>, Fail.Incident> {
         val query = preparedFindByCpidAndOcidCQL.bind()
@@ -71,9 +83,29 @@ class CassandraQualificationRepository(private val session: Session) : Qualifica
         return query.tryExecute(session)
             .orForwardFail { error -> return error }
             .map { row ->
-                converter(row = row)
+                row.converter()
                     .orForwardFail { error -> return error }
             }
+            .asSuccess()
+    }
+
+    override fun findBy(
+        cpid: Cpid,
+        ocid: Ocid,
+        qualificationId: QualificationId
+    ): Result<QualificationEntity?, Fail.Incident> {
+        val query = preparedFindByCpidAndOcidAndIdCQL.bind()
+            .apply {
+                setString(COLUMN_CPID, cpid.toString())
+                setString(COLUMN_OCID, ocid.toString())
+                setString(COLUMN_ID, qualificationId.toString())
+            }
+
+        return query.tryExecute(session)
+            .orForwardFail { error -> return error }
+            .one()
+            ?.converter()
+            ?.orForwardFail { error -> return error }
             .asSuccess()
     }
 
@@ -134,8 +166,8 @@ class CassandraQualificationRepository(private val session: Session) : Qualifica
         return MaybeFail.none()
     }
 
-    private fun converter(row: Row): Result<QualificationEntity, Fail.Incident> {
-        val cpid = row.getString(COLUMN_CPID)
+    private fun Row.converter(): Result<QualificationEntity, Fail.Incident> {
+        val cpid = this.getString(COLUMN_CPID)
         val cpidParsed = Cpid.tryCreateOrNull(cpid)
             ?: return failure(
                 Fail.Incident.Database.Parsing(
@@ -143,14 +175,14 @@ class CassandraQualificationRepository(private val session: Session) : Qualifica
                 )
             )
 
-        val ocid = row.getString(COLUMN_OCID)
+        val ocid = this.getString(COLUMN_OCID)
         val ocidParsed = Ocid.tryCreateOrNull(ocid)
             ?: return failure(
                 Fail.Incident.Database.Parsing(
                     column = COLUMN_OCID, value = ocid
                 )
             )
-        val qualificationId = row.getString(COLUMN_ID)
+        val qualificationId = this.getString(COLUMN_ID)
         val idParsed = QualificationId.tryCreateOrNull(text = qualificationId)
             ?: return failure(
                 Fail.Incident.Database.Parsing(
@@ -162,7 +194,7 @@ class CassandraQualificationRepository(private val session: Session) : Qualifica
             cpid = cpidParsed,
             ocid = ocidParsed,
             id = idParsed,
-            jsonData = row.getString(COLUMN_JSON_DATA)
+            jsonData = this.getString(COLUMN_JSON_DATA)
         )
             .asSuccess()
     }

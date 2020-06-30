@@ -23,6 +23,8 @@ import com.procurement.qualification.json.loadJson
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -89,6 +91,49 @@ class QualificationRepositoryIT {
 
         assertFalse(actual.isEmpty())
         assertEquals(actual, expectedList)
+    }
+
+    @Test
+    fun verifyThatFindByIsSuccess() {
+        val expected = createQualification()
+        insertQualification(expected)
+        val actual = qualificationRepository.findBy(
+            cpid = expected.cpid,
+            ocid = expected.ocid,
+            qualificationId = expected.id
+        ).get
+
+        assertNotNull(actual)
+        assertEquals(actual, expected)
+    }
+
+    @Test
+    fun verifyThatFindByIsNotFound() {
+        val expected = createQualification()
+        val actual = qualificationRepository.findBy(
+            cpid = expected.cpid,
+            ocid = expected.ocid,
+            qualificationId = expected.id
+        ).get
+
+        assertNull(actual)
+    }
+
+    @Test
+    fun verifyThatFindByIsError() {
+        val expected = createQualification()
+        doThrow(RuntimeException())
+            .whenever(session)
+            .execute(any<BoundStatement>())
+
+        val actual = qualificationRepository.findBy(
+            cpid = expected.cpid,
+            ocid = expected.ocid,
+            qualificationId = expected.id
+        )
+
+        assertTrue(actual.isFail)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
     }
 
     @Test
