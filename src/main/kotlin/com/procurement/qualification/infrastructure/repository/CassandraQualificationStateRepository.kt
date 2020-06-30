@@ -20,33 +20,50 @@ class CassandraQualificationStateRepository(private val session: Session) : Qual
         private const val TABLE_NAME = "qualification_states"
         private const val COLUMN_COUNTRY = "country"
         private const val COLUMN_PMD = "pmd"
-        private const val COLUMN_OPERATION_TYPE = "operationType"
-        private const val COLUMN_JSON_DATE = "json_data"
+        private const val COLUMN_OPERATION_TYPE = "operation_type"
+        private const val COLUMN_PARAMETER = "parameter"
+        private const val COLUMN_VALUE = "value"
+
+        private const val VALID_STATES_PARAMETER = "validStates"
 
         private const val FIND_BY_COUNTRY_PMD_OPERATION_TYPE_CQL = """
             SELECT $COLUMN_COUNTRY,
                    $COLUMN_PMD,
                    $COLUMN_OPERATION_TYPE,
-                   $COLUMN_JSON_DATE
+                   $COLUMN_PARAMETER,
+                   $COLUMN_VALUE
               FROM $KEYSPACE.$TABLE_NAME
              WHERE $COLUMN_COUNTRY=?
                AND $COLUMN_PMD=?
                AND $COLUMN_OPERATION_TYPE=?
+               AND $COLUMN_PARAMETER=?
         """
     }
 
     private val preparedFindByCountryPmdOperationType = session.prepare(FIND_BY_COUNTRY_PMD_OPERATION_TYPE_CQL)
 
-    override fun findBy(
+    override fun findValidStatesBy(
         country: String,
         pmd: Pmd,
         operationType: OperationType
+    ): Result<QualificationStateEntity, Fail> {
+        return findBy(country = country, pmd = pmd, operationType = operationType, parameter = VALID_STATES_PARAMETER)
+            .orForwardFail { error -> return error }
+            .asSuccess()
+    }
+
+    private fun findBy(
+        country: String,
+        pmd: Pmd,
+        operationType: OperationType,
+        parameter: String
     ): Result<QualificationStateEntity, Fail> {
         val query = preparedFindByCountryPmdOperationType.bind()
             .apply {
                 setString(COLUMN_COUNTRY, country)
                 setString(COLUMN_PMD, pmd.toString())
                 setString(COLUMN_OPERATION_TYPE, operationType.toString())
+                setString(COLUMN_PARAMETER, parameter)
             }
 
         return query.tryExecute(session)
@@ -74,7 +91,8 @@ class CassandraQualificationStateRepository(private val session: Session) : Qual
             country = this.getString(COLUMN_COUNTRY),
             pmd = pmdParsed,
             operationType = operationTypeParsed,
-            jsonData = this.getString(COLUMN_JSON_DATE)
+            value = this.getString(COLUMN_VALUE),
+            parameter = this.getString(COLUMN_PARAMETER)
         )
             .asSuccess()
     }

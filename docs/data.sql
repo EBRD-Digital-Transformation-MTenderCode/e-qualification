@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS  qualification.qualification_states
 (
     country text,
     pmd text,
-    operationType text,
-    json_data text
-    primary key(country, pmd, operationType)
+    operation_type text,
+    parameter text,
+    value text
+    primary key(country, pmd, operationType, parameter)
 );

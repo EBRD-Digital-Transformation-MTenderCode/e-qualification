@@ -7,5 +7,6 @@ data class QualificationStateEntity(
     val country: String,
     val pmd: Pmd,
     val operationType: OperationType,
-    val jsonData:String
+    val parameter: String,
+    val value: String
 )

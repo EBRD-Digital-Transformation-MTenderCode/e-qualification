@@ -8,5 +8,5 @@ import com.procurement.qualification.infrastructure.model.entity.QualificationSt
 
 interface QualificationStateRepository {
 
-    fun findBy(country: String, pmd: Pmd, operationType: OperationType): Result<QualificationStateEntity, Fail>
+    fun findValidStatesBy(country: String, pmd: Pmd, operationType: OperationType): Result<QualificationStateEntity, Fail>
 }

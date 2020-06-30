@@ -35,6 +35,8 @@ class CheckQualificationStateParams private constructor(
             .filter {
                 when (it) {
                     OperationType.QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST -> true
+                    OperationType.QUALIFICATION,
+                    OperationType.QUALIFICATION_CONSIDERATION -> false
                 }
             }
             .toSet()

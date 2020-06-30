@@ -35,8 +35,11 @@ class QualificationStatesRepositoryIT {
         private const val TABLE_NAME = "qualification_states"
         private const val COLUMN_COUNTRY = "country"
         private const val COLUMN_PMD = "pmd"
-        private const val COLUMN_OPERATION_TYPE = "operationType"
-        private const val COLUMN_JSON_DATE = "json_data"
+        private const val COLUMN_OPERATION_TYPE = "operation_type"
+        private const val COLUMN_PARAMETER = "parameter"
+        private const val COLUMN_VALUE = "value"
+
+        private const val VALID_STATES_PARAMETER = "validStates"
     }
 
     @Autowired
@@ -74,7 +77,7 @@ class QualificationStatesRepositoryIT {
     fun findBy() {
         val expectedQualificationState = createQualification()
         insertQualificationState(expectedQualificationState)
-        val actual = qualificationStatesRepository.findBy(
+        val actual = qualificationStatesRepository.findValidStatesBy(
             country = COUNTRY,
             operationType = OPERATION_TYPE,
             pmd = PMD
@@ -83,7 +86,6 @@ class QualificationStatesRepositoryIT {
         assertNotNull(actual)
         assertEquals(actual, expectedQualificationState)
     }
-
 
     private fun createKeyspace() {
         session.execute(
@@ -104,8 +106,9 @@ class QualificationStatesRepositoryIT {
                         $COLUMN_COUNTRY text,
                         $COLUMN_PMD text,
                         $COLUMN_OPERATION_TYPE text,
-                        $COLUMN_JSON_DATE text,
-                        primary key($COLUMN_COUNTRY, $COLUMN_PMD, $COLUMN_OPERATION_TYPE)
+                        $COLUMN_PARAMETER text,
+                        $COLUMN_VALUE text,
+                        primary key($COLUMN_COUNTRY, $COLUMN_PMD, $COLUMN_OPERATION_TYPE, $COLUMN_PARAMETER)
                     );
             """
         )
@@ -116,12 +119,17 @@ class QualificationStatesRepositoryIT {
             .value(COLUMN_COUNTRY, qualificationStateEntity.country)
             .value(COLUMN_PMD, qualificationStateEntity.pmd.toString())
             .value(COLUMN_OPERATION_TYPE, qualificationStateEntity.operationType.toString())
-            .value(COLUMN_JSON_DATE, qualificationStateEntity.jsonData)
+            .value(COLUMN_PARAMETER, qualificationStateEntity.parameter)
+            .value(COLUMN_VALUE, qualificationStateEntity.value)
 
         session.execute(record)
     }
 
     private fun createQualification() = QualificationStateEntity(
-        country = COUNTRY, pmd = PMD, operationType = OPERATION_TYPE, jsonData = JSON_DATE
+        country = COUNTRY,
+        pmd = PMD,
+        operationType = OPERATION_TYPE,
+        value = JSON_DATE,
+        parameter = VALID_STATES_PARAMETER
     )
 }

@@ -265,7 +265,7 @@ class QualificationServiceImpl(
                     .doReturn { fail -> return ValidationResult.error(fail) }
             }
 
-        val states = qualificationStateRepository.findBy(
+        val states = qualificationStateRepository.findValidStatesBy(
             country = params.country,
             operationType = params.operationType,
             pmd = params.pmd
@@ -562,7 +562,7 @@ class QualificationServiceImpl(
 
     private fun QualificationStateEntity.convert(): Result<States, Fail.Incident.Database.DatabaseParsing> =
         this.let {
-            transform.tryDeserialization(value = it.jsonData, target = States::class.java)
+            transform.tryDeserialization(value = it.value, target = States::class.java)
                 .doReturn { fail ->
                     return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
                         .asFailure()
