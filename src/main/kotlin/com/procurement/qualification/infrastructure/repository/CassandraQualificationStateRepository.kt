@@ -47,7 +47,13 @@ class CassandraQualificationStateRepository(private val session: Session) : Qual
         pmd: Pmd,
         operationType: OperationType
     ): Result<QualificationStateEntity, Fail> {
-        return findBy(country = country, pmd = pmd, operationType = operationType, parameter = VALID_STATES_PARAMETER)
+
+        val updatedOperationType = when (operationType) {
+            OperationType.QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST,
+            OperationType.QUALIFICATION,
+            OperationType.QUALIFICATION_CONSIDERATION -> operationType
+        }
+        return findBy(country = country, pmd = pmd, operationType = updatedOperationType, parameter = VALID_STATES_PARAMETER)
             .orForwardFail { error -> return error }
             .asSuccess()
     }
