@@ -9,7 +9,6 @@ import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.infrastructure.extension.cassandra.tryExecute
 import com.procurement.qualification.infrastructure.fail.Fail
-import com.procurement.qualification.infrastructure.model.entity.QualificationRulesEntity
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -25,11 +24,7 @@ class CassandraQualificationRulesRepository(private val session: Session) : Qual
         private const val COLUMN_VALUE = "value"
 
         private const val FIND_BY_COUNTRY_PMD_OPERATION_TYPE_CQL = """
-            SELECT $COLUMN_COUNTRY,
-                   $COLUMN_PMD,
-                   $COLUMN_OPERATION_TYPE,
-                   $COLUMN_PARAMETER,
-                   $COLUMN_VALUE
+            SELECT $COLUMN_VALUE
               FROM $KEYSPACE.$TABLE_NAME
              WHERE $COLUMN_COUNTRY=?
                AND $COLUMN_PMD=?
@@ -45,7 +40,7 @@ class CassandraQualificationRulesRepository(private val session: Session) : Qual
         pmd: Pmd,
         operationType: OperationType,
         parameter: String
-    ): Result<QualificationRulesEntity, Fail> {
+    ): Result<String?, Fail> {
 
         val query = preparedFindByCountryPmdOperationType.bind()
             .apply {
@@ -58,31 +53,11 @@ class CassandraQualificationRulesRepository(private val session: Session) : Qual
         return query.tryExecute(session)
             .orForwardFail { error -> return error }
             .one()
-            .converter()
-            .orForwardFail { error -> return error }
+            ?.converter()
+            ?.orForwardFail { error -> return error }
             .asSuccess()
     }
 
-    private fun Row.converter(): Result<QualificationRulesEntity, Fail> {
-        val pmd = this.getString(COLUMN_PMD)
-        val pmdParsed = Pmd.orNull(pmd)
-            ?: return Result.failure(Fail.Incident.Database.Parsing(column = COLUMN_PMD, value = pmd))
-
-        val operationType = this.getString(COLUMN_OPERATION_TYPE)
-        val operationTypeParsed = OperationType.orNull(operationType)
-            ?: return Result.failure(
-                Fail.Incident.Database.Parsing(
-                    column = COLUMN_OPERATION_TYPE,
-                    value = operationType
-                )
-            )
-        return QualificationRulesEntity(
-            country = this.getString(COLUMN_COUNTRY),
-            pmd = pmdParsed,
-            operationType = operationTypeParsed,
-            value = this.getString(COLUMN_VALUE),
-            parameter = this.getString(COLUMN_PARAMETER)
-        )
-            .asSuccess()
-    }
+    private fun Row.converter(): Result<String, Fail> = this.getString(COLUMN_VALUE)
+        .asSuccess()
 }

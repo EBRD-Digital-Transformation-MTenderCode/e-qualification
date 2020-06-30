@@ -11,7 +11,6 @@ import com.procurement.qualification.application.repository.QualificationRulesRe
 import com.procurement.qualification.domain.enums.OperationType
 import com.procurement.qualification.domain.enums.Pmd
 import com.procurement.qualification.infrastructure.configuration.DatabaseTestConfiguration
-import com.procurement.qualification.infrastructure.model.entity.QualificationRulesEntity
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -29,7 +28,7 @@ class QualificationRulesRepositoryIT {
         private const val COUNTRY = "country"
         private val PMD = Pmd.creator("GPA")
         private val OPERATION_TYPE = OperationType.creator("qualificationDeclareNonConflictOfInterest")
-        private const val JSON_DATE = "some data"
+        private const val VALUE = "some data"
 
         private const val KEYSPACE = "qualification"
         private const val TABLE_NAME = "qualification_rules"
@@ -75,8 +74,7 @@ class QualificationRulesRepositoryIT {
 
     @Test
     fun findBy() {
-        val expectedQualificationState = createQualificationRules()
-        insertQualificationState(expectedQualificationState)
+        insertQualificationState()
         val actual = qualificationStatesRepository.findBy(
             country = COUNTRY,
             operationType = OPERATION_TYPE,
@@ -85,7 +83,7 @@ class QualificationRulesRepositoryIT {
         ).get
 
         assertNotNull(actual)
-        assertEquals(actual, expectedQualificationState)
+        assertEquals(VALUE, actual)
     }
 
     private fun createKeyspace() {
@@ -115,22 +113,14 @@ class QualificationRulesRepositoryIT {
         )
     }
 
-    private fun insertQualificationState(qualificationRulesEntity: QualificationRulesEntity) {
+    private fun insertQualificationState() {
         val record = QueryBuilder.insertInto(KEYSPACE, TABLE_NAME)
-            .value(COLUMN_COUNTRY, qualificationRulesEntity.country)
-            .value(COLUMN_PMD, qualificationRulesEntity.pmd.toString())
-            .value(COLUMN_OPERATION_TYPE, qualificationRulesEntity.operationType.toString())
-            .value(COLUMN_PARAMETER, qualificationRulesEntity.parameter)
-            .value(COLUMN_VALUE, qualificationRulesEntity.value)
+            .value(COLUMN_COUNTRY, COUNTRY)
+            .value(COLUMN_PMD, PMD.toString())
+            .value(COLUMN_OPERATION_TYPE, OPERATION_TYPE.toString())
+            .value(COLUMN_PARAMETER, VALID_STATES_PARAMETER)
+            .value(COLUMN_VALUE, VALUE)
 
         session.execute(record)
     }
-
-    private fun createQualificationRules() = QualificationRulesEntity(
-        country = COUNTRY,
-        pmd = PMD,
-        operationType = OPERATION_TYPE,
-        value = JSON_DATE,
-        parameter = VALID_STATES_PARAMETER
-    )
 }

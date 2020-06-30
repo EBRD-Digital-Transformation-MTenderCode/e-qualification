@@ -4,7 +4,6 @@ import com.procurement.qualification.domain.enums.OperationType
 import com.procurement.qualification.domain.enums.Pmd
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.infrastructure.fail.Fail
-import com.procurement.qualification.infrastructure.model.entity.QualificationRulesEntity
 
 interface QualificationRulesRepository {
 
@@ -13,5 +12,5 @@ interface QualificationRulesRepository {
         pmd: Pmd,
         operationType: OperationType,
         parameter: String
-    ): Result<QualificationRulesEntity, Fail>
+    ): Result<String?, Fail>
 }

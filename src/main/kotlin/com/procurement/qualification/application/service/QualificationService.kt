@@ -24,7 +24,6 @@ import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
-import com.procurement.qualification.domain.model.state.States
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientValue
 import com.procurement.qualification.infrastructure.fail.Fail
@@ -34,7 +33,6 @@ import com.procurement.qualification.infrastructure.handler.create.qualification
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
-import com.procurement.qualification.infrastructure.model.entity.QualificationRulesEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -270,16 +268,6 @@ class QualificationServiceImpl(
             pmd = params.pmd
         )
             .doReturn { fail -> return ValidationResult.error(fail) }
-            .convert()
-            .doReturn { fail -> return ValidationResult.error(fail) }
-
-        if (states.isEmpty())
-            return ValidationError.QualificationStatesNotFoundOnCheckQualificationState(
-                country = params.country,
-                operationType = params.operationType,
-                pmd = params.pmd
-            )
-                .asValidationFailure()
 
         states.find { it.status == qualification.status && it.statusDetails == qualification.statusDetails }
             ?: return ValidationError.QualificationStatesIsInvalidOnCheckQualificationState(qualificationId = qualification.id)
@@ -558,16 +546,6 @@ class QualificationServiceImpl(
             is RequirementResponseValue.AsString -> false
         }
     }
-
-    private fun QualificationRulesEntity.convert(): Result<States, Fail.Incident.Database.DatabaseParsing> =
-        this.let {
-            transform.tryDeserialization(value = it.value, target = States::class.java)
-                .doReturn { fail ->
-                    return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                        .asFailure()
-                }
-        }
-            .asSuccess()
 
     private fun QualificationEntity.convert(): Result<Qualification, Fail.Incident.Database.DatabaseParsing> =
         this.let {

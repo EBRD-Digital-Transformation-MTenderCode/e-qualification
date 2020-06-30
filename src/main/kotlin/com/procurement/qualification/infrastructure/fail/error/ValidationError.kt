@@ -53,7 +53,7 @@ sealed class ValidationError(
             description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
         )
 
-    class QualificationStatesNotFoundOnCheckQualificationState(
+    class QualificationStatesNotFound(
         country: String,
         pmd: Pmd,
         operationType: OperationType
