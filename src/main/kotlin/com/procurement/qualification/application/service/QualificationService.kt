@@ -9,7 +9,6 @@ import com.procurement.qualification.application.model.params.DoDeclarationParam
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
 import com.procurement.qualification.application.repository.QualificationRepository
-import com.procurement.qualification.application.repository.QualificationStateRepository
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
@@ -35,7 +34,7 @@ import com.procurement.qualification.infrastructure.handler.create.qualification
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
-import com.procurement.qualification.infrastructure.model.entity.QualificationStateEntity
+import com.procurement.qualification.infrastructure.model.entity.QualificationRulesEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -56,7 +55,7 @@ class QualificationServiceImpl(
     val qualificationRepository: QualificationRepository,
     val transform: Transform,
     val generationService: GenerationService,
-    val qualificationStateRepository: QualificationStateRepository
+    val rulesService: RulesService
 ) : QualificationService {
 
     override fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail> {
@@ -265,7 +264,7 @@ class QualificationServiceImpl(
                     .doReturn { fail -> return ValidationResult.error(fail) }
             }
 
-        val states = qualificationStateRepository.findValidStatesBy(
+        val states = rulesService.findValidStates(
             country = params.country,
             operationType = params.operationType,
             pmd = params.pmd
@@ -560,7 +559,7 @@ class QualificationServiceImpl(
         }
     }
 
-    private fun QualificationStateEntity.convert(): Result<States, Fail.Incident.Database.DatabaseParsing> =
+    private fun QualificationRulesEntity.convert(): Result<States, Fail.Incident.Database.DatabaseParsing> =
         this.let {
             transform.tryDeserialization(value = it.value, target = States::class.java)
                 .doReturn { fail ->

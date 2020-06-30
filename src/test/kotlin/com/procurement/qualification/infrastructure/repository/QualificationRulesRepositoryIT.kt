@@ -7,11 +7,11 @@ import com.datastax.driver.core.PoolingOptions
 import com.datastax.driver.core.Session
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.nhaarman.mockito_kotlin.spy
-import com.procurement.qualification.application.repository.QualificationStateRepository
+import com.procurement.qualification.application.repository.QualificationRulesRepository
 import com.procurement.qualification.domain.enums.OperationType
 import com.procurement.qualification.domain.enums.Pmd
 import com.procurement.qualification.infrastructure.configuration.DatabaseTestConfiguration
-import com.procurement.qualification.infrastructure.model.entity.QualificationStateEntity
+import com.procurement.qualification.infrastructure.model.entity.QualificationRulesEntity
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -24,7 +24,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration(classes = [DatabaseTestConfiguration::class])
-class QualificationStatesRepositoryIT {
+class QualificationRulesRepositoryIT {
     companion object {
         private const val COUNTRY = "country"
         private val PMD = Pmd.creator("GPA")
@@ -46,7 +46,7 @@ class QualificationStatesRepositoryIT {
     private lateinit var container: CassandraTestContainer
 
     private lateinit var session: Session
-    private lateinit var qualificationStatesRepository: QualificationStateRepository
+    private lateinit var qualificationStatesRepository: QualificationRulesRepository
 
     @BeforeEach
     fun init() {
@@ -65,7 +65,7 @@ class QualificationStatesRepositoryIT {
         createKeyspace()
         createTable()
 
-        qualificationStatesRepository = CassandraQualificationStateRepository(session)
+        qualificationStatesRepository = CassandraQualificationRulesRepository(session)
     }
 
     @AfterEach
@@ -75,12 +75,13 @@ class QualificationStatesRepositoryIT {
 
     @Test
     fun findBy() {
-        val expectedQualificationState = createQualification()
+        val expectedQualificationState = createQualificationRules()
         insertQualificationState(expectedQualificationState)
-        val actual = qualificationStatesRepository.findValidStatesBy(
+        val actual = qualificationStatesRepository.findBy(
             country = COUNTRY,
             operationType = OPERATION_TYPE,
-            pmd = PMD
+            pmd = PMD,
+            parameter = VALID_STATES_PARAMETER
         ).get
 
         assertNotNull(actual)
@@ -114,18 +115,18 @@ class QualificationStatesRepositoryIT {
         )
     }
 
-    private fun insertQualificationState(qualificationStateEntity: QualificationStateEntity) {
+    private fun insertQualificationState(qualificationRulesEntity: QualificationRulesEntity) {
         val record = QueryBuilder.insertInto(KEYSPACE, TABLE_NAME)
-            .value(COLUMN_COUNTRY, qualificationStateEntity.country)
-            .value(COLUMN_PMD, qualificationStateEntity.pmd.toString())
-            .value(COLUMN_OPERATION_TYPE, qualificationStateEntity.operationType.toString())
-            .value(COLUMN_PARAMETER, qualificationStateEntity.parameter)
-            .value(COLUMN_VALUE, qualificationStateEntity.value)
+            .value(COLUMN_COUNTRY, qualificationRulesEntity.country)
+            .value(COLUMN_PMD, qualificationRulesEntity.pmd.toString())
+            .value(COLUMN_OPERATION_TYPE, qualificationRulesEntity.operationType.toString())
+            .value(COLUMN_PARAMETER, qualificationRulesEntity.parameter)
+            .value(COLUMN_VALUE, qualificationRulesEntity.value)
 
         session.execute(record)
     }
 
-    private fun createQualification() = QualificationStateEntity(
+    private fun createQualificationRules() = QualificationRulesEntity(
         country = COUNTRY,
         pmd = PMD,
         operationType = OPERATION_TYPE,

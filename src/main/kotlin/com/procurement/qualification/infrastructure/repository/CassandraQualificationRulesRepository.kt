@@ -2,18 +2,18 @@ package com.procurement.qualification.infrastructure.repository
 
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.Session
-import com.procurement.qualification.application.repository.QualificationStateRepository
+import com.procurement.qualification.application.repository.QualificationRulesRepository
 import com.procurement.qualification.domain.enums.OperationType
 import com.procurement.qualification.domain.enums.Pmd
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.infrastructure.extension.cassandra.tryExecute
 import com.procurement.qualification.infrastructure.fail.Fail
-import com.procurement.qualification.infrastructure.model.entity.QualificationStateEntity
+import com.procurement.qualification.infrastructure.model.entity.QualificationRulesEntity
 import org.springframework.stereotype.Repository
 
 @Repository
-class CassandraQualificationStateRepository(private val session: Session) : QualificationStateRepository {
+class CassandraQualificationRulesRepository(private val session: Session) : QualificationRulesRepository {
 
     companion object {
         private const val KEYSPACE = "qualification"
@@ -23,8 +23,6 @@ class CassandraQualificationStateRepository(private val session: Session) : Qual
         private const val COLUMN_OPERATION_TYPE = "operation_type"
         private const val COLUMN_PARAMETER = "parameter"
         private const val COLUMN_VALUE = "value"
-
-        private const val VALID_STATES_PARAMETER = "validStates"
 
         private const val FIND_BY_COUNTRY_PMD_OPERATION_TYPE_CQL = """
             SELECT $COLUMN_COUNTRY,
@@ -42,28 +40,13 @@ class CassandraQualificationStateRepository(private val session: Session) : Qual
 
     private val preparedFindByCountryPmdOperationType = session.prepare(FIND_BY_COUNTRY_PMD_OPERATION_TYPE_CQL)
 
-    override fun findValidStatesBy(
-        country: String,
-        pmd: Pmd,
-        operationType: OperationType
-    ): Result<QualificationStateEntity, Fail> {
-
-        val updatedOperationType = when (operationType) {
-            OperationType.QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST,
-            OperationType.QUALIFICATION,
-            OperationType.QUALIFICATION_CONSIDERATION -> operationType
-        }
-        return findBy(country = country, pmd = pmd, operationType = updatedOperationType, parameter = VALID_STATES_PARAMETER)
-            .orForwardFail { error -> return error }
-            .asSuccess()
-    }
-
-    private fun findBy(
+    override fun findBy(
         country: String,
         pmd: Pmd,
         operationType: OperationType,
         parameter: String
-    ): Result<QualificationStateEntity, Fail> {
+    ): Result<QualificationRulesEntity, Fail> {
+
         val query = preparedFindByCountryPmdOperationType.bind()
             .apply {
                 setString(COLUMN_COUNTRY, country)
@@ -80,7 +63,7 @@ class CassandraQualificationStateRepository(private val session: Session) : Qual
             .asSuccess()
     }
 
-    private fun Row.converter(): Result<QualificationStateEntity, Fail> {
+    private fun Row.converter(): Result<QualificationRulesEntity, Fail> {
         val pmd = this.getString(COLUMN_PMD)
         val pmdParsed = Pmd.orNull(pmd)
             ?: return Result.failure(Fail.Incident.Database.Parsing(column = COLUMN_PMD, value = pmd))
@@ -93,7 +76,7 @@ class CassandraQualificationStateRepository(private val session: Session) : Qual
                     value = operationType
                 )
             )
-        return QualificationStateEntity(
+        return QualificationRulesEntity(
             country = this.getString(COLUMN_COUNTRY),
             pmd = pmdParsed,
             operationType = operationTypeParsed,
