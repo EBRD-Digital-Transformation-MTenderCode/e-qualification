@@ -37,17 +37,10 @@ CREATE TABLE IF NOT EXISTS qualification.qualification_rules
     pmd            text,
     operation_type text,
     parameter      text,
-    value          text
-        primary key(country, pmd, operationType, parameter)
+    value          text,
+    primary key(country, pmd, operation_type, parameter)
 );
 
-INSERT INTO qualification.qualification_rules(country,
-                                              pmd,
-                                              operation_type,
-                                              parameter,
-                                              value)
-VALUES ('MD', 'GPA', 'qualificationConsideration', 'validStates', '[{"status":"pending","statusDetails":"awaiting"}]'),
-       ('MD', 'GPA', 'qualificationDeclareNonConflictOfInterest', 'validStates',
-        '[{"status":"pending","statusDetails":"consideration"}]'),
-       ('MD', 'GPA', 'qualification', 'validStates',
-        '[{"status":"pending","statusDetails":"consideration"},{"status":"pending","statusDetails":"active"},{"status":"pending","statusDetails":"unsuccessful"}]');
+INSERT INTO qualification.qualification_rules(country, pmd, operation_type, parameter, value) VALUES ('MD', 'GPA', 'qualificationConsideration', 'validStates', '[{"status":"pending","statusDetails":"awaiting"}]');
+INSERT INTO qualification.qualification_rules(country, pmd, operation_type, parameter, value) VALUES ('MD', 'GPA', 'qualificationDeclareNonConflictOfInterest', 'validStates', '[{"status":"pending","statusDetails":"consideration"}]');
+INSERT INTO qualification.qualification_rules(country, pmd, operation_type, parameter, value) VALUES ('MD', 'GPA', 'qualification', 'validStates', '[{"status":"pending","statusDetails":"consideration"},{"status":"pending","statusDetails":"active"},{"status":"pending","statusDetails":"unsuccessful"}]');
