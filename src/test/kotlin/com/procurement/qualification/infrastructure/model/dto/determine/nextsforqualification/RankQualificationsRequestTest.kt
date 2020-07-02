@@ -10,16 +10,16 @@ class RankQualificationsRequestTest : AbstractDTOTestBase<RankQualificationsRequ
 
     @Test
     fun full() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/determine.nextsforqualification/determine_nexts_for_qualification_request_full.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/rank.qualification/rank_qualifications_request_full.json")
     }
 
     @Test
     fun full1() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/determine.nextsforqualification/determine_nexts_for_qualification_request_1.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/rank.qualification/rank_qualifications_request_1.json")
     }
 
     @Test
     fun full2() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/determine.nextsforqualification/determine_nexts_for_qualification_request_2.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/rank.qualification/rank_qualifications_request_2.json")
     }
 }

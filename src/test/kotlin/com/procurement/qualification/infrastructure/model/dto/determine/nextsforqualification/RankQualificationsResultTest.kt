@@ -9,6 +9,6 @@ class RankQualificationsResultTest : AbstractDTOTestBase<RankQualificationsResul
 
     @Test
     fun full() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/determine.nextsforqualification/determine_nexts_for_qualification_result_full.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/rank.qualification/rank_qualifications_result_full.json")
     }
 }
