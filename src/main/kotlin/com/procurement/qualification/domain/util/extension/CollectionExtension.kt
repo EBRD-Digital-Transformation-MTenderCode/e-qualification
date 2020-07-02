@@ -29,3 +29,11 @@ fun <T, R, E> List<T>.mapResult(block: (T) -> Result<R, E>): Result<List<R>, E> 
 }
 
 fun <T> T?.toListOrEmpty(): List<T> = if (this != null) listOf(this) else emptyList()
+
+fun <T> getNewElements(received: Iterable<T>, known: Iterable<T>): Set<T> =
+    received.asSet().subtract(known.asSet())
+
+private fun <T> Iterable<T>.asSet(): Set<T> = when (this) {
+    is Set -> this
+    else -> this.toSet()
+}

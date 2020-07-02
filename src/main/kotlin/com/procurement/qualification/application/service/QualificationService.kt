@@ -26,6 +26,7 @@ import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientValue
+import com.procurement.qualification.domain.util.extension.getNewElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
@@ -282,48 +283,53 @@ class QualificationServiceImpl(
 
         val qualificationEntities = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
             .orForwardFail { fail -> return fail }
-
-        val dbQualificationsById = qualificationEntities.associateBy { it.id }
-
-        val filteredQualifications = params.qualifications
-            .map {
-                val qualification = dbQualificationsById[it.id]
+        val qualificationEntityById = qualificationEntities.associateBy { it.id }
+        val qualifications = params.qualifications
+            .map { qualification ->
+                qualificationEntityById[qualification.id]
+                    ?.let { entity ->
+                        entity.convert()
+                            .orForwardFail { fail -> return fail }
+                    }
                     ?: return ValidationError.QualificationNotFoundOnDoDeclaration(
                         cpid = cpid,
                         ocid = ocid,
-                        qualificationId = it.id
-                    )
-                        .asFailure()
-                qualification.convert()
-                    .orForwardFail { fail -> return fail }
+                        qualificationId = qualification.id
+                    ).asFailure()
             }
 
-        val filteredDbQualificationsById = filteredQualifications.associateBy { it.id }
-
-        val updatedQualifications = params.qualifications
-            .map { rqQualification ->
-
-                val qualification = filteredDbQualificationsById.getValue(rqQualification.id)
-
-                val dbRequirementResponsesById = qualification.requirementResponses
-                    .associateBy { it.id }
-
-                val updatedRR = rqQualification
+        val rqQualificationById = params.qualifications.associateBy { it.id }
+        val updatedQualifications = qualifications
+            .map { qualification ->
+                val rqRequirementResponseById = rqQualificationById.getValue(qualification.id)
                     .requirementResponses
-                    .map { rqRR ->
-                        dbRequirementResponsesById[rqRR.id]
-                            ?.copy(value = rqRR.value)
-                            ?: buildRequirementResponse(requirementResponse = rqRR)
+                    .associateBy { it.id }
+                val requirementResponseById = qualification.requirementResponses
+                    .associateBy { it.id }
+                val updatedRequirementResponses = requirementResponseById
+                    .map { (id, requirementResponse) ->
+                        rqRequirementResponseById[id]
+                            ?.let {
+                                requirementResponse.copy(value = it.value)
+                            }
+                            ?: requirementResponse
                     }
-                qualification.copy(requirementResponses = updatedRR)
+
+                val newRequirementResponses =
+                    getNewElements(received = rqRequirementResponseById.keys, known = requirementResponseById.keys)
+                        .map { id ->
+                            buildRequirementResponse(requirementResponse = rqRequirementResponseById.getValue(id))
+                        }
+
+                qualification.copy(requirementResponses = updatedRequirementResponses + newRequirementResponses)
             }
 
-        val updatedQualificationsEntity = updatedQualifications.map {
+        val updatedQualificationsEntity = updatedQualifications.map { qualification ->
             QualificationEntity(
                 cpid = cpid,
                 ocid = ocid,
-                id = it.id,
-                jsonData = transform.trySerialization(value = it)
+                id = qualification.id,
+                jsonData = transform.trySerialization(qualification)
                     .doReturn { fail ->
                         return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
                             .asFailure()
