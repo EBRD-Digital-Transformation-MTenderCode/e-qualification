@@ -55,7 +55,7 @@ class Command2Service(
         return when (action) {
             Command2Type.FIND_QUALIFICATION_IDS -> findQualificationIdsHandler.handle(node = node)
             Command2Type.CREATE_QUALIFICATIONS -> createQualificationsHandler.handle(node = node)
-            Command2Type.DETERMINE_NEXTS_FOR_QUALIFICATION -> determineNextsForQualificationHandler.handle(node = node)
+            Command2Type.RANK_QUALIFICATIONS -> determineNextsForQualificationHandler.handle(node = node)
             Command2Type.START_QUALIFICATION_PERIOD -> startQualificationPeriodHandler.handle(node = node)
             Command2Type.CHECK_ACCESS_TO_QUALIFICATION -> checkAccessToQualificationHandler.handle(node = node)
             Command2Type.CHECK_QUALIFICATION_STATE -> checkQualificationStateHandler.handle(node = node)

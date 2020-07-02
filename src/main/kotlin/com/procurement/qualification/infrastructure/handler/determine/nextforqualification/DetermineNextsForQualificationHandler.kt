@@ -30,5 +30,5 @@ class DetermineNextsForQualificationHandler(
         return qualificationService.determineNextsForQualification(params = params)
     }
 
-    override val action: Command2Type = Command2Type.DETERMINE_NEXTS_FOR_QUALIFICATION
+    override val action: Command2Type = Command2Type.RANK_QUALIFICATIONS
 }
