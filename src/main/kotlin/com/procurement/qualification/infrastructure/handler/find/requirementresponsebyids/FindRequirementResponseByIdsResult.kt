@@ -1,6 +1,6 @@
 package com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids
 
-
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.procurement.qualification.domain.model.organization.OrganizationId
 import com.procurement.qualification.domain.model.person.PersonId
@@ -14,6 +14,8 @@ data class FindRequirementResponseByIdsResult(
 ) {
     data class Qualification(
         @field:JsonProperty("id") @param:JsonProperty("id") val id: QualificationId,
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         @field:JsonProperty("requirementResponses") @param:JsonProperty("requirementResponses") val requirementResponses: List<RequirementResponse>
     ) {
         data class RequirementResponse(
