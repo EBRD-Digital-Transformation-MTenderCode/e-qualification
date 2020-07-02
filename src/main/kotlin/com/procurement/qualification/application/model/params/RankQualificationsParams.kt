@@ -149,7 +149,8 @@ class RankQualificationsParams private constructor(
                             CriteriaRelatesTo.AWARD,
                             CriteriaRelatesTo.ITEM,
                             CriteriaRelatesTo.LOT,
-                            CriteriaRelatesTo.TENDERER -> true
+                            CriteriaRelatesTo.TENDERER,
+                            CriteriaRelatesTo.QUALIFICATION -> true
                         }
                     }
                     .toSet()
@@ -238,7 +239,6 @@ class RankQualificationsParams private constructor(
                             val parsedRequirementId = RequirementId.parse(id)
                                 ?: return DataErrors.Validation.EmptyString(name = id)
                                     .asFailure()
-
 
                             val parsedDataType = parseEnum(
                                 attributeName = "dataType",
