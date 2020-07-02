@@ -388,8 +388,8 @@ class QualificationServiceImpl(
             ?.apply {
                 if (this.id != params.requirementResponse.id)
                     return ValidationError.InvalidRequirementResponseIdOnCheckDeclaration(
-                        expected = params.requirementResponse.id,
-                        actualId = this.id
+                        expected = this.id,
+                        actualId = params.requirementResponse.id
                     )
                         .asValidationFailure()
             }
