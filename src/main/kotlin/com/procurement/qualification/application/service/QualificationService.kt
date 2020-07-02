@@ -131,7 +131,7 @@ class QualificationServiceImpl(
             .orForwardFail { fail -> return fail }
 
         if (qualificationEntities.isEmpty())
-            return ValidationError.QualificationsNotFoundOnDetermineNextsForQualification(cpid = cpid, ocid = ocid)
+            return ValidationError.QualificationsNotFoundOnRankQualifications(cpid = cpid, ocid = ocid)
                 .asFailure()
 
         val qualifications = qualificationEntities
@@ -435,12 +435,12 @@ class QualificationServiceImpl(
     private fun filterByRelatedSubmissions(
         qualifications: List<Qualification>,
         submissions: List<RankQualificationsParams.Submission>
-    ): Result<List<Qualification>, ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification> {
+    ): Result<List<Qualification>, ValidationError.RelatedSubmissionNotEqualOnRankQualifications> {
 
         val qualificationByRelatedSubmission = qualifications.associateBy { it.relatedSubmission }
         return submissions.map {
             qualificationByRelatedSubmission[it.id]
-                ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
+                ?: return ValidationError.RelatedSubmissionNotEqualOnRankQualifications(
                     submissionId = it.id
                 )
                     .asFailure()
