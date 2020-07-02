@@ -1,11 +1,11 @@
 package com.procurement.qualification.infrastructure.model.dto.determine.nextsforqualification
 
-import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationRequest
+import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsRequest
 import com.procurement.qualification.infrastructure.model.dto.AbstractDTOTestBase
 import org.junit.jupiter.api.Test
 
-class DetermineNextsForQualificationRequestTest : AbstractDTOTestBase<DetermineNextsForQualificationRequest>(
-    DetermineNextsForQualificationRequest::class.java
+class RankQualificationsRequestTest : AbstractDTOTestBase<RankQualificationsRequest>(
+    RankQualificationsRequest::class.java
 ) {
 
     @Test

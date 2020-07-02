@@ -12,17 +12,17 @@ import com.procurement.qualification.infrastructure.web.parser.tryGetParams
 import org.springframework.stereotype.Component
 
 @Component
-class DetermineNextsForQualificationHandler(
+class RankQualificationsHandler(
     transform: Transform,
     logger: Logger,
     val qualificationService: QualificationService
-) : AbstractHandler2<Command2Type, List<DetermineNextsForQualificationResult>>(
+) : AbstractHandler2<Command2Type, List<RankQualificationsResult>>(
     transform = transform,
     logger = logger
 ) {
-    override fun execute(node: JsonNode): Result<List<DetermineNextsForQualificationResult>, Fail> {
+    override fun execute(node: JsonNode): Result<List<RankQualificationsResult>, Fail> {
 
-        val params = node.tryGetParams(target = DetermineNextsForQualificationRequest::class.java, transform = transform)
+        val params = node.tryGetParams(target = RankQualificationsRequest::class.java, transform = transform)
             .orForwardFail { fail -> return fail }
             .convert()
             .orForwardFail { fail -> return fail }

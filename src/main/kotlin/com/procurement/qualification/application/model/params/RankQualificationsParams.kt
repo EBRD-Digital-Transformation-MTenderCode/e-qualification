@@ -22,7 +22,7 @@ import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import com.procurement.qualification.lib.toSetBy
 import java.time.LocalDateTime
 
-class DetermineNextsForQualificationParams private constructor(
+class RankQualificationsParams private constructor(
     val cpid: Cpid,
     val ocid: Ocid,
     val submissions: List<Submission>,
@@ -36,7 +36,7 @@ class DetermineNextsForQualificationParams private constructor(
             ocid: String,
             submissions: List<Submission>,
             tender: Tender
-        ): Result<DetermineNextsForQualificationParams, DataErrors> {
+        ): Result<RankQualificationsParams, DataErrors> {
 
             val parsedCpid = parseCpid(value = cpid)
                 .orForwardFail { fail -> return fail }
@@ -44,7 +44,7 @@ class DetermineNextsForQualificationParams private constructor(
             val parsedOcid = parseOcid(value = ocid)
                 .orForwardFail { fail -> return fail }
 
-            return DetermineNextsForQualificationParams(
+            return RankQualificationsParams(
                 cpid = parsedCpid,
                 ocid = parsedOcid,
                 submissions = submissions,

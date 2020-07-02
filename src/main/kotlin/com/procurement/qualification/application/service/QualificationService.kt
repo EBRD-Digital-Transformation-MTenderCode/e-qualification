@@ -4,10 +4,10 @@ import com.procurement.qualification.application.model.params.CheckAccessToQuali
 import com.procurement.qualification.application.model.params.CheckDeclarationParams
 import com.procurement.qualification.application.model.params.CheckQualificationStateParams
 import com.procurement.qualification.application.model.params.CreateQualificationsParams
-import com.procurement.qualification.application.model.params.DetermineNextsForQualificationParams
 import com.procurement.qualification.application.model.params.DoDeclarationParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
+import com.procurement.qualification.application.model.params.RankQualificationsParams
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationStatus
@@ -30,7 +30,7 @@ import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
-import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationResult
+import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
 import org.springframework.stereotype.Service
@@ -40,7 +40,7 @@ interface QualificationService {
 
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
     fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident>
-    fun determineNextsForQualification(params: DetermineNextsForQualificationParams): Result<List<DetermineNextsForQualificationResult>, Fail>
+    fun determineNextsForQualification(params: RankQualificationsParams): Result<List<RankQualificationsResult>, Fail>
     fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail>
     fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
     fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail>
@@ -122,7 +122,7 @@ class QualificationServiceImpl(
             .asSuccess()
     }
 
-    override fun determineNextsForQualification(params: DetermineNextsForQualificationParams): Result<List<DetermineNextsForQualificationResult>, Fail> {
+    override fun determineNextsForQualification(params: RankQualificationsParams): Result<List<RankQualificationsResult>, Fail> {
 
         val cpid = params.cpid
         val ocid = params.ocid
@@ -197,7 +197,7 @@ class QualificationServiceImpl(
 
         return updatedQualifications
             .map { qualification ->
-                DetermineNextsForQualificationResult(id = qualification.id, statusDetails = qualification.statusDetails)
+                RankQualificationsResult(id = qualification.id, statusDetails = qualification.statusDetails)
             }
             .asSuccess()
     }
@@ -434,7 +434,7 @@ class QualificationServiceImpl(
 
     private fun filterByRelatedSubmissions(
         qualifications: List<Qualification>,
-        submissions: List<DetermineNextsForQualificationParams.Submission>
+        submissions: List<RankQualificationsParams.Submission>
     ): Result<List<Qualification>, ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification> {
 
         val qualificationByRelatedSubmission = qualifications.associateBy { it.relatedSubmission }
@@ -450,7 +450,7 @@ class QualificationServiceImpl(
 
     private fun setStatusDetailsByCriteria(
         qualifications: List<Qualification>,
-        criteria: List<DetermineNextsForQualificationParams.Tender.Criteria>?
+        criteria: List<RankQualificationsParams.Tender.Criteria>?
     ) = if (criteria.isNullOrEmpty()) {
         setStatusDetails(
             statusDetails = QualificationStatusDetails.CONSIDERATION,
@@ -511,7 +511,7 @@ class QualificationServiceImpl(
         .filter { scoring == it.scoring }
         .count() > 1
 
-    private fun findMinDate(submissions: List<DetermineNextsForQualificationParams.Submission>) =
+    private fun findMinDate(submissions: List<RankQualificationsParams.Submission>) =
         submissions.minBy { it.date }
 
     private fun setStatusDetails(statusDetails: QualificationStatusDetails, qualifications: List<Qualification>) =
