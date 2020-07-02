@@ -45,7 +45,7 @@ interface QualificationService {
     fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
     fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail>
     fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
-    fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult, Fail>
+    fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
 }
 
 @Service
@@ -397,7 +397,7 @@ class QualificationServiceImpl(
         return ValidationResult.ok()
     }
 
-    override fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult, Fail> {
+    override fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail> {
 
         val cpid = params.cpid
         val ocid = params.ocid
@@ -421,15 +421,19 @@ class QualificationServiceImpl(
         val filteredRequirementResponses = qualification.requirementResponses
             .filter { rqRequirementResponsesByIds.containsKey(it.id) }
 
-        return FindRequirementResponseByIdsResult(
-            qualification = FindRequirementResponseByIdsResult.Qualification(
-                id = params.qualificationId,
-                requirementResponses = filteredRequirementResponses.map { requirementResponse ->
-                    requirementResponse.convertToFindRequirementResponseByIdsResultRR()
-                }
-            )
-        )
-            .asSuccess()
+        return filteredRequirementResponses
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                FindRequirementResponseByIdsResult(
+                    qualification = FindRequirementResponseByIdsResult.Qualification(
+                        id = params.qualificationId,
+                        requirementResponses = filteredRequirementResponses.map { requirementResponse ->
+                            requirementResponse.convertToFindRequirementResponseByIdsResultRR()
+                        }
+                    )
+                )
+            }
+            .asSuccess<FindRequirementResponseByIdsResult?, Fail>()
     }
 
     private fun filterByRelatedSubmissions(
