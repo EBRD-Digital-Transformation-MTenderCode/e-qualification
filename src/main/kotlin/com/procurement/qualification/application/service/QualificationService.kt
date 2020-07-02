@@ -185,7 +185,7 @@ class QualificationServiceImpl(
             qualificationId = qualificationId
         )
             .doReturn { fail -> return ValidationResult.error(fail) }
-            ?: return ValidationError.QualificationNotFoundByCheckAccessToQualification(
+            ?: return ValidationError.QualificationNotFoundFor.CheckAccessToQualification(
                 cpid = cpid,
                 ocid = ocid,
                 qualificationId = qualificationId
@@ -215,7 +215,7 @@ class QualificationServiceImpl(
             qualificationId = qualificationId
         )
             .doReturn { fail -> return ValidationResult.error(fail) }
-            ?: return ValidationError.QualificationNotFoundByCheckQualificationState(
+            ?: return ValidationError.QualificationNotFoundFor.CheckQualificationState(
                 cpid = cpid,
                 ocid = ocid,
                 qualificationId = qualificationId
@@ -248,7 +248,7 @@ class QualificationServiceImpl(
         val filteredQualifications = params.qualifications
             .map {
                 dbQualificationsById[it.id]
-                    ?: return ValidationError.QualificationNotFoundOnDoDeclaration(
+                    ?: return ValidationError.QualificationNotFoundFor.DoDeclaration(
                         cpid = cpid,
                         ocid = ocid,
                         qualificationId = it.id
@@ -295,7 +295,7 @@ class QualificationServiceImpl(
             qualificationId = qualificationId
         )
             .doReturn { fail -> return ValidationResult.error(fail) }
-            ?: return ValidationError.QualificationNotFoundOnCheckDeclaration(
+            ?: return ValidationError.QualificationNotFoundFor.CheckDeclaration(
                 cpid = cpid,
                 ocid = ocid,
                 qualificationId = qualificationId
@@ -351,7 +351,7 @@ class QualificationServiceImpl(
             qualificationId = qualificationId
         )
             .orForwardFail { fail -> return fail }
-            ?: return ValidationError.QualificationNotFoundOnFindRequirementResponseByIds(cpid, ocid, qualificationId)
+            ?: return ValidationError.QualificationNotFoundFor.FindRequirementResponseByIds(cpid, ocid, qualificationId)
                 .asFailure()
 
         val rqRequirementResponsesByIds = params.requirementResponseIds
