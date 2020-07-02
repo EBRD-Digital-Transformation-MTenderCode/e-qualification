@@ -1,0 +1,65 @@
+{
+  "qualifications": [
+    {
+      "id": "70f2f12e-135b-4285-a857-5fbb8ccd9c7b",
+      "requirementResponses": [
+        {
+          "id": "9f0f599c-52f0-42f5-a5ee-ea8a1274f11f",
+          "value": "Unknown Type: string,number,integer,boolean",
+          "relatedTenderer": {
+            "id": "string"
+          },
+          "requirement": {
+            "id": "string"
+          },
+          "responder": {
+            "id": "string",
+            "name": "string"
+          }
+        },
+        {
+          "id": "60cbd9df-30db-4a20-9a12-52e9b7ebc21a",
+          "value": 2,
+          "relatedTenderer": {
+            "id": "string"
+          },
+          "requirement": {
+            "id": "string"
+          },
+          "responder": {
+            "id": "string",
+            "name": "string"
+          }
+        },
+        {
+          "id": "d2d9ade5-7ddb-4a3c-8477-7ec0e3659f3c",
+          "value": 2.001,
+          "relatedTenderer": {
+            "id": "string"
+          },
+          "requirement": {
+            "id": "string"
+          },
+          "responder": {
+            "id": "string",
+            "name": "string"
+          }
+        },
+        {
+          "id": "5115c6ae-13e2-49a3-bdc8-cc5638dcced4",
+          "value": true,
+          "relatedTenderer": {
+            "id": "string"
+          },
+          "requirement": {
+            "id": "string"
+          },
+          "responder": {
+            "id": "string",
+            "name": "string"
+          }
+        }
+      ]
+    }
+  ]
+}

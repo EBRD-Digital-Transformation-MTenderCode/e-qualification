@@ -10,9 +10,11 @@ import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
 import com.procurement.qualification.domain.enums.RequirementDataType
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.domain.model.submission.tryCreateSubmissionId
 import com.procurement.qualification.domain.util.extension.getElementIfOnlyOne
@@ -208,7 +210,7 @@ class DetermineNextsForQualificationParams private constructor(
                 }
 
                 class Requirement private constructor(
-                    val id: String,
+                    val id: RequirementId,
                     val title: String,
                     val dataType: RequirementDataType,
                     val description: String?
@@ -232,6 +234,12 @@ class DetermineNextsForQualificationParams private constructor(
                             dataType: String,
                             description: String?
                         ): Result<Requirement, DataErrors> {
+
+                            val parsedRequirementId = RequirementId.parse(id)
+                                ?: return DataErrors.Validation.EmptyString(name = id)
+                                    .asFailure()
+
+
                             val parsedDataType = parseEnum(
                                 attributeName = "dataType",
                                 value = dataType,
@@ -241,7 +249,7 @@ class DetermineNextsForQualificationParams private constructor(
                                 .orForwardFail { fail -> return fail }
 
                             return Requirement(
-                                id = id,
+                                id = parsedRequirementId,
                                 description = description,
                                 dataType = parsedDataType,
                                 title = title
