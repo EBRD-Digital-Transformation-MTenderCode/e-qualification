@@ -27,7 +27,7 @@ class RankQualificationsHandler(
             .convert()
             .orForwardFail { fail -> return fail }
 
-        return qualificationService.determineNextsForQualification(params = params)
+        return qualificationService.rankQualifications(params = params)
     }
 
     override val action: Command2Type = Command2Type.RANK_QUALIFICATIONS

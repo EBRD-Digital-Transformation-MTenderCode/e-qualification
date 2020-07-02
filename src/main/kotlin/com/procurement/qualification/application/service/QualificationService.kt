@@ -40,7 +40,7 @@ interface QualificationService {
 
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
     fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident>
-    fun determineNextsForQualification(params: RankQualificationsParams): Result<List<RankQualificationsResult>, Fail>
+    fun rankQualifications(params: RankQualificationsParams): Result<List<RankQualificationsResult>, Fail>
     fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail>
     fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
     fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail>
@@ -122,7 +122,7 @@ class QualificationServiceImpl(
             .asSuccess()
     }
 
-    override fun determineNextsForQualification(params: RankQualificationsParams): Result<List<RankQualificationsResult>, Fail> {
+    override fun rankQualifications(params: RankQualificationsParams): Result<List<RankQualificationsResult>, Fail> {
 
         val cpid = params.cpid
         val ocid = params.ocid
