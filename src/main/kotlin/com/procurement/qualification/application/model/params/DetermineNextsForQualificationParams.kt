@@ -4,6 +4,7 @@ import com.procurement.qualification.application.model.parseCpid
 import com.procurement.qualification.application.model.parseDate
 import com.procurement.qualification.application.model.parseEnum
 import com.procurement.qualification.application.model.parseOcid
+import com.procurement.qualification.application.model.parseSubmissionId
 import com.procurement.qualification.domain.enums.CriteriaRelatesTo
 import com.procurement.qualification.domain.enums.CriteriaSource
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
@@ -16,7 +17,6 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.submission.SubmissionId
-import com.procurement.qualification.domain.model.submission.tryCreateSubmissionId
 import com.procurement.qualification.domain.util.extension.getElementIfOnlyOne
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import com.procurement.qualification.lib.toSetBy
@@ -149,7 +149,8 @@ class DetermineNextsForQualificationParams private constructor(
                             CriteriaRelatesTo.AWARD,
                             CriteriaRelatesTo.ITEM,
                             CriteriaRelatesTo.LOT,
-                            CriteriaRelatesTo.TENDERER -> true
+                            CriteriaRelatesTo.TENDERER,
+                            CriteriaRelatesTo.QUALIFICATION -> true
                         }
                     }
                     .toSet()
@@ -268,7 +269,7 @@ class DetermineNextsForQualificationParams private constructor(
     ) {
         companion object {
             fun tryCreate(id: String, date: String): Result<Submission, DataErrors> {
-                val parsedId = tryCreateSubmissionId(value = id)
+                val parsedId = parseSubmissionId(value = id)
                     .orForwardFail { fail -> return fail }
                 val parsedDate = parseDate(value = date, attributeName = "date")
                     .orForwardFail { fail -> return fail }
