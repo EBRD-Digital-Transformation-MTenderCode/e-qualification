@@ -8,16 +8,16 @@ class CreateQualificationsRequestTest : AbstractDTOTestBase<CreateQualifications
 
     @Test
     fun full() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/create.qualification/create_qualifications_request_full.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/create/qualifications/create_qualifications_request_full.json")
     }
 
     @Test
     fun full1() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/create.qualification/create_qualifications_request_1.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/create/qualifications/create_qualifications_request_1.json")
     }
 
     @Test
     fun full2() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/create.qualification/create_qualifications_request_2.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/create/qualifications/create_qualifications_request_2.json")
     }
 }
