@@ -2,10 +2,12 @@ package com.procurement.qualification.domain.model.qualification
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.procurement.qualification.domain.enums.DocumentType
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
+import com.procurement.qualification.domain.model.document.DocumentId
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.organization.OrganizationId
 import com.procurement.qualification.domain.model.person.PersonId
@@ -30,7 +32,13 @@ data class Qualification(
     @param:JsonProperty("scoring") @field:JsonProperty("scoring") val scoring: Scoring?,
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @param:JsonProperty("requirementResponses") @field:JsonProperty("requirementResponses") val requirementResponses: List<RequirementResponse> = emptyList()
+    @param:JsonProperty("requirementResponses") @field:JsonProperty("requirementResponses") val requirementResponses: List<RequirementResponse> = emptyList(),
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @param:JsonProperty("documents") @field:JsonProperty("documents") val documents: List<Document> = emptyList(),
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @field:JsonProperty("internalId")  @param:JsonProperty("internalId") val internalId: String? = null
 ) {
     data class RequirementResponse(
         @param:JsonProperty("id") @field:JsonProperty("id") val id: RequirementResponseId,
@@ -52,4 +60,12 @@ data class Qualification(
             @param:JsonProperty("name") @field:JsonProperty("name") val name: String
         )
     }
+
+    data class Document(
+        @param:JsonProperty("id") @field:JsonProperty("id") val id: DocumentId,
+        @param:JsonProperty("documentType") @field:JsonProperty("documentType") val documentType: DocumentType,
+        @param:JsonProperty("title") @field:JsonProperty("title") val title: String,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @param:JsonProperty("description") @field:JsonProperty("description") val description: String?
+    )
 }

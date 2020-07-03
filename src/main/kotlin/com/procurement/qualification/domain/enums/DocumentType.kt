@@ -3,17 +3,15 @@ package com.procurement.qualification.domain.enums
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue
 
-enum class CriteriaRelatesTo(@JsonValue override val key: String) : EnumElementProvider.Key {
+enum class DocumentType(@JsonValue override val key: String) : EnumElementProvider.Key {
 
-    AWARD("award"),
-    ITEM("item"),
-    LOT("lot"),
-    TENDERER("tenderer"),
-    QUALIFICATION("qualification");
+    NOTICE("notice"),
+    EVALUATION_REPORTS("evaluationReports"),
+    CONFLICT_OF_INTEREST("conflictOfInterest");
 
     override fun toString(): String = key
 
-    companion object : EnumElementProvider<CriteriaRelatesTo>(info = info()) {
+    companion object : EnumElementProvider<DocumentType>(info = info()) {
 
         @JvmStatic
         @JsonCreator
