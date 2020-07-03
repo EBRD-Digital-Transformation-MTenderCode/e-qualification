@@ -8,6 +8,7 @@ import com.procurement.qualification.application.model.params.DetermineNextsForQ
 import com.procurement.qualification.application.model.params.DoDeclarationParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
+import com.procurement.qualification.application.model.params.SetNextForQualificationParams
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationStatus
@@ -33,6 +34,7 @@ import com.procurement.qualification.infrastructure.handler.create.declaration.D
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
+import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -47,6 +49,7 @@ interface QualificationService {
     fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail>
     fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
+    fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult, Fail>
 }
 
 @Service
@@ -442,6 +445,146 @@ class QualificationServiceImpl(
             .asSuccess<FindRequirementResponseByIdsResult?, Fail>()
     }
 
+    override fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult, Fail> {
+
+        val cpid = params.cpid
+        val ocid = params.ocid
+
+        val qualificationEntity = qualificationRepository.findBy(
+            cpid = cpid,
+            ocid = ocid
+        )
+            .orForwardFail { fail -> return fail }
+
+        val qualifications = qualificationEntity.map {
+            it.convert()
+                .orForwardFail { fail -> return fail }
+        }
+
+        val filteredQualifications = filterByRelatedSubmission(
+            qualifications = qualifications,
+            submissions = params.submissions
+        )
+            .orForwardFail { fail -> return fail }
+
+        val qualificationSystemMethod = params.tender.otherCriteria.qualificationSystemMethod
+        val reductionCriteria = params.tender.otherCriteria.reductionCriteria
+
+        val isAlreadyStatusSet = when (qualificationSystemMethod) {
+            QualificationSystemMethod.AUTOMATED -> when (reductionCriteria) {
+                ReductionCriteria.SCORING -> filteredQualifications
+                    .filter {
+                        it.statusDetails != null
+                            || it.statusDetails == QualificationStatusDetails.CONSIDERATION
+                            || it.statusDetails == QualificationStatusDetails.AWAITING
+                    }
+                    .isNotEmpty()
+                ReductionCriteria.NONE -> true
+            }
+            QualificationSystemMethod.MANUAL -> when (reductionCriteria) {
+                ReductionCriteria.SCORING -> true
+                ReductionCriteria.NONE -> true
+            }
+        }
+
+        return if (isAlreadyStatusSet) {
+            SetNextForQualificationResult(qualifications = emptyList())
+                .asSuccess()
+        } else {
+            val qualificationWithMinScoring = findMinScoring(qualifications = filteredQualifications)!!
+            val hasSameScoring = hasSameScoring(
+                qualifications = qualifications,
+                scoring = qualificationWithMinScoring.scoring!!
+            )
+            val qualificationToUpdate =
+                if (hasSameScoring) {
+                    val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
+                    val qualificationRelatedToSubmission = filteredQualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }!!
+                    listOf(qualificationRelatedToSubmission)
+                } else {
+                    listOf(qualificationWithMinScoring)
+                }
+
+            val updatedQualifications = if (params.criteria.isNullOrEmpty()) {
+                setStatusDetails(
+                    statusDetails = QualificationStatusDetails.CONSIDERATION,
+                    qualifications = qualificationToUpdate
+                )
+            } else {
+                setStatusDetails(
+                    statusDetails = QualificationStatusDetails.AWAITING,
+                    qualifications = qualificationToUpdate
+                )
+            }
+            val updatedQualificationsEntity = updatedQualifications.map { qualification ->
+                QualificationEntity(
+                    cpid = cpid,
+                    ocid = ocid,
+                    id = qualification.id,
+                    jsonData = transform.trySerialization(qualification)
+                        .doReturn { fail ->
+                            return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
+                                .asFailure()
+                        }
+                )
+            }
+
+            qualificationRepository.updateAll(updatedQualificationsEntity)
+
+            return SetNextForQualificationResult(
+                qualifications = updatedQualifications
+                    .map { qualification -> qualification.convert() }
+            )
+                .asSuccess()
+        }
+    }
+
+    private fun Qualification.convert(): SetNextForQualificationResult.Qualification =
+        SetNextForQualificationResult.Qualification(
+            id = this.id,
+            date = this.date,
+            status = this.status,
+            relatedSubmission = this.relatedSubmission,
+            scoring = this.scoring,
+            internalId = this.internalId,
+            statusDetails = this.statusDetails!!,
+            documents = this.documents
+                .map {
+                    SetNextForQualificationResult.Qualification.Document(
+                        id = it.id,
+                        description = it.description,
+                        title = it.title,
+                        documentType = it.documentType
+                    )
+                },
+            requirementResponses = this.requirementResponses
+                .map { requirementResponse ->
+                    SetNextForQualificationResult.Qualification.RequirementResponse(
+                        id = requirementResponse.id,
+                        value = requirementResponse.value,
+                        requirement = requirementResponse.requirement
+                            .let {
+                                SetNextForQualificationResult.Qualification.RequirementResponse.Requirement(
+                                    id = it.id
+                                )
+                            },
+                        relatedTenderer = requirementResponse.relatedTenderer
+                            .let {
+                                SetNextForQualificationResult.Qualification.RequirementResponse.RelatedTenderer(
+                                    id = it.id
+                                )
+                            },
+                        responder = requirementResponse.responder
+                            .let {
+                                SetNextForQualificationResult.Qualification.RequirementResponse.Responder(
+                                    id = it.id,
+                                    name = it.name
+                                )
+                            }
+                    )
+                }
+        )
+
     private fun filterByRelatedSubmissions(
         qualifications: List<Qualification>,
         submissions: List<DetermineNextsForQualificationParams.Submission>
@@ -451,6 +594,22 @@ class QualificationServiceImpl(
         return submissions.map {
             qualificationByRelatedSubmission[it.id]
                 ?: return ValidationError.RelatedSubmissionNotEqualOnDetermineNextsForQualification(
+                    submissionId = it.id
+                )
+                    .asFailure()
+        }
+            .asSuccess()
+    }
+
+    private fun filterByRelatedSubmission(
+        qualifications: List<Qualification>,
+        submissions: List<SetNextForQualificationParams.Submission>
+    ): Result<List<Qualification>, ValidationError.RelatedSubmissionNotEqualOnSetNextForQualification> {
+
+        val qualificationByRelatedSubmission = qualifications.associateBy { it.relatedSubmission }
+        return submissions.map {
+            qualificationByRelatedSubmission[it.id]
+                ?: return ValidationError.RelatedSubmissionNotEqualOnSetNextForQualification(
                     submissionId = it.id
                 )
                     .asFailure()
@@ -522,6 +681,9 @@ class QualificationServiceImpl(
         .count() > 1
 
     private fun findMinDate(submissions: List<DetermineNextsForQualificationParams.Submission>) =
+        submissions.minBy { it.date }
+
+    private fun findMinDate(submissions: List<SetNextForQualificationParams.Submission>) =
         submissions.minBy { it.date }
 
     private fun setStatusDetails(statusDetails: QualificationStatusDetails, qualifications: List<Qualification>) =

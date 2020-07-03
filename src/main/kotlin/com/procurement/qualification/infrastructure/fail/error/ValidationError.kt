@@ -104,4 +104,10 @@ sealed class ValidationError(
             numberError = "7.18.1",
             description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
         )
+
+    class RelatedSubmissionNotEqualOnSetNextForQualification(submissionId: SubmissionId) :
+        ValidationError(
+            numberError = "7.22.1",
+            description = "Related submission in qualifications not found on submission id='$submissionId'."
+        )
 }
