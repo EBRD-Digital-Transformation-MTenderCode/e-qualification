@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.model.dto.create.qualification
+package com.procurement.qualification.infrastructure.model.dto.create.qualifications
 
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsRequest
 import com.procurement.qualification.infrastructure.model.dto.AbstractDTOTestBase
