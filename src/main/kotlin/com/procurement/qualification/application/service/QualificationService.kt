@@ -6,6 +6,7 @@ import com.procurement.qualification.application.model.params.CheckQualification
 import com.procurement.qualification.application.model.params.CreateQualificationsParams
 import com.procurement.qualification.application.model.params.DetermineNextsForQualificationParams
 import com.procurement.qualification.application.model.params.DoDeclarationParams
+import com.procurement.qualification.application.model.params.DoQualificationParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
 import com.procurement.qualification.application.model.params.SetNextForQualificationParams
@@ -31,6 +32,7 @@ import com.procurement.qualification.domain.util.extension.getNewElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
+import com.procurement.qualification.infrastructure.handler.create.qualification.DoQualificationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
@@ -50,6 +52,7 @@ interface QualificationService {
     fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
     fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult, Fail>
+    fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail>
 }
 
 @Service
@@ -538,6 +541,135 @@ class QualificationServiceImpl(
                 .asSuccess()
         }
     }
+
+    override fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail> {
+
+        val cpid = params.cpid
+        val ocid = params.ocid
+
+        val qualificationEntity = qualificationRepository.findBy(
+            cpid = cpid,
+            ocid = ocid
+        )
+            .orForwardFail { fail -> return fail }
+
+        val qualifications = qualificationEntity.map {
+            it.convert()
+                .orForwardFail { fail -> return fail }
+        }
+
+        val dbQualificationByIds = qualifications
+            .associateBy { it.id }
+
+        val updatedQualifications = params.qualifications
+            .map { rqQualification ->
+                dbQualificationByIds[rqQualification.id]
+                    ?.let { updateQualification(rqQualification = rqQualification, qualification = it) }
+                    ?: return ValidationError.QualificationNotFoundOnDoQualification(
+                        cpid = cpid,
+                        ocid = ocid,
+                        qualificationId = rqQualification.id
+                    )
+                        .asFailure()
+            }
+
+        val updatedQualificationsEntity = updatedQualifications.map { qualification ->
+            QualificationEntity(
+                cpid = cpid,
+                ocid = ocid,
+                id = qualification.id,
+                jsonData = transform.trySerialization(qualification)
+                    .doReturn { fail ->
+                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
+                            .asFailure()
+                    }
+            )
+        }
+
+        qualificationRepository.updateAll(updatedQualificationsEntity)
+
+        return DoQualificationResult(
+            qualifications = updatedQualifications.map {
+                it.convertToDoQualificationResult()
+            }
+        )
+            .asSuccess()
+    }
+
+    private fun updateQualification(
+        rqQualification: DoQualificationParams.Qualification,
+        qualification: Qualification
+    ): Qualification {
+
+        val documentsByIds = qualification.documents
+            .associateBy { it.id }
+
+        val updatedDocuments = rqQualification.documents
+            .map { rqDocument ->
+                documentsByIds[rqDocument.id]
+                    ?.let { updateDocument(rqDocument = rqDocument, document = it) }
+                    ?: Qualification.Document(
+                        id = rqDocument.id,
+                        description = rqDocument.description,
+                        title = rqDocument.title,
+                        documentType = rqDocument.documentType
+                    ) //FR.COM-7.20.4
+            }
+
+        return qualification.copy(
+            internalId = rqQualification.internalId,  //FR.COM-7.20.2
+            description = rqQualification.description, //FR.COM-7.20.3
+            documents = updatedDocuments,
+            statusDetails = rqQualification.statusDetails  //FR.COM-7.20.1
+        )
+    }
+
+    private fun updateDocument(
+        rqDocument: DoQualificationParams.Qualification.Document,
+        document: Qualification.Document
+    ): Qualification.Document = document.copy(
+        title = rqDocument.title, //FR.COM-7.20.6
+        documentType = rqDocument.documentType, //FR.COM-7.20.5
+        description = rqDocument.description ?: document.description //FR.COM-7.20.7
+    )
+
+    private fun Qualification.convertToDoQualificationResult() =
+        DoQualificationResult.Qualification(
+            id = this.id,
+            internalId = this.internalId,
+            statusDetails = this.statusDetails,
+            relatedSubmission = this.relatedSubmission,
+            status = this.status,
+            date = this.date,
+            scoring = this.scoring,
+            requirementResponses = this.requirementResponses
+                .map { requirementResponse ->
+                    DoQualificationResult.Qualification.RequirementResponse(
+                        id = requirementResponse.id,
+                        value = requirementResponse.value,
+                        relatedTenderer = requirementResponse.relatedTenderer
+                            .let { DoQualificationResult.Qualification.RequirementResponse.RelatedTenderer(id = it.id) },
+                        requirement = requirementResponse.requirement
+                            .let { DoQualificationResult.Qualification.RequirementResponse.Requirement(id = it.id) },
+                        responder = requirementResponse.responder
+                            .let {
+                                DoQualificationResult.Qualification.RequirementResponse.Responder(
+                                    id = it.id,
+                                    name = it.name
+                                )
+                            }
+                    )
+                },
+            documents = this.documents
+                .map {
+                    DoQualificationResult.Qualification.Document(
+                        id = it.id,
+                        description = it.description,
+                        documentType = it.documentType,
+                        title = it.title
+                    )
+                }
+        )
 
     private fun Qualification.convert(): SetNextForQualificationResult.Qualification =
         SetNextForQualificationResult.Qualification(
