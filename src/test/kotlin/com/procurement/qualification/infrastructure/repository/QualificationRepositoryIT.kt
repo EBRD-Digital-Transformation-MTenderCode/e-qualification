@@ -13,16 +13,21 @@ import com.nhaarman.mockito_kotlin.doThrow
 import com.nhaarman.mockito_kotlin.spy
 import com.nhaarman.mockito_kotlin.whenever
 import com.procurement.qualification.application.repository.QualificationRepository
+import com.procurement.qualification.application.service.Transform
+import com.procurement.qualification.domain.enums.QualificationStatus
+import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
+import com.procurement.qualification.domain.model.measure.Scoring
+import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
+import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
 import com.procurement.qualification.infrastructure.configuration.DatabaseTestConfiguration
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
-import com.procurement.qualification.json.loadJson
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -32,6 +37,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import java.time.LocalDateTime
+import java.util.*
 
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration(classes = [DatabaseTestConfiguration::class])
@@ -39,8 +46,7 @@ class QualificationRepositoryIT {
     companion object {
         private val CPID = Cpid.tryCreateOrNull("ocds-t1s2t3-MD-1565251033096")!!
         private val OCID = Ocid.tryCreateOrNull("ocds-b3wdp1-MD-1581509539187-EV-1581509653044")!!
-        private val QUALIFICATION_PATH = "json/dto/qualification/qualification_full.json"
-        private val QUALIFICATION_JSON = loadJson(QUALIFICATION_PATH)
+        private val DATE = JsonDateTimeDeserializer.deserialize(JsonDateTimeSerializer.serialize(LocalDateTime.now()))
 
         private const val KEYSPACE = "qualification"
         private const val TABLE_NAME = "qualifications"
@@ -52,6 +58,9 @@ class QualificationRepositoryIT {
 
     @Autowired
     private lateinit var container: CassandraTestContainer
+
+    @Autowired
+    private lateinit var transform: Transform
 
     private lateinit var session: Session
     private lateinit var qualificationRepository: QualificationRepository
@@ -73,7 +82,7 @@ class QualificationRepositoryIT {
         createKeyspace()
         createTable()
 
-        qualificationRepository = CassandraQualificationRepository(session)
+        qualificationRepository = CassandraQualificationRepository(session, transform)
     }
 
     @AfterEach
@@ -85,11 +94,10 @@ class QualificationRepositoryIT {
     fun findBy() {
         val qualification = createQualification()
         insertQualification(qualification)
-        val actual = qualificationRepository.findBy(cpid = qualification.cpid, ocid = qualification.ocid).get
+        val actual = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
 
         val expectedList = listOf(qualification)
 
-        assertFalse(actual.isEmpty())
         assertEquals(actual, expectedList)
     }
 
@@ -98,8 +106,8 @@ class QualificationRepositoryIT {
         val expected = createQualification()
         insertQualification(expected)
         val actual = qualificationRepository.findBy(
-            cpid = expected.cpid,
-            ocid = expected.ocid,
+            cpid = CPID,
+            ocid = OCID,
             qualificationId = expected.id
         ).get
 
@@ -111,8 +119,8 @@ class QualificationRepositoryIT {
     fun verifyThatFindByIsNotFound() {
         val expected = createQualification()
         val actual = qualificationRepository.findBy(
-            cpid = expected.cpid,
-            ocid = expected.ocid,
+            cpid = CPID,
+            ocid = OCID,
             qualificationId = expected.id
         ).get
 
@@ -127,8 +135,8 @@ class QualificationRepositoryIT {
             .execute(any<BoundStatement>())
 
         val actual = qualificationRepository.findBy(
-            cpid = expected.cpid,
-            ocid = expected.ocid,
+            cpid = CPID,
+            ocid = OCID,
             qualificationId = expected.id
         )
 
@@ -139,8 +147,8 @@ class QualificationRepositoryIT {
     @Test
     fun save() {
         val qualification = createQualification()
-        qualificationRepository.save(qualification)
-        val savedPeriod = qualificationRepository.findBy(cpid = qualification.cpid, ocid = qualification.ocid).get
+        qualificationRepository.save(CPID, OCID, qualification)
+        val savedPeriod = qualificationRepository.findBy(CPID, OCID).get
 
         val expectedList = listOf(qualification)
         assertEquals(savedPeriod, expectedList)
@@ -158,7 +166,7 @@ class QualificationRepositoryIT {
             .whenever(session)
             .execute(any<BoundStatement>())
 
-        val actual = qualificationRepository.save(createQualification())
+        val actual = qualificationRepository.save(CPID, OCID, createQualification())
 
         assertTrue(actual.isFail)
         assertTrue(actual.error is Fail.Incident.Database.Interaction)
@@ -169,7 +177,7 @@ class QualificationRepositoryIT {
         val qual1 = createQualification()
         val qual2 = createQualification()
         val expectedQualifications = listOf(qual1, qual2)
-        qualificationRepository.saveAll(expectedQualifications)
+        qualificationRepository.saveAll(CPID, OCID, expectedQualifications)
         val savedQualifications = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
         expectedQualifications.forEach { expected ->
             val actualQualification = savedQualifications.find { it.id == expected.id }!!
@@ -183,8 +191,11 @@ class QualificationRepositoryIT {
         val qual2 = createQualification()
         insertQualification(qual1)
         insertQualification(qual2)
-        val updatedQualifications = listOf(qual1.copy(jsonData = "new json"), qual2.copy(jsonData = "new json2"))
-        qualificationRepository.updateAll(updatedQualifications)
+        val updatedQualifications = listOf(
+            qual1.copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
+            qual2.copy(relatedSubmission = UUID.randomUUID())
+        )
+        qualificationRepository.updateAll(CPID, OCID, updatedQualifications)
         val updated = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
         updated.forEach { expected ->
             val actualQualification = updatedQualifications.find { it.id == expected.id }!!
@@ -193,12 +204,55 @@ class QualificationRepositoryIT {
     }
 
     @Test
+    fun findAll_success() {
+        val qual1 = createQualification()
+        val qual2 = createQualification()
+        insertQualification(qual1)
+        insertQualification(qual2)
+        val qualifications = qualificationRepository.findBy(
+            cpid = CPID, ocid = OCID, qualificationIds = listOf(qual1.id, qual2.id)
+        ).get
+        val uniqueQualifications = qualifications.toSet()
+        val expected = setOf(qual1, qual2)
+
+        assertEquals(qualifications.size, uniqueQualifications.size)
+        assertEquals(expected, uniqueQualifications)
+    }
+
+    @Test
+    fun findAll_noQualificationFound_success() {
+        val qualification = createQualification()
+
+        val actual = qualificationRepository.findBy(
+            cpid = CPID, ocid = OCID, qualificationIds = listOf(qualification.id)
+        ).get
+
+        assertTrue(actual.isEmpty())
+    }
+
+    @Test
+    fun findAll_error() {
+        doThrow(RuntimeException())
+            .whenever(session)
+            .execute(any<BoundStatement>())
+
+        val qualification = createQualification()
+
+        val actual = qualificationRepository.findBy(
+            cpid = CPID, ocid = OCID, qualificationIds = listOf(qualification.id)
+        )
+
+        assertTrue(actual.isFail)
+        assertTrue(actual.error is Fail.Incident.Database.Interaction)
+    }
+
+    @Test
     fun `error while saving all`() {
         doThrow(RuntimeException())
             .whenever(session)
             .execute(any<BatchStatement>())
 
-        val actual = qualificationRepository.saveAll(listOf(createQualification()))
+        val actual = qualificationRepository.saveAll(CPID, OCID, listOf(createQualification()))
 
         assertTrue(actual.isFail)
         assertTrue(actual.error is Fail.Incident.Database.Interaction)
@@ -230,21 +284,55 @@ class QualificationRepositoryIT {
         )
     }
 
-    private fun insertQualification(qualificationEntity: QualificationEntity) {
+    private fun insertQualification(qualification: Qualification) {
         val record = QueryBuilder.insertInto(KEYSPACE, TABLE_NAME)
-            .value(COLUMN_CPID, qualificationEntity.cpid.toString())
-            .value(COLUMN_OCID, qualificationEntity.ocid.toString())
-            .value(COLUMN_ID, qualificationEntity.id.toString())
-            .value(COLUMN_JSON_DATA, qualificationEntity.jsonData)
+            .value(COLUMN_CPID, CPID.toString())
+            .value(COLUMN_OCID, OCID.toString())
+            .value(COLUMN_ID, qualification.id.toString())
+            .value(COLUMN_JSON_DATA, generateJsonData(qualification))
 
 
         session.execute(record)
     }
 
-    private fun createQualification() = QualificationEntity(
-        cpid = CPID,
-        ocid = OCID,
+    private fun convert(qualification: Qualification) = QualificationEntity(
+        id = qualification.id,
+        date = qualification.date,
+        owner = qualification.owner,
+        token = qualification.token,
+        status = qualification.status,
+        statusDetails = qualification.statusDetails,
+        scoring = qualification.scoring,
+        relatedSubmission = qualification.relatedSubmission,
+        requirementResponses = qualification.requirementResponses.map { requirementResponse ->
+            QualificationEntity.RequirementResponse(
+                id = requirementResponse.id,
+                value = requirementResponse.value,
+                responder = requirementResponse.responder.let { responder ->
+                    QualificationEntity.RequirementResponse.Responder(
+                        id = responder.id,
+                        name = responder.name
+                    )
+                },
+                requirement = QualificationEntity.RequirementResponse.Requirement(requirementResponse.requirement.id),
+                relatedTenderer = QualificationEntity.RequirementResponse.RelatedTenderer(id = requirementResponse.relatedTenderer.id)
+            )
+        }
+    )
+
+    private fun generateJsonData(qualification: Qualification): String {
+        val entity = convert(qualification)
+        return transform.trySerialization(entity).get
+    }
+
+    private fun createQualification() = Qualification(
         id = QualificationId.generate(),
-        jsonData = QUALIFICATION_JSON
+        date = DATE,
+        owner = UUID.randomUUID(),
+        token = UUID.randomUUID(),
+        status = QualificationStatus.ACTIVE,
+        scoring = Scoring.tryCreate("0.001").get,
+        statusDetails = QualificationStatusDetails.ACTIVE,
+        relatedSubmission = UUID.randomUUID()
     )
 }

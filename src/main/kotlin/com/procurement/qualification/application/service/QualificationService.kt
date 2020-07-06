@@ -4,6 +4,7 @@ import com.procurement.qualification.application.model.params.CheckAccessToQuali
 import com.procurement.qualification.application.model.params.CheckDeclarationParams
 import com.procurement.qualification.application.model.params.CheckQualificationStateParams
 import com.procurement.qualification.application.model.params.CreateQualificationsParams
+import com.procurement.qualification.application.model.params.DoConsiderationParams
 import com.procurement.qualification.application.model.params.DoDeclarationParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
@@ -27,13 +28,14 @@ import com.procurement.qualification.domain.model.requirement.RequirementRespons
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientValue
 import com.procurement.qualification.domain.util.extension.getNewElements
+import com.procurement.qualification.domain.util.extension.getUnknownElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
-import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -46,27 +48,21 @@ interface QualificationService {
     fun checkQualificationState(params: CheckQualificationStateParams): ValidationResult<Fail>
     fun doDeclaration(params: DoDeclarationParams): Result<DoDeclarationResult, Fail>
     fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
+    fun doConsideration(params: DoConsiderationParams): Result<DoConsiderationResult, Fail>
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
 }
 
 @Service
 class QualificationServiceImpl(
     val qualificationRepository: QualificationRepository,
-    val transform: Transform,
     val generationService: GenerationService,
     val rulesService: RulesService
 ) : QualificationService {
 
     override fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail> {
 
-        val qualificationEntities = qualificationRepository.findBy(cpid = params.cpid, ocid = params.ocid)
+        val qualifications = qualificationRepository.findBy(cpid = params.cpid, ocid = params.ocid)
             .orForwardFail { fail -> return fail }
-
-        val qualifications = qualificationEntities
-            .map {
-                it.convert()
-                    .orForwardFail { fail -> return fail }
-            }
 
         if (params.states.isEmpty())
             return qualifications.map { it.id }
@@ -98,17 +94,7 @@ class QualificationServiceImpl(
 
             }
 
-        val qualificationEntities = qualifications.map {
-            QualificationEntity(
-                cpid = params.cpid,
-                ocid = params.ocid,
-                id = it.id,
-                jsonData = transform.trySerialization(value = it)
-                    .orForwardFail { fail -> return fail }
-            )
-        }
-
-        qualificationRepository.saveAll(qualificationEntities)
+        qualificationRepository.saveAll(params.cpid, params.ocid, qualifications)
 
         return qualifications.map { qualification ->
             CreateQualificationsResult(
@@ -128,18 +114,12 @@ class QualificationServiceImpl(
         val cpid = params.cpid
         val ocid = params.ocid
 
-        val qualificationEntities = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
+        val qualifications = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
             .orForwardFail { fail -> return fail }
 
-        if (qualificationEntities.isEmpty())
+        if (qualifications.isEmpty())
             return ValidationError.QualificationsNotFoundOnRankQualifications(cpid = cpid, ocid = ocid)
                 .asFailure()
-
-        val qualifications = qualificationEntities
-            .map {
-                it.convert()
-                    .orForwardFail { fail -> return fail }
-            }
 
         val filteredQualifications = filterByRelatedSubmissions(
             qualifications = qualifications,
@@ -184,16 +164,7 @@ class QualificationServiceImpl(
             }
         }
 
-        val updatedQualificationEntities = updatedQualifications.map {
-            QualificationEntity(
-                cpid = params.cpid,
-                ocid = params.ocid,
-                id = it.id,
-                jsonData = transform.trySerialization(it)
-                    .orForwardFail { fail -> return fail }
-            )
-        }
-        qualificationRepository.updateAll(updatedQualificationEntities)
+        qualificationRepository.updateAll(params.cpid, params.ocid, updatedQualifications)
             .doOnFail { fail -> return fail.asFailure() }
 
         return updatedQualifications
@@ -209,23 +180,18 @@ class QualificationServiceImpl(
         val ocid = params.ocid
         val qualificationId = params.qualificationId
 
-        val qualificationEntity = qualificationRepository.findBy(
+        val qualification = qualificationRepository.findBy(
             cpid = cpid,
             ocid = ocid,
             qualificationId = qualificationId
         )
             .doReturn { fail -> return ValidationResult.error(fail) }
-            ?: return ValidationError.QualificationNotFoundByCheckAccessToQualification(
+            ?: return ValidationError.QualificationNotFoundFor.CheckAccessToQualification(
                 cpid = cpid,
                 ocid = ocid,
                 qualificationId = qualificationId
             )
                 .asValidationFailure()
-
-        val qualification = qualificationEntity
-            .convert()
-            .doReturn { fail -> return ValidationResult.error(fail) }
-
 
         if (params.token != qualification.token)
             return ValidationError.InvalidTokenOnCheckAccessToQualification(cpid = params.cpid, token = params.token)
@@ -244,24 +210,18 @@ class QualificationServiceImpl(
         val ocid = params.ocid
         val qualificationId = params.qualificationId
 
-        val qualificationEntity = qualificationRepository.findBy(
+        val qualification = qualificationRepository.findBy(
             cpid = cpid,
             ocid = ocid,
             qualificationId = qualificationId
         )
             .doReturn { fail -> return ValidationResult.error(fail) }
-            ?: return ValidationError.QualificationNotFoundByCheckQualificationState(
+            ?: return ValidationError.QualificationNotFoundFor.CheckQualificationState(
                 cpid = cpid,
                 ocid = ocid,
                 qualificationId = qualificationId
             )
                 .asValidationFailure()
-
-        val qualification = qualificationEntity
-            .let {
-                it.convert()
-                    .doReturn { fail -> return ValidationResult.error(fail) }
-            }
 
         val states = rulesService.findValidStates(
             country = params.country,
@@ -281,17 +241,13 @@ class QualificationServiceImpl(
         val cpid = params.cpid
         val ocid = params.ocid
 
-        val qualificationEntities = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
+        val qualificationsFromDb = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
             .orForwardFail { fail -> return fail }
-        val qualificationEntityById = qualificationEntities.associateBy { it.id }
+        val qualificationFromDbById = qualificationsFromDb.associateBy { it.id }
         val qualifications = params.qualifications
             .map { qualification ->
-                qualificationEntityById[qualification.id]
-                    ?.let { entity ->
-                        entity.convert()
-                            .orForwardFail { fail -> return fail }
-                    }
-                    ?: return ValidationError.QualificationNotFoundOnDoDeclaration(
+                qualificationFromDbById[qualification.id]
+                    ?: return ValidationError.QualificationNotFoundFor.DoDeclaration(
                         cpid = cpid,
                         ocid = ocid,
                         qualificationId = qualification.id
@@ -324,20 +280,7 @@ class QualificationServiceImpl(
                 qualification.copy(requirementResponses = updatedRequirementResponses + newRequirementResponses)
             }
 
-        val updatedQualificationsEntity = updatedQualifications.map { qualification ->
-            QualificationEntity(
-                cpid = cpid,
-                ocid = ocid,
-                id = qualification.id,
-                jsonData = transform.trySerialization(qualification)
-                    .doReturn { fail ->
-                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                            .asFailure()
-                    }
-            )
-        }
-
-        qualificationRepository.updateAll(entities = updatedQualificationsEntity)
+        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
             .doOnFail { fail -> return fail.asFailure() }
 
         return updatedQualifications.convertQualificationsToDoDeclarationResult()
@@ -350,21 +293,18 @@ class QualificationServiceImpl(
         val ocid = params.ocid
         val qualificationId = params.qualificationId
 
-        val qualificationEntity = qualificationRepository.findBy(
+        val qualification = qualificationRepository.findBy(
             cpid = cpid,
             ocid = ocid,
             qualificationId = qualificationId
         )
             .doReturn { fail -> return ValidationResult.error(fail) }
-            ?: return ValidationError.QualificationNotFoundOnCheckDeclaration(
+            ?: return ValidationError.QualificationNotFoundFor.CheckDeclaration(
                 cpid = cpid,
                 ocid = ocid,
                 qualificationId = qualificationId
             )
                 .asValidationFailure()
-
-        val qualification = qualificationEntity.convert()
-            .doReturn { fail -> return ValidationResult.error(fail) }
 
         val requirement = params.criteria
             .asSequence()
@@ -409,17 +349,14 @@ class QualificationServiceImpl(
         val ocid = params.ocid
         val qualificationId = params.qualificationId
 
-        val qualificationEntity = qualificationRepository.findBy(
+        val qualification = qualificationRepository.findBy(
             cpid = cpid,
             ocid = ocid,
             qualificationId = qualificationId
         )
             .orForwardFail { fail -> return fail }
-            ?: return ValidationError.QualificationNotFoundOnFindRequirementResponseByIds(cpid, ocid, qualificationId)
+            ?: return ValidationError.QualificationNotFoundFor.FindRequirementResponseByIds(cpid, ocid, qualificationId)
                 .asFailure()
-
-        val qualification = qualificationEntity.convert()
-            .orForwardFail { fail -> return fail }
 
         val rqRequirementResponsesByIds = params.requirementResponseIds
             .associateBy { it }
@@ -440,6 +377,37 @@ class QualificationServiceImpl(
                 )
             }
             .asSuccess<FindRequirementResponseByIdsResult?, Fail>()
+    }
+
+    override fun doConsideration(params: DoConsiderationParams): Result<DoConsiderationResult, Fail> {
+        val requestQualificationIds = params.qualifications.map { it.id }
+        val qualifications = qualificationRepository.findBy(
+            cpid = params.cpid, ocid = params.ocid, qualificationIds = requestQualificationIds
+        ).orForwardFail { fail -> return fail }
+
+        val unknownElements = getUnknownElements(
+            received = requestQualificationIds,
+            known = qualifications.map { it.id })
+
+        if (unknownElements.isNotEmpty())
+            return ValidationError.QualificationNotFoundFor.DoConsideration(
+                cpid = params.cpid, ocid = params.ocid, qualificationId = unknownElements.first()
+            ).asFailure()
+
+        val updatedQualifications = qualifications.map { qualification ->
+            qualification.copy(statusDetails = QualificationStatusDetails.CONSIDERATION)
+        }
+
+        qualificationRepository.updateAll(
+            cpid = params.cpid, ocid = params.ocid, qualifications = updatedQualifications
+        )
+
+        return DoConsiderationResult(qualifications = updatedQualifications.map { updatedQualification ->
+            DoConsiderationResult.Qualification(
+                id = updatedQualification.id,
+                statusDetails = updatedQualification.statusDetails!!
+            )
+        }).asSuccess()
     }
 
     private fun filterByRelatedSubmissions(
@@ -556,16 +524,6 @@ class QualificationServiceImpl(
             is RequirementResponseValue.AsString -> false
         }
     }
-
-    private fun QualificationEntity.convert(): Result<Qualification, Fail.Incident.Database.DatabaseParsing> =
-        this.let {
-            transform.tryDeserialization(value = it.jsonData, target = Qualification::class.java)
-                .doReturn { fail ->
-                    return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                        .asFailure()
-                }
-        }
-            .asSuccess()
 
     private fun Qualification.RequirementResponse.convertToFindRequirementResponseByIdsResultRR() =
         this.let { requirementResponse ->
