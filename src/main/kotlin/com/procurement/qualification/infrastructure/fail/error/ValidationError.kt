@@ -93,13 +93,20 @@ sealed class ValidationError(
             description = "Requirement datatype mismatch, expected='$expected' , actual='$actual'."
         )
 
-    class InvalidRequirementResponseIdOnCheckDeclaration(actualId: RequirementResponseId, expected: RequirementResponseId) :
+    class InvalidRequirementResponseIdOnCheckDeclaration(
+        actualId: RequirementResponseId,
+        expected: RequirementResponseId
+    ) :
         ValidationError(
             numberError = "7.16.4",
             description = "Invalid Requirement Response Id, actual='$actualId', expected='$expected'."
         )
 
-    class QualificationNotFoundOnFindRequirementResponseByIds(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+    class QualificationNotFoundOnFindRequirementResponseByIds(
+        cpid: Cpid,
+        ocid: Ocid,
+        qualificationId: QualificationId
+    ) :
         ValidationError(
             numberError = "7.18.1",
             description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
@@ -109,5 +116,12 @@ sealed class ValidationError(
         ValidationError(
             numberError = "7.22.1",
             description = "Related submission in qualifications not found on submission id='$submissionId'."
+        )
+
+    class QualificationNotFoundOnDoQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+        ValidationError(
+            numberError = "7.20.1",
+            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'.",
+            entityId = qualificationId.toString()
         )
 }

@@ -6,6 +6,7 @@ import com.procurement.qualification.infrastructure.handler.check.accesstoqualif
 import com.procurement.qualification.infrastructure.handler.check.declaration.CheckDeclarationHandler
 import com.procurement.qualification.infrastructure.handler.check.qualificationstate.CheckQualificationStateHandler
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationHandler
+import com.procurement.qualification.infrastructure.handler.create.qualification.DoQualificationHandler
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsHandler
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationHandler
 import com.procurement.qualification.infrastructure.handler.find.qualificationids.FindQualificationIdsHandler
@@ -32,7 +33,8 @@ class Command2Service(
     private val doDeclarationHandler: DoDeclarationHandler,
     private val checkDeclarationHandler: CheckDeclarationHandler,
     private val findRequirementResponseByIdsHandler: FindRequirementResponseByIdsHandler,
-    private val setNextForQualificationHandler: SetNextForQualificationHandler
+    private val setNextForQualificationHandler: SetNextForQualificationHandler,
+    private val doQualificationHandler: DoQualificationHandler
 ) {
 
     fun execute(node: JsonNode): ApiResponse2 {
@@ -65,6 +67,7 @@ class Command2Service(
             Command2Type.CHECK_DECLARATION -> checkDeclarationHandler.handle(node = node)
             Command2Type.FIND_REQUIREMENT_RESPONSE_BY_IDS -> findRequirementResponseByIdsHandler.handle(node = node)
             Command2Type.SET_NEXT_FOR_QUALIFICATION -> setNextForQualificationHandler.handle(node = node)
+            Command2Type.DO_QUALIFICATION -> doQualificationHandler.handle(node = node)
         }
     }
 }
