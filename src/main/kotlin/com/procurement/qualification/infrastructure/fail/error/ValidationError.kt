@@ -21,13 +21,13 @@ sealed class ValidationError(
 ) : Fail.Error("VR.COM-") {
     override val code: String = prefix + numberError
 
-    class QualificationsNotFoundOnDetermineNextsForQualification(cpid: Cpid, ocid: Ocid) :
+    class QualificationsNotFoundOnRankQualifications(cpid: Cpid, ocid: Ocid) :
         ValidationError(
             numberError = "7.13.1",
             description = "Qualifications not found by cpid=${cpid} and ocid=${ocid}."
         )
 
-    class RelatedSubmissionNotEqualOnDetermineNextsForQualification(submissionId: SubmissionId) :
+    class RelatedSubmissionNotEqualOnRankQualifications(submissionId: SubmissionId) :
         ValidationError(
             numberError = "7.13.2",
             description = "Related submission in qualifications not found on submission id='$submissionId'."

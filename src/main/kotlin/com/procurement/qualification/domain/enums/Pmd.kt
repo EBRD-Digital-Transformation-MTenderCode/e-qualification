@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonValue
 
 enum class Pmd(@JsonValue override val key: String) : EnumElementProvider.Key {
 
-    GPA("GPA");
+    GPA("GPA"),
+    TEST_GPA("TEST_GPA");
 
     override fun toString(): String = key
 

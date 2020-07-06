@@ -16,11 +16,11 @@ class FindRequirementResponseByIdsHandler(
     transform: Transform,
     logger: Logger,
     val qualificationService: QualificationService
-) : AbstractHandler2<Command2Type, FindRequirementResponseByIdsResult>(
+) : AbstractHandler2<Command2Type, FindRequirementResponseByIdsResult?>(
     transform = transform,
     logger = logger
 ) {
-    override fun execute(node: JsonNode): Result<FindRequirementResponseByIdsResult, Fail> {
+    override fun execute(node: JsonNode): Result<FindRequirementResponseByIdsResult?, Fail> {
 
         val params = node.tryGetParams(target = FindRequirementResponseByIdsRequest::class.java, transform = transform)
             .orForwardFail { fail -> return fail }

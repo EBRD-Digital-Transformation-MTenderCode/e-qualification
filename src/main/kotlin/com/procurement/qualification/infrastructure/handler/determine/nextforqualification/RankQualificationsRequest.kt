@@ -3,7 +3,7 @@ package com.procurement.qualification.infrastructure.handler.determine.nextforqu
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
-data class DetermineNextsForQualificationRequest(
+data class RankQualificationsRequest(
     @field:JsonProperty("cpid") @param:JsonProperty("cpid") val cpid: String,
     @field:JsonProperty("ocid") @param:JsonProperty("ocid") val ocid: String,
     @field:JsonProperty("submissions") @param:JsonProperty("submissions") val submissions: List<Submission>,

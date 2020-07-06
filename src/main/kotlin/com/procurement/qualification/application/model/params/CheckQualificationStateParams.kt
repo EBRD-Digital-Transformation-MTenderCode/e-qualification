@@ -26,7 +26,8 @@ class CheckQualificationStateParams private constructor(
         private val allowedPmd = Pmd.allowedElements
             .filter {
                 when (it) {
-                    Pmd.GPA -> true
+                    Pmd.GPA,
+                    Pmd.TEST_GPA -> true
                 }
             }
             .toSet()
