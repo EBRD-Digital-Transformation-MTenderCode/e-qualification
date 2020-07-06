@@ -38,7 +38,10 @@ data class Qualification(
     @param:JsonProperty("documents") @field:JsonProperty("documents") val documents: List<Document> = emptyList(),
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @field:JsonProperty("internalId")  @param:JsonProperty("internalId") val internalId: String? = null
+    @field:JsonProperty("internalId")  @param:JsonProperty("internalId") val internalId: String? = null,
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @field:JsonProperty("description")  @param:JsonProperty("description") val description: String? = null
 ) {
     data class RequirementResponse(
         @param:JsonProperty("id") @field:JsonProperty("id") val id: RequirementResponseId,
