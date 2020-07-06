@@ -104,4 +104,9 @@ sealed class ValidationError(
             numberError = "7.18.1",
             description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
         )
+
+    class InvalidResponderNameOnCheckDeclaration(expected: String, actual: String) : ValidationError(
+        numberError = "7.16.5",
+        description = "Invalid Responder name, actual='$actual', expected='$expected'."
+    )
 }

@@ -6,7 +6,10 @@
     "id": "string",
     "value": "string",
     "relatedTendererId": "string",
-    "responderId": "string",
+    "responder": {
+      "id": "string",
+      "name": "name"
+    },
     "requirementId": "string"
   },
   "criteria": [

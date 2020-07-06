@@ -20,7 +20,18 @@ fun CheckDeclarationRequest.convert(): Result<CheckDeclarationParams, DataErrors
     )
 
 fun CheckDeclarationRequest.RequirementResponse.convert(): Result<CheckDeclarationParams.RequirementResponse, DataErrors> =
-    CheckDeclarationParams.RequirementResponse.tryCreate(id, value, relatedTendererId, responderId, requirementId)
+    CheckDeclarationParams.RequirementResponse.tryCreate(
+        id,
+        value,
+        relatedTendererId,
+        this.responder
+            .convert()
+            .orForwardFail { fail -> return fail },
+        requirementId
+    )
+
+fun CheckDeclarationRequest.RequirementResponse.Responder.convert(): Result<CheckDeclarationParams.RequirementResponse.Responder, DataErrors> =
+    CheckDeclarationParams.RequirementResponse.Responder.tryCreate(id = this.id, name = this.name)
 
 fun CheckDeclarationRequest.Criteria.convert(): Result<CheckDeclarationParams.Criteria, DataErrors> =
     CheckDeclarationParams.Criteria.tryCreate(
