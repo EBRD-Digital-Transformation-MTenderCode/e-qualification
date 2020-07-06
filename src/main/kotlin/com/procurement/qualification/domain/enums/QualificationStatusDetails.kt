@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonValue
 
 enum class QualificationStatusDetails(@JsonValue override val key: String) : EnumElementProvider.Key {
 
+    ACTIVE("active"),
     AWAITING("awaiting"),
     CONSIDERATION("consideration"),
-    ACTIVE("active"),
     UNSUCCESSFUL("unsuccessful");
 
     override fun toString(): String = key

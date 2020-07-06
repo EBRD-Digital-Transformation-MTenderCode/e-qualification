@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonValue
 
 enum class DocumentType(@JsonValue override val key: String) : EnumElementProvider.Key {
 
-    NOTICE("notice"),
+    CONFLICT_OF_INTEREST("conflictOfInterest"),
     EVALUATION_REPORTS("evaluationReports"),
-    CONFLICT_OF_INTEREST("conflictOfInterest");
+    NOTICE("notice");
 
     override fun toString(): String = key
 
