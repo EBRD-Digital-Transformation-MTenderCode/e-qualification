@@ -7,7 +7,7 @@ import com.procurement.qualification.infrastructure.handler.check.declaration.Ch
 import com.procurement.qualification.infrastructure.handler.check.qualificationstate.CheckQualificationStateHandler
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationHandler
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsHandler
-import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.DetermineNextsForQualificationHandler
+import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsHandler
 import com.procurement.qualification.infrastructure.handler.find.qualificationids.FindQualificationIdsHandler
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsHandler
 import com.procurement.qualification.infrastructure.handler.start.qualificationperiod.StartQualificationPeriodHandler
@@ -24,7 +24,7 @@ class Command2Service(
     private val logger: Logger,
     private val findQualificationIdsHandler: FindQualificationIdsHandler,
     private val createQualificationsHandler: CreateQualificationsHandler,
-    private val determineNextsForQualificationHandler: DetermineNextsForQualificationHandler,
+    private val rankQualificationsHandler: RankQualificationsHandler,
     private val startQualificationPeriodHandler: StartQualificationPeriodHandler,
     private val checkAccessToQualificationHandler: CheckAccessToQualificationHandler,
     private val checkQualificationStateHandler: CheckQualificationStateHandler,
@@ -55,7 +55,7 @@ class Command2Service(
         return when (action) {
             Command2Type.FIND_QUALIFICATION_IDS -> findQualificationIdsHandler.handle(node = node)
             Command2Type.CREATE_QUALIFICATIONS -> createQualificationsHandler.handle(node = node)
-            Command2Type.DETERMINE_NEXTS_FOR_QUALIFICATION -> determineNextsForQualificationHandler.handle(node = node)
+            Command2Type.RANK_QUALIFICATIONS -> rankQualificationsHandler.handle(node = node)
             Command2Type.START_QUALIFICATION_PERIOD -> startQualificationPeriodHandler.handle(node = node)
             Command2Type.CHECK_ACCESS_TO_QUALIFICATION -> checkAccessToQualificationHandler.handle(node = node)
             Command2Type.CHECK_QUALIFICATION_STATE -> checkQualificationStateHandler.handle(node = node)

@@ -1,11 +1,11 @@
 package com.procurement.qualification.infrastructure.handler.determine.nextforqualification
 
-import com.procurement.qualification.application.model.params.DetermineNextsForQualificationParams
+import com.procurement.qualification.application.model.params.RankQualificationsParams
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
-fun DetermineNextsForQualificationRequest.convert(): Result<DetermineNextsForQualificationParams, DataErrors> =
-    DetermineNextsForQualificationParams.tryCreate(
+fun RankQualificationsRequest.convert(): Result<RankQualificationsParams, DataErrors> =
+    RankQualificationsParams.tryCreate(
         cpid = this.cpid,
         ocid = this.ocid,
         tender = this.tender
@@ -18,8 +18,8 @@ fun DetermineNextsForQualificationRequest.convert(): Result<DetermineNextsForQua
             }
     )
 
-fun DetermineNextsForQualificationRequest.Tender.convert(): Result<DetermineNextsForQualificationParams.Tender, DataErrors> =
-    DetermineNextsForQualificationParams.Tender.tryCreate(
+fun RankQualificationsRequest.Tender.convert(): Result<RankQualificationsParams.Tender, DataErrors> =
+    RankQualificationsParams.Tender.tryCreate(
         criteria = this.criteria
             ?.map {
                 it.convert()
@@ -30,8 +30,8 @@ fun DetermineNextsForQualificationRequest.Tender.convert(): Result<DetermineNext
             .orForwardFail { fail -> return fail }
     )
 
-fun DetermineNextsForQualificationRequest.Tender.Criteria.convert(): Result<DetermineNextsForQualificationParams.Tender.Criteria, DataErrors> =
-    DetermineNextsForQualificationParams.Tender.Criteria.tryCreate(
+fun RankQualificationsRequest.Tender.Criteria.convert(): Result<RankQualificationsParams.Tender.Criteria, DataErrors> =
+    RankQualificationsParams.Tender.Criteria.tryCreate(
         id = this.id,
         title = this.title,
         description = this.description,
@@ -46,8 +46,8 @@ fun DetermineNextsForQualificationRequest.Tender.Criteria.convert(): Result<Dete
 
     )
 
-fun DetermineNextsForQualificationRequest.Tender.Criteria.RequirementGroup.convert(): Result<DetermineNextsForQualificationParams.Tender.Criteria.RequirementGroup, DataErrors> =
-    DetermineNextsForQualificationParams.Tender.Criteria.RequirementGroup.tryCreate(
+fun RankQualificationsRequest.Tender.Criteria.RequirementGroup.convert(): Result<RankQualificationsParams.Tender.Criteria.RequirementGroup, DataErrors> =
+    RankQualificationsParams.Tender.Criteria.RequirementGroup.tryCreate(
         id = this.id,
         description = this.description,
         requirements = this.requirements
@@ -57,20 +57,20 @@ fun DetermineNextsForQualificationRequest.Tender.Criteria.RequirementGroup.conve
             }
     )
 
-fun DetermineNextsForQualificationRequest.Tender.Criteria.RequirementGroup.Requirement.convert(): Result<DetermineNextsForQualificationParams.Tender.Criteria.RequirementGroup.Requirement, DataErrors> =
-    DetermineNextsForQualificationParams.Tender.Criteria.RequirementGroup.Requirement.tryCreate(
+fun RankQualificationsRequest.Tender.Criteria.RequirementGroup.Requirement.convert(): Result<RankQualificationsParams.Tender.Criteria.RequirementGroup.Requirement, DataErrors> =
+    RankQualificationsParams.Tender.Criteria.RequirementGroup.Requirement.tryCreate(
         id = this.id,
         description = this.description,
         title = this.title,
         dataType = this.dataType
     )
 
-fun DetermineNextsForQualificationRequest.Tender.OtherCriteria.convert(): Result<DetermineNextsForQualificationParams.Tender.OtherCriteria, DataErrors> =
-    DetermineNextsForQualificationParams.Tender.OtherCriteria.tryCreate(
+fun RankQualificationsRequest.Tender.OtherCriteria.convert(): Result<RankQualificationsParams.Tender.OtherCriteria, DataErrors> =
+    RankQualificationsParams.Tender.OtherCriteria.tryCreate(
         reductionCriteria = this.reductionCriteria,
         qualificationSystemMethods = this.qualificationSystemMethods
     )
 
-fun DetermineNextsForQualificationRequest.Submission.convert(): Result<DetermineNextsForQualificationParams.Submission, DataErrors> =
-    DetermineNextsForQualificationParams.Submission.tryCreate(id = this.id, date = this.date)
+fun RankQualificationsRequest.Submission.convert(): Result<RankQualificationsParams.Submission, DataErrors> =
+    RankQualificationsParams.Submission.tryCreate(id = this.id, date = this.date)
 
