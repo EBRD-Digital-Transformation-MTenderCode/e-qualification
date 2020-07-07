@@ -117,28 +117,15 @@ sealed class ValidationError(
                 numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
-
+        class QualificationNotFoundOnDoQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            QualificationNotFoundFor(
+                numberError = "7.20.1", ocid = ocid, cpid = cpid, qualificationId = qualificationId
+            )
     }
-    class QualificationNotFoundOnFindRequirementResponseByIds(
-        cpid: Cpid,
-        ocid: Ocid,
-        qualificationId: QualificationId
-    ) :
-        ValidationError(
-            numberError = "7.18.1",
-            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
-        )
 
     class RelatedSubmissionNotEqualOnSetNextForQualification(submissionId: SubmissionId) :
         ValidationError(
             numberError = "7.22.1",
             description = "Related submission in qualifications not found on submission id='$submissionId'."
-        )
-
-    class QualificationNotFoundOnDoQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
-        ValidationError(
-            numberError = "7.20.1",
-            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'.",
-            entityId = qualificationId.toString()
         )
 }
