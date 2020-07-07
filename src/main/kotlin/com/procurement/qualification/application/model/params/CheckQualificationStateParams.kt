@@ -35,9 +35,9 @@ class CheckQualificationStateParams private constructor(
         private val allowedOperationType = OperationType.allowedElements
             .filter {
                 when (it) {
-                    OperationType.QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST,
                     OperationType.QUALIFICATION,
-                    OperationType.QUALIFICATION_CONSIDERATION -> true
+                    OperationType.QUALIFICATION_CONSIDERATION,
+                    OperationType.QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST -> true
                 }
             }
             .toSet()
