@@ -18,7 +18,7 @@ import java.time.LocalDateTime
 
 data class SetNextForQualificationResult(
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @field:JsonProperty("qualifications") @param:JsonProperty("qualifications") val qualifications: List<Qualification>?
+    @field:JsonProperty("qualifications") @param:JsonProperty("qualifications") val qualifications: List<Qualification>
 ) {
 
     data class Qualification(

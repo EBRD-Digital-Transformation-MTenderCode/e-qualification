@@ -153,7 +153,7 @@ data class SetNextForQualificationParams(
         val id: String,
         val title: String,
         val source: CriteriaSource,
-        val relatedItem: String,
+        val relatedItem: String?,
         val requirementGroups: List<RequirementGroup>,
         val relatesTo: CriteriaRelatesTo?,
         val description: String?
@@ -186,7 +186,7 @@ data class SetNextForQualificationParams(
                 id: String,
                 title: String,
                 source: String,
-                relatedItem: String,
+                relatedItem: String?,
                 requirementGroups: List<RequirementGroup>,
                 relatesTo: String?,
                 description: String?

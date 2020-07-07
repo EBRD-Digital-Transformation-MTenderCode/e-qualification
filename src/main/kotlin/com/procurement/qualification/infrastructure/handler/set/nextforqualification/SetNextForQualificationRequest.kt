@@ -30,8 +30,9 @@ data class SetNextForQualificationRequest(
         @field:JsonProperty("id")  @param:JsonProperty("id") val id: String,
         @field:JsonProperty("title")  @param:JsonProperty("title") val title: String,
         @field:JsonProperty("source")  @param:JsonProperty("source") val source: String,
-        @field:JsonProperty("relatedItem")  @param:JsonProperty("relatedItem") val relatedItem: String,
         @field:JsonProperty("requirementGroups")  @param:JsonProperty("requirementGroups") val requirementGroups: List<RequirementGroup>,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonProperty("relatedItem")  @param:JsonProperty("relatedItem") val relatedItem: String?,
         @JsonInclude(JsonInclude.Include.NON_NULL)
         @field:JsonProperty("relatesTo")  @param:JsonProperty("relatesTo") val relatesTo: String?,
         @JsonInclude(JsonInclude.Include.NON_NULL)
