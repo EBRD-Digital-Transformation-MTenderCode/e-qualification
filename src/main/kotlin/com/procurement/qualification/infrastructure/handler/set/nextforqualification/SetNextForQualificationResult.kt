@@ -17,7 +17,6 @@ import com.procurement.qualification.domain.model.submission.SubmissionId
 import java.time.LocalDateTime
 
 data class SetNextForQualificationResult(
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @field:JsonProperty("qualifications") @param:JsonProperty("qualifications") val qualifications: List<Qualification>
 ) {
 

@@ -54,7 +54,7 @@ interface QualificationService {
     fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
     fun doConsideration(params: DoConsiderationParams): Result<DoConsiderationResult, Fail>
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
-    fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult, Fail>
+    fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult?, Fail>
     fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail>
 }
 
@@ -416,7 +416,7 @@ class QualificationServiceImpl(
         }).asSuccess()
     }
 
-    override fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult, Fail> {
+    override fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult?, Fail> {
 
         val cpid = params.cpid
         val ocid = params.ocid
@@ -454,8 +454,7 @@ class QualificationServiceImpl(
         }
 
         return if (isAlreadyStatusSet) {
-            SetNextForQualificationResult(qualifications = emptyList())
-                .asSuccess()
+            null.asSuccess()
         } else {
             val qualificationWithMinScoring = findMinScoring(qualifications = filteredQualifications)!!
             val hasSameScoring = hasSameScoring(

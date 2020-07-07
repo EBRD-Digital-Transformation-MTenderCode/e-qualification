@@ -16,11 +16,11 @@ class SetNextForQualificationHandler(
     transform: Transform,
     logger: Logger,
     val qualificationService: QualificationService
-) : AbstractHandler2<Command2Type, SetNextForQualificationResult>(
+) : AbstractHandler2<Command2Type, SetNextForQualificationResult?>(
     transform = transform,
     logger = logger
 ) {
-    override fun execute(node: JsonNode): Result<SetNextForQualificationResult, Fail> {
+    override fun execute(node: JsonNode): Result<SetNextForQualificationResult?, Fail> {
 
         val params = node.tryGetParams(target = SetNextForQualificationRequest::class.java, transform = transform)
             .orForwardFail { fail -> return fail }
