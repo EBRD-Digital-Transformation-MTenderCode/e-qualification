@@ -21,13 +21,13 @@ sealed class ValidationError(
 ) : Fail.Error("VR.COM-") {
     override val code: String = prefix + numberError
 
-    class QualificationsNotFoundOnDetermineNextsForQualification(cpid: Cpid, ocid: Ocid) :
+    class QualificationsNotFoundOnRankQualifications(cpid: Cpid, ocid: Ocid) :
         ValidationError(
             numberError = "7.13.1",
             description = "Qualifications not found by cpid=${cpid} and ocid=${ocid}."
         )
 
-    class RelatedSubmissionNotEqualOnDetermineNextsForQualification(submissionId: SubmissionId) :
+    class RelatedSubmissionNotEqualOnRankQualifications(submissionId: SubmissionId) :
         ValidationError(
             numberError = "7.13.2",
             description = "Related submission in qualifications not found on submission id='$submissionId'."
@@ -43,18 +43,6 @@ sealed class ValidationError(
         description = "Invalid owner '$owner' by cpid '$cpid'."
     )
 
-    class QualificationNotFoundByCheckAccessToQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
-        ValidationError(
-            numberError = "7.14.3",
-            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
-        )
-
-    class QualificationNotFoundByCheckQualificationState(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
-        ValidationError(
-            numberError = "7.17.1",
-            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
-        )
-
     class QualificationStatesNotFound(
         country: String,
         pmd: Pmd,
@@ -68,18 +56,6 @@ sealed class ValidationError(
         numberError = "7.17.2",
         description = "Qualification with id='$qualificationId' has invalid states."
     )
-
-    class QualificationNotFoundOnDoDeclaration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
-        ValidationError(
-            numberError = "7.19.1",
-            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
-        )
-
-    class QualificationNotFoundOnCheckDeclaration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
-        ValidationError(
-            numberError = "7.16.1",
-            description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
-        )
 
     class RequirementNotFoundOnCheckDeclaration(requirementId: RequirementId) :
         ValidationError(
@@ -102,6 +78,47 @@ sealed class ValidationError(
             description = "Invalid Requirement Response Id, actual='$actualId', expected='$expected'."
         )
 
+    sealed class QualificationNotFoundFor(
+        numberError: String,
+        cpid: Cpid,
+        ocid: Ocid,
+        qualificationId: QualificationId
+    ) : ValidationError(
+        numberError = numberError,
+        description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
+    ) {
+        class CheckAccessToQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            QualificationNotFoundFor(
+                numberError = "7.14.3", cpid = cpid, ocid = ocid, qualificationId = qualificationId
+            )
+
+        class CheckQualificationState(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            QualificationNotFoundFor(
+                numberError = "7.17.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
+            )
+
+        class DoDeclaration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            QualificationNotFoundFor(
+                numberError = "7.19.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
+            )
+
+        class CheckDeclaration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            QualificationNotFoundFor(
+                numberError = "7.16.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
+            )
+
+        class FindRequirementResponseByIds(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            QualificationNotFoundFor(
+                numberError = "7.18.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
+            )
+
+        class DoConsideration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            QualificationNotFoundFor(
+                numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
+            )
+
+
+    }
     class QualificationNotFoundOnFindRequirementResponseByIds(
         cpid: Cpid,
         ocid: Ocid,
