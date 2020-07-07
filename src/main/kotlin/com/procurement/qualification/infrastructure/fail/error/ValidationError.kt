@@ -117,7 +117,7 @@ sealed class ValidationError(
                 numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
-        class QualificationNotFoundOnDoQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+        class DoQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
                 numberError = "7.20.1", ocid = ocid, cpid = cpid, qualificationId = qualificationId
             )

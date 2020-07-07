@@ -510,7 +510,7 @@ class QualificationServiceImpl(
             .map { rqQualification ->
                 dbQualificationByIds[rqQualification.id]
                     ?.let { updateQualification(rqQualification = rqQualification, qualification = it) }
-                    ?: return ValidationError.QualificationNotFoundOnDoQualification(
+                    ?: return ValidationError.QualificationNotFoundFor.DoQualification(
                         cpid = cpid,
                         ocid = ocid,
                         qualificationId = rqQualification.id
