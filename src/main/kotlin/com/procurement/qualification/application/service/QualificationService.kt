@@ -465,7 +465,7 @@ class QualificationServiceImpl(
             val qualificationToUpdate =
                 if (hasSameScoring) {
                     val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
-                    val qualificationRelatedToSubmission = filteredQualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }!!
+                    val qualificationRelatedToSubmission = filteredQualifications.find { qualification -> qualification.relatedSubmission == submissionWithMinDate.id }!!
                     listOf(qualificationRelatedToSubmission)
                 } else {
                     listOf(qualificationWithMinScoring)
