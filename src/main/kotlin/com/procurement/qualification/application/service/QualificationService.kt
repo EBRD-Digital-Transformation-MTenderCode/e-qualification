@@ -40,7 +40,6 @@ import com.procurement.qualification.infrastructure.handler.create.qualification
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
-import com.procurement.qualification.infrastructure.model.entity.QualificationEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -422,16 +421,11 @@ class QualificationServiceImpl(
         val cpid = params.cpid
         val ocid = params.ocid
 
-        val qualificationEntity = qualificationRepository.findBy(
+        val qualifications = qualificationRepository.findBy(
             cpid = cpid,
             ocid = ocid
         )
             .orForwardFail { fail -> return fail }
-
-        val qualifications = qualificationEntity.map {
-            it.convert()
-                .orForwardFail { fail -> return fail }
-        }
 
         val filteredQualifications = filterByRelatedSubmission(
             qualifications = qualifications,
@@ -488,20 +482,8 @@ class QualificationServiceImpl(
                     qualifications = qualificationToUpdate
                 )
             }
-            val updatedQualificationsEntity = updatedQualifications.map { qualification ->
-                QualificationEntity(
-                    cpid = cpid,
-                    ocid = ocid,
-                    id = qualification.id,
-                    jsonData = transform.trySerialization(qualification)
-                        .doReturn { fail ->
-                            return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                                .asFailure()
-                        }
-                )
-            }
 
-            qualificationRepository.updateAll(updatedQualificationsEntity)
+            qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
 
             return SetNextForQualificationResult(
                 qualifications = updatedQualifications
@@ -516,16 +498,11 @@ class QualificationServiceImpl(
         val cpid = params.cpid
         val ocid = params.ocid
 
-        val qualificationEntity = qualificationRepository.findBy(
+        val qualifications = qualificationRepository.findBy(
             cpid = cpid,
             ocid = ocid
         )
             .orForwardFail { fail -> return fail }
-
-        val qualifications = qualificationEntity.map {
-            it.convert()
-                .orForwardFail { fail -> return fail }
-        }
 
         val dbQualificationByIds = qualifications
             .associateBy { it.id }
@@ -542,20 +519,8 @@ class QualificationServiceImpl(
                         .asFailure()
             }
 
-        val updatedQualificationsEntity = updatedQualifications.map { qualification ->
-            QualificationEntity(
-                cpid = cpid,
-                ocid = ocid,
-                id = qualification.id,
-                jsonData = transform.trySerialization(qualification)
-                    .doReturn { fail ->
-                        return Fail.Incident.Database.DatabaseParsing(exception = fail.exception)
-                            .asFailure()
-                    }
-            )
-        }
 
-        qualificationRepository.updateAll(updatedQualificationsEntity)
+        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
 
         return DoQualificationResult(
             qualifications = updatedQualifications.map {

@@ -35,7 +35,6 @@ class Command2Service(
     private val checkDeclarationHandler: CheckDeclarationHandler,
     private val findRequirementResponseByIdsHandler: FindRequirementResponseByIdsHandler,
     private val doConsiderationHandler: DoConsiderationHandler,
-    private val findRequirementResponseByIdsHandler: FindRequirementResponseByIdsHandler,
     private val setNextForQualificationHandler: SetNextForQualificationHandler,
     private val doQualificationHandler: DoQualificationHandler
 ) {
