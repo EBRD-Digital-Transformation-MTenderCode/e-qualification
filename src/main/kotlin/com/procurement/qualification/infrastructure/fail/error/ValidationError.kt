@@ -7,12 +7,14 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
+import com.procurement.qualification.domain.model.date.format
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.infrastructure.fail.Fail
+import java.time.LocalDateTime
 
 sealed class ValidationError(
     numberError: String,
@@ -116,7 +118,28 @@ sealed class ValidationError(
             QualificationNotFoundFor(
                 numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
-
-
     }
+
+    sealed class PeriodNotFoundFor(
+        numberError: String,
+        cpid: Cpid,
+        ocid: Ocid
+    ) : ValidationError(
+        numberError = numberError,
+        description = "Period not found by cpid='$cpid' and ocid='$ocid'."
+    ) {
+        class CheckQualificationPeriod(cpid: Cpid, ocid: Ocid) : PeriodNotFoundFor(
+            numberError = "7.4.1", cpid = cpid, ocid = ocid
+        )
+    }
+
+    class RequestDateIsNotAfterStartDate(requestDate: LocalDateTime, startDate: LocalDateTime) : ValidationError(
+        numberError = "7.4.3",
+        description = "Request date '${requestDate.format()}' must be after stored period start date '${startDate.format()}'."
+    )
+
+    class RequestDateIsNotBeforeEndDate(requestDate: LocalDateTime, endDate: LocalDateTime) : ValidationError(
+        numberError = "7.4.4",
+        description = "Request date '${requestDate.format()}' must precede stored period end date '${endDate.format()}'."
+    )
 }
