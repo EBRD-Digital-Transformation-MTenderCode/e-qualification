@@ -9,13 +9,14 @@ enum class Command2Type(@JsonValue override val key: String) : Action, EnumEleme
 
     FIND_QUALIFICATION_IDS("findQualificationIds"),
     CREATE_QUALIFICATIONS("createQualifications"),
-    DETERMINE_NEXTS_FOR_QUALIFICATION("determineNextsForQualification"),
+    RANK_QUALIFICATIONS("rankQualifications"),
     START_QUALIFICATION_PERIOD("startQualificationPeriod"),
     CHECK_ACCESS_TO_QUALIFICATION("checkAccessToQualification"),
     CHECK_QUALIFICATION_STATE("checkQualificationState"),
     DO_DECLARATION("doDeclaration"),
     CHECK_DECLARATION("checkDeclaration"),
-    FIND_REQUIREMENT_RESPONSE_BY_IDS("findRequirementResponseByIds");
+    FIND_REQUIREMENT_RESPONSE_BY_IDS("findRequirementResponseByIds"),
+    DO_CONSIDERATION("doConsideration");
 
     override fun toString(): String = key
 
