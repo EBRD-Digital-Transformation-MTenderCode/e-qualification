@@ -46,6 +46,7 @@ import com.procurement.qualification.infrastructure.handler.set.nextforqualifica
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.convertToSetNextForQualification
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 interface QualificationService {
 
@@ -431,7 +432,7 @@ class QualificationServiceImpl(
         )
             .orForwardFail { fail -> return fail }
 
-        val filteredQualifications = filterByRelatedSubmission(
+        val filteredWrappedQualifications = filterByRelatedSubmission(
             qualifications = qualifications,
             submissions = params.submissions
         )
@@ -440,57 +441,53 @@ class QualificationServiceImpl(
         val qualificationSystemMethod = params.tender.otherCriteria.qualificationSystemMethod
         val reductionCriteria = params.tender.otherCriteria.reductionCriteria
 
-        val isAlreadyStatusSet = when (qualificationSystemMethod) {
+        return when (qualificationSystemMethod) {
             QualificationSystemMethod.AUTOMATED -> when (reductionCriteria) {
-                ReductionCriteria.SCORING -> filteredQualifications.any {
-                    it.statusDetails != null &&
-                        (it.statusDetails == QualificationStatusDetails.CONSIDERATION
-                            || it.statusDetails == QualificationStatusDetails.AWAITING)
+                ReductionCriteria.SCORING -> {
+                    val filteredQualifications = filteredWrappedQualifications.filter {
+                        it.qualification.statusDetails == null
+                            || it.qualification.statusDetails != QualificationStatusDetails.CONSIDERATION
+                            || it.qualification.statusDetails != QualificationStatusDetails.AWAITING
+                    }
+                    if (filteredQualifications.isEmpty()) {
+                        return null.asSuccess()
+                    } else {
+                        val nullStatusQualifications = filteredQualifications.filter { it.qualification.statusDetails == null }
+
+                        if (nullStatusQualifications.isEmpty()) {
+                            return null.asSuccess()
+                        } else {
+                            val sortedQualifications = filteredWrappedQualifications.sorted()
+                            val qualificationWithMinScoringAndDate = sortedQualifications.first().qualification
+
+                            val updatedQualifications = if (params.criteria.isNullOrEmpty()) {
+                                setStatusDetails(
+                                    statusDetails = QualificationStatusDetails.CONSIDERATION,
+                                    qualifications = listOf(qualificationWithMinScoringAndDate)
+                                )
+                            } else {
+                                setStatusDetails(
+                                    statusDetails = QualificationStatusDetails.AWAITING,
+                                    qualifications = listOf(qualificationWithMinScoringAndDate)
+                                )
+                            }
+
+                            qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
+
+                            return SetNextForQualificationResult(
+                                qualifications = updatedQualifications
+                                    .map { qualification -> qualification.convertToSetNextForQualification() }
+                            )
+                                .asSuccess()
+                        }
+                    }
                 }
-                ReductionCriteria.NONE -> true
+                ReductionCriteria.NONE -> null.asSuccess()
             }
             QualificationSystemMethod.MANUAL -> when (reductionCriteria) {
-                ReductionCriteria.SCORING -> true
-                ReductionCriteria.NONE -> true
+                ReductionCriteria.SCORING -> null.asSuccess()
+                ReductionCriteria.NONE -> null.asSuccess()
             }
-        }
-
-        return if (isAlreadyStatusSet) {
-            null.asSuccess()
-        } else {
-            val qualificationWithMinScoring = findMinScoring(qualifications = filteredQualifications)!!
-            val hasSameScoring = hasSameScoring(
-                qualifications = qualifications,
-                scoring = qualificationWithMinScoring.scoring!!
-            )
-            val qualificationToUpdate =
-                if (hasSameScoring) {
-                    val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
-                    val qualificationRelatedToSubmission = filteredQualifications.find { qualification -> qualification.relatedSubmission == submissionWithMinDate.id }!!
-                    listOf(qualificationRelatedToSubmission)
-                } else {
-                    listOf(qualificationWithMinScoring)
-                }
-
-            val updatedQualifications = if (params.criteria.isNullOrEmpty()) {
-                setStatusDetails(
-                    statusDetails = QualificationStatusDetails.CONSIDERATION,
-                    qualifications = qualificationToUpdate
-                )
-            } else {
-                setStatusDetails(
-                    statusDetails = QualificationStatusDetails.AWAITING,
-                    qualifications = qualificationToUpdate
-                )
-            }
-
-            qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
-
-            return SetNextForQualificationResult(
-                qualifications = updatedQualifications
-                    .map { qualification -> qualification.convertToSetNextForQualification() }
-            )
-                .asSuccess()
         }
     }
 
@@ -582,15 +579,16 @@ class QualificationServiceImpl(
     private fun filterByRelatedSubmission(
         qualifications: List<Qualification>,
         submissions: List<SetNextForQualificationParams.Submission>
-    ): Result<List<Qualification>, ValidationError.RelatedSubmissionNotEqualOnSetNextForQualification> {
+    ): Result<List<SetNextForQualificationWrapper>, ValidationError.RelatedSubmissionNotEqualOnSetNextForQualification> {
 
         val qualificationByRelatedSubmission = qualifications.associateBy { it.relatedSubmission }
         return submissions.map {
-            qualificationByRelatedSubmission[it.id]
+            val qualification = qualificationByRelatedSubmission[it.id]
                 ?: return ValidationError.RelatedSubmissionNotEqualOnSetNextForQualification(
                     submissionId = it.id
                 )
                     .asFailure()
+            SetNextForQualificationWrapper(qualification, it.date)
         }
             .asSuccess()
     }
@@ -656,6 +654,10 @@ class QualificationServiceImpl(
     private fun findMinScoring(qualifications: List<Qualification>) = qualifications.minBy { it.scoring!! }
     private fun hasSameScoring(qualifications: List<Qualification>, scoring: Scoring) = qualifications
         .filter { scoring == it.scoring }
+        .count() > 1
+
+    private fun isSameScoring(qualifications: List<SetNextForQualificationWrapper>, scoring: Scoring) = qualifications
+        .filter { scoring == it.qualification.scoring }
         .count() > 1
 
     private fun findMinDate(submissions: List<RankQualificationsParams.Submission>) =
@@ -732,5 +734,24 @@ class QualificationServiceImpl(
             state.status == qualification.status ||
                 state.statusDetails == qualification.statusDetails
         }
+    }
+}
+
+class SetNextForQualificationWrapper(
+    val qualification: Qualification,
+    val dateTime: LocalDateTime
+) : Comparable<SetNextForQualificationWrapper> {
+
+    override fun compareTo(other: SetNextForQualificationWrapper): Int {
+        val scoringResult = qualification.scoring!!.compareTo(other = other.qualification.scoring!!)
+        return if (scoringResult == 0) {
+            compareByDates(other.dateTime)
+        } else {
+            scoringResult
+        }
+    }
+
+    private fun compareByDates(other: LocalDateTime): Int {
+        return dateTime.compareTo(other)
     }
 }
