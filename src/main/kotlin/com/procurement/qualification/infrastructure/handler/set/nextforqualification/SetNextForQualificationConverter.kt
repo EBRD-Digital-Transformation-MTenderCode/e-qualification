@@ -2,6 +2,7 @@ package com.procurement.qualification.infrastructure.handler.set.nextforqualific
 
 import com.procurement.qualification.application.model.params.SetNextForQualificationParams
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 fun SetNextForQualificationRequest.convert(): Result<SetNextForQualificationParams, DataErrors> =
@@ -72,4 +73,51 @@ fun SetNextForQualificationRequest.Criteria.RequirementGroup.Requirement.convert
         title = this.title,
         description = this.description,
         dataType = this.dataType
+    )
+
+
+fun Qualification.convertToSetNextForQualification(): SetNextForQualificationResult.Qualification =
+    SetNextForQualificationResult.Qualification(
+        id = this.id,
+        date = this.date,
+        status = this.status,
+        relatedSubmission = this.relatedSubmission,
+        scoring = this.scoring,
+        internalId = this.internalId,
+        statusDetails = this.statusDetails!!,
+        documents = this.documents
+            .map {
+                SetNextForQualificationResult.Qualification.Document(
+                    id = it.id,
+                    description = it.description,
+                    title = it.title,
+                    documentType = it.documentType
+                )
+            },
+        requirementResponses = this.requirementResponses
+            .map { requirementResponse ->
+                SetNextForQualificationResult.Qualification.RequirementResponse(
+                    id = requirementResponse.id,
+                    value = requirementResponse.value,
+                    requirement = requirementResponse.requirement
+                        .let {
+                            SetNextForQualificationResult.Qualification.RequirementResponse.Requirement(
+                                id = it.id
+                            )
+                        },
+                    relatedTenderer = requirementResponse.relatedTenderer
+                        .let {
+                            SetNextForQualificationResult.Qualification.RequirementResponse.RelatedTenderer(
+                                id = it.id
+                            )
+                        },
+                    responder = requirementResponse.responder
+                        .let {
+                            SetNextForQualificationResult.Qualification.RequirementResponse.Responder(
+                                id = it.id,
+                                name = it.name
+                            )
+                        }
+                )
+            }
     )

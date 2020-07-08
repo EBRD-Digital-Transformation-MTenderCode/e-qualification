@@ -2,6 +2,7 @@ package com.procurement.qualification.infrastructure.handler.create.qualificatio
 
 import com.procurement.qualification.application.model.params.DoQualificationParams
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 fun DoQualificationRequest.convert(): Result<DoQualificationParams, DataErrors> =
@@ -34,5 +35,43 @@ fun DoQualificationRequest.Qualification.Document.convert(): Result<DoQualificat
         description = this.description,
         documentType = this.documentType,
         title = this.title
+    )
+
+fun Qualification.convertToDoQualificationResult() =
+    DoQualificationResult.Qualification(
+        id = this.id,
+        internalId = this.internalId,
+        statusDetails = this.statusDetails,
+        relatedSubmission = this.relatedSubmission,
+        status = this.status,
+        date = this.date,
+        scoring = this.scoring,
+        requirementResponses = this.requirementResponses
+            .map { requirementResponse ->
+                DoQualificationResult.Qualification.RequirementResponse(
+                    id = requirementResponse.id,
+                    value = requirementResponse.value,
+                    relatedTenderer = requirementResponse.relatedTenderer
+                        .let { DoQualificationResult.Qualification.RequirementResponse.RelatedTenderer(id = it.id) },
+                    requirement = requirementResponse.requirement
+                        .let { DoQualificationResult.Qualification.RequirementResponse.Requirement(id = it.id) },
+                    responder = requirementResponse.responder
+                        .let {
+                            DoQualificationResult.Qualification.RequirementResponse.Responder(
+                                id = it.id,
+                                name = it.name
+                            )
+                        }
+                )
+            },
+        documents = this.documents
+            .map {
+                DoQualificationResult.Qualification.Document(
+                    id = it.id,
+                    description = it.description,
+                    documentType = it.documentType,
+                    title = it.title
+                )
+            }
     )
 

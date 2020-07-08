@@ -35,11 +35,15 @@ import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
+import com.procurement.qualification.infrastructure.handler.create.declaration.convertQualificationsToDoDeclarationResult
 import com.procurement.qualification.infrastructure.handler.create.qualification.DoQualificationResult
+import com.procurement.qualification.infrastructure.handler.create.qualification.convertToDoQualificationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
+import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.convertToFindRequirementResponseByIdsResultRR
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
+import com.procurement.qualification.infrastructure.handler.set.nextforqualification.convertToSetNextForQualification
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
@@ -486,7 +490,7 @@ class QualificationServiceImpl(
 
             return SetNextForQualificationResult(
                 qualifications = updatedQualifications
-                    .map { qualification -> qualification.convert() }
+                    .map { qualification -> qualification.convertToSetNextForQualification() }
             )
                 .asSuccess()
         }
@@ -541,12 +545,7 @@ class QualificationServiceImpl(
             .map { rqDocument ->
                 documentsByIds[rqDocument.id]
                     ?.let { updateDocument(rqDocument = rqDocument, document = it) }
-                    ?: Qualification.Document(
-                        id = rqDocument.id,
-                        description = rqDocument.description,
-                        title = rqDocument.title,
-                        documentType = rqDocument.documentType
-                    ) //FR.COM-7.20.4
+                    ?: buildDocument(document = rqDocument)
             }
 
         return qualification.copy(
@@ -565,90 +564,6 @@ class QualificationServiceImpl(
         documentType = rqDocument.documentType, //FR.COM-7.20.5
         description = rqDocument.description ?: document.description //FR.COM-7.20.7
     )
-
-    private fun Qualification.convertToDoQualificationResult() =
-        DoQualificationResult.Qualification(
-            id = this.id,
-            internalId = this.internalId,
-            statusDetails = this.statusDetails,
-            relatedSubmission = this.relatedSubmission,
-            status = this.status,
-            date = this.date,
-            scoring = this.scoring,
-            requirementResponses = this.requirementResponses
-                .map { requirementResponse ->
-                    DoQualificationResult.Qualification.RequirementResponse(
-                        id = requirementResponse.id,
-                        value = requirementResponse.value,
-                        relatedTenderer = requirementResponse.relatedTenderer
-                            .let { DoQualificationResult.Qualification.RequirementResponse.RelatedTenderer(id = it.id) },
-                        requirement = requirementResponse.requirement
-                            .let { DoQualificationResult.Qualification.RequirementResponse.Requirement(id = it.id) },
-                        responder = requirementResponse.responder
-                            .let {
-                                DoQualificationResult.Qualification.RequirementResponse.Responder(
-                                    id = it.id,
-                                    name = it.name
-                                )
-                            }
-                    )
-                },
-            documents = this.documents
-                .map {
-                    DoQualificationResult.Qualification.Document(
-                        id = it.id,
-                        description = it.description,
-                        documentType = it.documentType,
-                        title = it.title
-                    )
-                }
-        )
-
-    private fun Qualification.convert(): SetNextForQualificationResult.Qualification =
-        SetNextForQualificationResult.Qualification(
-            id = this.id,
-            date = this.date,
-            status = this.status,
-            relatedSubmission = this.relatedSubmission,
-            scoring = this.scoring,
-            internalId = this.internalId,
-            statusDetails = this.statusDetails!!,
-            documents = this.documents
-                .map {
-                    SetNextForQualificationResult.Qualification.Document(
-                        id = it.id,
-                        description = it.description,
-                        title = it.title,
-                        documentType = it.documentType
-                    )
-                },
-            requirementResponses = this.requirementResponses
-                .map { requirementResponse ->
-                    SetNextForQualificationResult.Qualification.RequirementResponse(
-                        id = requirementResponse.id,
-                        value = requirementResponse.value,
-                        requirement = requirementResponse.requirement
-                            .let {
-                                SetNextForQualificationResult.Qualification.RequirementResponse.Requirement(
-                                    id = it.id
-                                )
-                            },
-                        relatedTenderer = requirementResponse.relatedTenderer
-                            .let {
-                                SetNextForQualificationResult.Qualification.RequirementResponse.RelatedTenderer(
-                                    id = it.id
-                                )
-                            },
-                        responder = requirementResponse.responder
-                            .let {
-                                SetNextForQualificationResult.Qualification.RequirementResponse.Responder(
-                                    id = it.id,
-                                    name = it.name
-                                )
-                            }
-                    )
-                }
-        )
 
     private fun filterByRelatedSubmissions(
         qualifications: List<Qualification>,
@@ -784,29 +699,6 @@ class QualificationServiceImpl(
         }
     }
 
-    private fun Qualification.RequirementResponse.convertToFindRequirementResponseByIdsResultRR() =
-        this.let { requirementResponse ->
-            FindRequirementResponseByIdsResult.Qualification.RequirementResponse(
-                id = requirementResponse.id,
-                value = requirementResponse.value,
-                relatedTenderer = requirementResponse.relatedTenderer
-                    .let {
-                        FindRequirementResponseByIdsResult.Qualification.RequirementResponse.RelatedTenderer(
-                            id = it.id
-                        )
-                    },
-                requirement = requirementResponse.requirement
-                    .let { FindRequirementResponseByIdsResult.Qualification.RequirementResponse.Requirement(id = it.id) },
-                responder = requirementResponse.responder
-                    .let {
-                        FindRequirementResponseByIdsResult.Qualification.RequirementResponse.Responder(
-                            id = it.id,
-                            name = it.name
-                        )
-                    }
-            )
-        }
-
     private fun isMatchingDataType(datatype: RequirementDataType, value: RequirementResponseValue) =
         when (value) {
             is RequirementResponseValue.AsString -> datatype == RequirementDataType.STRING
@@ -815,32 +707,13 @@ class QualificationServiceImpl(
             is RequirementResponseValue.AsInteger -> datatype == RequirementDataType.INTEGER
         }
 
-    private fun List<Qualification>.convertQualificationsToDoDeclarationResult(): DoDeclarationResult =
-        DoDeclarationResult(
-            qualifications = this.map { qualification ->
-                DoDeclarationResult.Qualification(
-                    id = qualification.id,
-                    requirementResponses = qualification.requirementResponses
-                        .map { rr ->
-                            DoDeclarationResult.Qualification.RequirementResponse(
-                                id = rr.id,
-                                value = rr.value,
-                                relatedTenderer = rr.relatedTenderer
-                                    .let { DoDeclarationResult.Qualification.RequirementResponse.RelatedTenderer(id = it.id) },
-                                requirement = rr.requirement
-                                    .let { DoDeclarationResult.Qualification.RequirementResponse.Requirement(id = it.id) },
-                                responder = rr.responder
-                                    .let {
-                                        DoDeclarationResult.Qualification.RequirementResponse.Responder(
-                                            id = it.id,
-                                            name = it.name
-                                        )
-                                    }
-                            )
-                        }
-                )
-            }
-        )
+    private fun buildDocument(document: DoQualificationParams.Qualification.Document): Qualification.Document =
+        Qualification.Document(
+            id = document.id,
+            description = document.description,
+            title = document.title,
+            documentType = document.documentType
+        ) //FR.COM-7.20.4
 
     private fun buildRequirementResponse(requirementResponse: DoDeclarationParams.Qualification.RequirementResponse): Qualification.RequirementResponse =
         Qualification.RequirementResponse(
