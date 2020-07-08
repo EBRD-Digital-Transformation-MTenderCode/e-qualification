@@ -84,7 +84,7 @@ fun Qualification.convertToSetNextForQualification(): SetNextForQualificationRes
         relatedSubmission = this.relatedSubmission,
         scoring = this.scoring,
         internalId = this.internalId,
-        statusDetails = this.statusDetails!!,
+        statusDetails = this.statusDetails,
         documents = this.documents
             .map {
                 SetNextForQualificationResult.Qualification.Document(

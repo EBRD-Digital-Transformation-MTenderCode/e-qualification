@@ -24,7 +24,6 @@ data class SetNextForQualificationResult(
         @field:JsonProperty("id") @param:JsonProperty("id") val id: QualificationId,
         @field:JsonProperty("date") @param:JsonProperty("date") val date: LocalDateTime,
         @field:JsonProperty("status") @param:JsonProperty("status") val status: QualificationStatus,
-        @field:JsonProperty("statusDetails") @param:JsonProperty("statusDetails") val statusDetails: QualificationStatusDetails,
         @field:JsonProperty("relatedSubmission") @param:JsonProperty("relatedSubmission") val relatedSubmission: SubmissionId,
         @JsonInclude(JsonInclude.Include.NON_NULL)
         @field:JsonProperty("internalId") @param:JsonProperty("internalId") val internalId: String?,
@@ -33,7 +32,10 @@ data class SetNextForQualificationResult(
         @JsonInclude(JsonInclude.Include.NON_NULL)
         @field:JsonProperty("scoring") @param:JsonProperty("scoring") val scoring: Scoring?,
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        @field:JsonProperty("documents") @param:JsonProperty("documents") val documents: List<Document>?
+        @field:JsonProperty("documents") @param:JsonProperty("documents") val documents: List<Document>?,
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonProperty("statusDetails") @param:JsonProperty("statusDetails") val statusDetails: QualificationStatusDetails?
     ) {
         data class RequirementResponse(
             @field:JsonProperty("id") @param:JsonProperty("id") val id: RequirementResponseId,
