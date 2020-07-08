@@ -21,13 +21,13 @@ fun CheckDeclarationRequest.convert(): Result<CheckDeclarationParams, DataErrors
 
 fun CheckDeclarationRequest.RequirementResponse.convert(): Result<CheckDeclarationParams.RequirementResponse, DataErrors> =
     CheckDeclarationParams.RequirementResponse.tryCreate(
-        id,
-        value,
-        relatedTendererId,
-        this.responder
+        id = this.id,
+        value = this.value,
+        relatedTendererId = this.relatedTendererId,
+        responder = this.responder
             .convert()
             .orForwardFail { fail -> return fail },
-        requirementId
+        requirementId = this.requirementId
     )
 
 fun CheckDeclarationRequest.RequirementResponse.Responder.convert(): Result<CheckDeclarationParams.RequirementResponse.Responder, DataErrors> =
