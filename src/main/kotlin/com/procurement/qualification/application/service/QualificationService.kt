@@ -443,11 +443,7 @@ class QualificationServiceImpl(
         val isAlreadyStatusSet = when (qualificationSystemMethod) {
             QualificationSystemMethod.AUTOMATED -> when (reductionCriteria) {
                 ReductionCriteria.SCORING -> filteredQualifications
-                    .filter {
-                        it.statusDetails != null
-                            || it.statusDetails == QualificationStatusDetails.CONSIDERATION
-                            || it.statusDetails == QualificationStatusDetails.AWAITING
-                    }
+                    .filter { it.statusDetails != null }
                     .isNotEmpty()
                 ReductionCriteria.NONE -> true
             }
