@@ -9,7 +9,7 @@ class CheckQualificationStateTest : AbstractDTOTestBase<CheckQualificationStateR
 
     @Test
     fun full() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/check/qualificationstate/check_qualification_state_request_full.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/check/qualification/state/check_qualification_state_request_full.json")
     }
 
 }
