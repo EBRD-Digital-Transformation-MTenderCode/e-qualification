@@ -127,6 +127,7 @@ sealed class ValidationError(
             QualificationNotFoundFor(
                 numberError = "7.20.1", ocid = ocid, cpid = cpid, qualificationId = qualificationId
             )
+
         class CheckQualificationsForProtocol(cpid: Cpid, ocid: Ocid) :
             QualificationNotFoundFor(numberError = "7.24.1", cpid = cpid, ocid = ocid)
     }
@@ -162,6 +163,17 @@ sealed class ValidationError(
 
     class UnsuitableQualificationFound(cpid: Cpid, ocid: Ocid, id: QualificationId) : ValidationError(
         numberError = "7.24.2",
-        description = "Unsuitable qualification found by cpid '$cpid', ocid '$ocid', id '$id''."
+        description = "Unsuitable qualification found by cpid '$cpid', ocid '$ocid', id '$id'."
     )
+
+    class RuleNotFound : ValidationError {
+        constructor(description: String):
+            super(numberError = "17", description = description)
+
+        constructor(country: String, pmd: Pmd, operationType: OperationType?) :
+            this(description = "Rule not found by country '$country', pmd '$pmd', operationType $operationType.")
+
+        constructor(country: String, pmd: Pmd) :
+            this(description = "Rule not found by country '$country', pmd '$pmd'.")
+    }
 }
