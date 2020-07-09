@@ -10,7 +10,7 @@ interface QualificationRulesRepository {
     fun findBy(
         country: String,
         pmd: Pmd,
-        operationType: OperationType,
+        operationType: OperationType? = null,
         parameter: String
     ): Result<String?, Fail>
 }
