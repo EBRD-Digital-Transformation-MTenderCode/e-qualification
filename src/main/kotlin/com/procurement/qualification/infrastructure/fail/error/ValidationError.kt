@@ -123,6 +123,10 @@ sealed class ValidationError(
                 numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
+        class DoQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            QualificationNotFoundFor(
+                numberError = "7.20.1", ocid = ocid, cpid = cpid, qualificationId = qualificationId
+            )
         class CheckQualificationsForProtocol(cpid: Cpid, ocid: Ocid) :
             QualificationNotFoundFor(numberError = "7.24.1", cpid = cpid, ocid = ocid)
     }
@@ -139,6 +143,12 @@ sealed class ValidationError(
             numberError = "7.4.1", cpid = cpid, ocid = ocid
         )
     }
+
+    class RelatedSubmissionNotEqualOnSetNextForQualification(submissionId: SubmissionId) :
+        ValidationError(
+            numberError = "7.22.1",
+            description = "Related submission in qualifications not found on submission id='$submissionId'."
+        )
 
     class RequestDateIsNotAfterStartDate(requestDate: LocalDateTime, startDate: LocalDateTime) : ValidationError(
         numberError = "7.4.3",

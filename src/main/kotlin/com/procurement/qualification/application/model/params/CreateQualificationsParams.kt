@@ -5,6 +5,7 @@ import com.procurement.qualification.application.model.parseDate
 import com.procurement.qualification.application.model.parseEnum
 import com.procurement.qualification.application.model.parseOcid
 import com.procurement.qualification.application.model.parseOwner
+import com.procurement.qualification.application.model.parseSubmissionId
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
@@ -18,7 +19,6 @@ import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
 import com.procurement.qualification.domain.model.submission.SubmissionId
-import com.procurement.qualification.domain.model.submission.tryCreateSubmissionId
 import com.procurement.qualification.domain.model.tender.conversion.ConversionId
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientId
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
@@ -83,8 +83,9 @@ class CreateQualificationsParams private constructor(
                 requirementResponses: List<RequirementResponse>
             ): Result<Submission, DataErrors> {
 
-                val parsedId = tryCreateSubmissionId(value = id)
+                val parsedId = parseSubmissionId(value = id)
                     .orForwardFail { fail -> return fail }
+
                 return Submission(id = parsedId, requirementResponses = requirementResponses)
                     .asSuccess()
             }

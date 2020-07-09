@@ -1,0 +1,37 @@
+{
+  "qualifications": [
+    {
+      "id": "cf14da99-d490-4906-b585-4ba959eaa0f8",
+      "internalId": "string",
+      "status": "pending",
+      "statusDetails": "active",
+      "date": "2020-07-06T07:14:50Z",
+      "documents": [
+        {
+          "id": "string",
+          "documentType": "notice",
+          "title": "string",
+          "description": "string"
+        }
+      ],
+      "relatedSubmission": "daeae300-ebdd-46ea-b286-d1ecfb542faf",
+      "requirementResponses": [
+        {
+          "id": "5e338768-8be8-4daa-a63f-4c765b9781b2",
+          "value": "Unknown Type: string,number,integer,boolean",
+          "relatedTenderer": {
+            "id": "string"
+          },
+          "requirement": {
+            "id": "string"
+          },
+          "responder": {
+            "id": "string",
+            "name": "string"
+          }
+        }
+      ],
+      "scoring": 0.001
+    }
+  ]
+}

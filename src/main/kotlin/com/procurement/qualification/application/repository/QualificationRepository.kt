@@ -14,9 +14,8 @@ interface QualificationRepository {
 
     fun findBy(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId): Result<Qualification?, Fail.Incident>
 
-    fun findBy(
-        cpid: Cpid, ocid: Ocid, qualificationIds: List<QualificationId>
-    ): Result<List<Qualification>, Fail.Incident>
+    fun findBy(cpid: Cpid, ocid: Ocid, qualificationIds: List<QualificationId>)
+        : Result<List<Qualification>, Fail.Incident>
 
     fun save(cpid: Cpid, ocid: Ocid, qualification: Qualification): MaybeFail<Fail.Incident>
 

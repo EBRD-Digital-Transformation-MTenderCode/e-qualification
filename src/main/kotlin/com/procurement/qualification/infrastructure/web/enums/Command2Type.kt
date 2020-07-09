@@ -7,16 +7,18 @@ import com.procurement.qualification.infrastructure.web.dto.Action
 
 enum class Command2Type(@JsonValue override val key: String) : Action, EnumElementProvider.Key {
 
-    FIND_QUALIFICATION_IDS("findQualificationIds"),
-    CREATE_QUALIFICATIONS("createQualifications"),
-    RANK_QUALIFICATIONS("rankQualifications"),
-    START_QUALIFICATION_PERIOD("startQualificationPeriod"),
     CHECK_ACCESS_TO_QUALIFICATION("checkAccessToQualification"),
-    CHECK_QUALIFICATION_STATE("checkQualificationState"),
-    DO_DECLARATION("doDeclaration"),
     CHECK_DECLARATION("checkDeclaration"),
-    FIND_REQUIREMENT_RESPONSE_BY_IDS("findRequirementResponseByIds"),
+    CHECK_QUALIFICATION_STATE("checkQualificationState"),
+    CREATE_QUALIFICATIONS("createQualifications"),
     DO_CONSIDERATION("doConsideration"),
+    DO_DECLARATION("doDeclaration"),
+    DO_QUALIFICATION("doQualification"),
+    FIND_QUALIFICATION_IDS("findQualificationIds"),
+    FIND_REQUIREMENT_RESPONSE_BY_IDS("findRequirementResponseByIds"),
+    RANK_QUALIFICATIONS("rankQualifications"),
+    SET_NEXT_FOR_QUALIFICATION("setNextForQualification"),
+    START_QUALIFICATION_PERIOD("startQualificationPeriod"),
     CHECK_QUALIFICATION_PERIOD("checkQualificationPeriod"),
     CHECK_QUALIFICATIONS_FOR_PROTOCOL("checkQualificationsForProtocol");
 

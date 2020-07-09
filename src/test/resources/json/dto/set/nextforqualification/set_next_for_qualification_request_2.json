@@ -1,0 +1,18 @@
+{
+  "cpid": "ocds-b3wdp1-MD-1580458690892",
+  "ocid": "ocds-b3wdp1-MD-1580458690892-EV-1580458791896",
+  "submissions": [
+    {
+      "id": "string",
+      "date": "2020-07-03T09:41:36Z"
+    }
+  ],
+  "tender": {
+    "otherCriteria": {
+      "qualificationSystemMethods": [
+        "authomated"
+      ],
+      "reductionCriteria": "scoring"
+    }
+  }
+}

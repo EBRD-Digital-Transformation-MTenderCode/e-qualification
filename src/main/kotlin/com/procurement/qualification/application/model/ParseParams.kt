@@ -8,6 +8,7 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.domain.model.tryOwner
 import com.procurement.qualification.domain.util.extension.tryParseLocalDateTime
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
@@ -90,5 +91,15 @@ fun parseQualificationId(value: String): Result<QualificationId, DataErrors.Vali
     return id.asSuccess()
 }
 
-
+fun parseSubmissionId(value: String): Result<SubmissionId, DataErrors.Validation.DataFormatMismatch> {
+    val id = SubmissionId.tryCreateOrNull(text = value)
+        ?: return Result.failure(
+            DataErrors.Validation.DataFormatMismatch(
+                name = "submissionId",
+                actualValue = value,
+                expectedFormat = SubmissionId.pattern
+            )
+        )
+    return id.asSuccess()
+}
 

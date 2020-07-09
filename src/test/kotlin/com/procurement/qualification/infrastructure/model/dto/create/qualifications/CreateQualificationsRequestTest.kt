@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.model.dto.create.qualification
+package com.procurement.qualification.infrastructure.model.dto.create.qualifications
 
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsRequest
 import com.procurement.qualification.infrastructure.model.dto.AbstractDTOTestBase
@@ -8,16 +8,16 @@ class CreateQualificationsRequestTest : AbstractDTOTestBase<CreateQualifications
 
     @Test
     fun full() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/create.qualification/create_qualifications_request_full.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/create/qualifications/create_qualifications_request_full.json")
     }
 
     @Test
     fun full1() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/create.qualification/create_qualifications_request_1.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/create/qualifications/create_qualifications_request_1.json")
     }
 
     @Test
     fun full2() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/create.qualification/create_qualifications_request_2.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/create/qualifications/create_qualifications_request_2.json")
     }
 }

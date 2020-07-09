@@ -15,6 +15,7 @@ import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
 import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolParams
@@ -136,7 +137,7 @@ internal class QualificationServiceImplTest {
             status = QualificationStatus.ACTIVE,
             scoring = Scoring.tryCreate("0.001").get,
             statusDetails = QualificationStatusDetails.ACTIVE,
-            relatedSubmission = UUID.randomUUID()
+            relatedSubmission = SubmissionId.generate()
         )
     }
 
