@@ -183,7 +183,7 @@ internal class QualificationServiceImplTest {
 
             val actual = qualificationService.checkQualificationsForProtocol(params = params).error
             val expectedErrorCode = "VR.COM-7.24.2"
-            val expectedErrorDescription = "Unsuitable qualification found by cpid '$CPID', ocid '$OCID', id '${qualificationsStored[1].id}''."
+            val expectedErrorDescription = "Unsuitable qualification found by cpid '$CPID', ocid '$OCID', id '${qualificationsStored[1].id}'."
 
             assertEquals(expectedErrorCode, actual.code)
             assertEquals(expectedErrorDescription, actual.description)
@@ -205,7 +205,7 @@ internal class QualificationServiceImplTest {
 
             val actual = qualificationService.checkQualificationsForProtocol(params = params).error
             val expectedErrorCode = "VR.COM-7.24.2"
-            val expectedErrorDescription = "Unsuitable qualification found by cpid '$CPID', ocid '$OCID', id '${qualificationsStored.first().id}''."
+            val expectedErrorDescription = "Unsuitable qualification found by cpid '$CPID', ocid '$OCID', id '${qualificationsStored.first().id}'."
 
             assertEquals(expectedErrorCode, actual.code)
             assertEquals(expectedErrorDescription, actual.description)
