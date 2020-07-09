@@ -6,7 +6,7 @@ import com.procurement.qualification.infrastructure.handler.check.accesstoqualif
 import com.procurement.qualification.infrastructure.handler.check.declaration.CheckDeclarationHandler
 import com.procurement.qualification.infrastructure.handler.check.qualification.period.CheckQualificationPeriodHandler
 import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolHandler
-import com.procurement.qualification.infrastructure.handler.check.qualificationstate.CheckQualificationStateHandler
+import com.procurement.qualification.infrastructure.handler.check.qualification.state.CheckQualificationStateHandler
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationHandler
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationHandler
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsHandler

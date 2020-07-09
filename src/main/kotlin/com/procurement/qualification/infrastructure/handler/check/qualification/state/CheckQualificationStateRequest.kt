@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.handler.check.qualificationstate
+package com.procurement.qualification.infrastructure.handler.check.qualification.state
 
 
 import com.fasterxml.jackson.annotation.JsonProperty
