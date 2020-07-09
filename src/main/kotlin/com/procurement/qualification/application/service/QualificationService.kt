@@ -31,6 +31,7 @@ import com.procurement.qualification.domain.util.extension.getNewElements
 import com.procurement.qualification.domain.util.extension.getUnknownElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolParams
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
@@ -50,6 +51,7 @@ interface QualificationService {
     fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
     fun doConsideration(params: DoConsiderationParams): Result<DoConsiderationResult, Fail>
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
+    fun checkQualificationsForProtocol(params: CheckQualificationsForProtocolParams): ValidationResult<Fail>
 }
 
 @Service
@@ -408,6 +410,30 @@ class QualificationServiceImpl(
                 statusDetails = updatedQualification.statusDetails!!
             )
         }).asSuccess()
+    }
+
+    override fun checkQualificationsForProtocol(params: CheckQualificationsForProtocolParams): ValidationResult<Fail> {
+        val cpid = params.cpid
+        val ocid = params.ocid
+        val qualifications = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
+            .doReturn { error -> return ValidationResult.error(error) }
+
+        if (qualifications.isEmpty())
+            return ValidationError.QualificationNotFoundFor.CheckQualificationsForProtocol(cpid = cpid, ocid = ocid)
+                .asValidationFailure()
+
+        val allowedStatusDetails = setOf(QualificationStatusDetails.ACTIVE, QualificationStatusDetails.UNSUCCESSFUL)
+
+        val unsuitableQualification = qualifications.find { qualification ->
+            qualification.status != QualificationStatus.PENDING
+                || qualification.statusDetails !in allowedStatusDetails
+        }
+
+        if (unsuitableQualification != null)
+            return ValidationError.UnsuitableQualificationFound(cpid, ocid, unsuitableQualification.id)
+                .asValidationFailure()
+
+        return ValidationResult.ok()
     }
 
     private fun filterByRelatedSubmissions(
