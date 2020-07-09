@@ -1,5 +1,6 @@
 package com.procurement.qualification.application.service
 
+import com.procurement.qualification.application.model.params.AnalyzeQualificationsForInvitationParams
 import com.procurement.qualification.application.model.params.CheckAccessToQualificationParams
 import com.procurement.qualification.application.model.params.CheckDeclarationParams
 import com.procurement.qualification.application.model.params.CheckQualificationStateParams
@@ -33,6 +34,7 @@ import com.procurement.qualification.domain.util.extension.getNewElements
 import com.procurement.qualification.domain.util.extension.getUnknownElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.handler.analyze.qualification.AnalyzeQualificationsForInvitationResult
 import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolParams
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
@@ -63,6 +65,7 @@ interface QualificationService {
     fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult?, Fail>
     fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail>
     fun checkQualificationsForProtocol(params: CheckQualificationsForProtocolParams): ValidationResult<Fail>
+    fun analyzeQualificationsForInvitation(params: AnalyzeQualificationsForInvitationParams): Result<AnalyzeQualificationsForInvitationResult?, Fail>
 }
 
 @Service
@@ -575,6 +578,37 @@ class QualificationServiceImpl(
                 .asValidationFailure()
 
         return ValidationResult.ok()
+    }
+
+    override fun analyzeQualificationsForInvitation(params: AnalyzeQualificationsForInvitationParams): Result<AnalyzeQualificationsForInvitationResult?, Fail> {
+        val qualifications = qualificationRepository.findBy(cpid = params.cpid, ocid = params.ocid)
+            .orForwardFail { fail -> return fail }
+
+        val suitableQualifications = qualifications.filter { qualification ->
+            qualification.status == QualificationStatus.PENDING
+                && qualification.statusDetails == QualificationStatusDetails.ACTIVE
+        }
+
+        val minimumQuantity = rulesService.findMinimumQualificationQuantity(
+            country = params.country, pmd = params.pmd
+        )
+            .orForwardFail { fail -> return fail }
+            ?: return ValidationError.RuleNotFound(pmd = params.pmd, country = params.country)
+                .asFailure()
+
+        if (suitableQualifications.size < minimumQuantity)
+            return null.asSuccess()
+
+        return AnalyzeQualificationsForInvitationResult(
+            qualifications = suitableQualifications.map { qualification ->
+                AnalyzeQualificationsForInvitationResult.Qualification(
+                    id = qualification.id,
+                    statusDetails = qualification.statusDetails!!,
+                    status = qualification.status,
+                    relatedSubmission = qualification.relatedSubmission
+                )
+            }
+        ).asSuccess()
     }
 
     private fun updateDocument(
