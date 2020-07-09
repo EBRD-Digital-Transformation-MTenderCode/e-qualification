@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.model.dto.check.qualificationstate
+package com.procurement.qualification.infrastructure.model.dto.check.qualification.state
 
 import com.procurement.qualification.infrastructure.handler.check.qualification.state.CheckQualificationStateRequest
 import com.procurement.qualification.infrastructure.model.dto.AbstractDTOTestBase
