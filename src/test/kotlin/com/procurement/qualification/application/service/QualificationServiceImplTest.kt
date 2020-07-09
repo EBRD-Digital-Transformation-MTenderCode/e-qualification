@@ -237,7 +237,7 @@ internal class QualificationServiceImplTest {
             status = status,
             scoring = Scoring.tryCreate("0.001").get,
             statusDetails = statusDetails,
-            relatedSubmission = UUID.randomUUID()
+            relatedSubmission = SubmissionId.generate()
         )
     }
 }
