@@ -252,29 +252,43 @@ class CassandraQualificationRepository(
         token = qualification.token,
         status = qualification.status,
         statusDetails = qualification.statusDetails,
+        description = qualification.description,
+        internalId = qualification.internalId,
         scoring = qualification.scoring,
         relatedSubmission = qualification.relatedSubmission,
-        requirementResponses = qualification.requirementResponses.map { requirementResponse ->
-            QualificationEntity.RequirementResponse(
-                id = requirementResponse.id,
-                value = requirementResponse.value,
-                responder = requirementResponse.responder.let { responder ->
-                    QualificationEntity.RequirementResponse.Responder(
-                        id = responder.id,
-                        name = responder.name
-                    )
-                },
-                requirement = QualificationEntity.RequirementResponse.Requirement(requirementResponse.requirement.id),
-                relatedTenderer = QualificationEntity.RequirementResponse.RelatedTenderer(id = requirementResponse.relatedTenderer.id)
-            )
-        }
+        requirementResponses = qualification.requirementResponses
+            .map { requirementResponse ->
+                QualificationEntity.RequirementResponse(
+                    id = requirementResponse.id,
+                    value = requirementResponse.value,
+                    responder = requirementResponse.responder
+                        .let { responder ->
+                            QualificationEntity.RequirementResponse.Responder(
+                                id = responder.id,
+                                name = responder.name
+                            )
+                        },
+                    requirement = QualificationEntity.RequirementResponse.Requirement(requirementResponse.requirement.id),
+                    relatedTenderer = QualificationEntity.RequirementResponse.RelatedTenderer(id = requirementResponse.relatedTenderer.id)
+                )
+            },
+        documents = qualification.documents
+            .map { document ->
+                QualificationEntity.Document(
+                    id = document.id,
+                    description = document.description,
+                    title = document.title,
+                    documentType = document.documentType
+                )
+            }
     )
 
-    private fun generateJsonData(qualification: Qualification): Result<String, Fail.Incident>{
+    private fun generateJsonData(qualification: Qualification): Result<String, Fail.Incident> {
         val entity = convert(qualification)
         return transform.trySerialization(entity)
-            .doOnError { error -> return error.asFailure() }
-
+            .doOnError { error ->
+                return Fail.Incident.Database.DatabaseParsing(exception = error.exception)
+                    .asFailure()
+            }
     }
-
 }
