@@ -17,7 +17,8 @@ enum class Command2Type(@JsonValue override val key: String) : Action, EnumEleme
     CHECK_DECLARATION("checkDeclaration"),
     FIND_REQUIREMENT_RESPONSE_BY_IDS("findRequirementResponseByIds"),
     DO_CONSIDERATION("doConsideration"),
-    CHECK_QUALIFICATION_PERIOD("checkQualificationPeriod");
+    CHECK_QUALIFICATION_PERIOD("checkQualificationPeriod"),
+    CHECK_QUALIFICATIONS_FOR_PROTOCOL("checkQualificationsForProtocol");
 
     override fun toString(): String = key
 
