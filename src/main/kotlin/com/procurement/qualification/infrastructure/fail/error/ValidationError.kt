@@ -80,15 +80,19 @@ sealed class ValidationError(
             description = "Invalid Requirement Response Id, actual='$actualId', expected='$expected'."
         )
 
-    sealed class QualificationNotFoundFor(
-        numberError: String,
-        cpid: Cpid,
-        ocid: Ocid,
-        qualificationId: QualificationId
-    ) : ValidationError(
-        numberError = numberError,
-        description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
-    ) {
+    sealed class QualificationNotFoundFor : ValidationError {
+        constructor(numberError: String, cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            super(
+                numberError = numberError,
+                description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
+            )
+
+        constructor(numberError: String, cpid: Cpid, ocid: Ocid) :
+            super(
+                numberError = numberError,
+                description = "No qualification found by cpid='$cpid' and ocid='$ocid'."
+            )
+
         class CheckAccessToQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
                 numberError = "7.14.3", cpid = cpid, ocid = ocid, qualificationId = qualificationId
@@ -118,6 +122,9 @@ sealed class ValidationError(
             QualificationNotFoundFor(
                 numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
+
+        class CheckQualificationsForProtocol(cpid: Cpid, ocid: Ocid) :
+            QualificationNotFoundFor(numberError = "7.24.1", cpid = cpid, ocid = ocid)
     }
 
     sealed class PeriodNotFoundFor(
@@ -141,5 +148,10 @@ sealed class ValidationError(
     class RequestDateIsNotBeforeEndDate(requestDate: LocalDateTime, endDate: LocalDateTime) : ValidationError(
         numberError = "7.4.4",
         description = "Request date '${requestDate.format()}' must precede stored period end date '${endDate.format()}'."
+    )
+
+    class UnsuitableQualificationFound(cpid: Cpid, ocid: Ocid, id: QualificationId) : ValidationError(
+        numberError = "7.24.2",
+        description = "Unsuitable qualification found by cpid '$cpid', ocid '$ocid', id '$id''."
     )
 }
