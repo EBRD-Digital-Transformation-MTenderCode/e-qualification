@@ -8,6 +8,7 @@ import com.procurement.qualification.application.model.params.DoConsiderationPar
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
+import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
@@ -16,8 +17,10 @@ import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
+import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolParams
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -133,6 +136,106 @@ internal class QualificationServiceImplTest {
             status = QualificationStatus.ACTIVE,
             scoring = Scoring.tryCreate("0.001").get,
             statusDetails = QualificationStatusDetails.ACTIVE,
+            relatedSubmission = UUID.randomUUID()
+        )
+    }
+
+    @Nested
+    inner class CheckQualificationsForProtocol {
+
+        @Test
+        fun success() {
+            val params: CheckQualificationsForProtocolParams = getParams()
+            val allowedStatus = QualificationStatus.PENDING
+            val allowedStatusDetailsUnsuccessful = QualificationStatusDetails.UNSUCCESSFUL
+            val allowedStatusDetailsActive = QualificationStatusDetails.ACTIVE
+
+            val qualificationsStored = listOf(
+                createQualification(allowedStatus, allowedStatusDetailsActive),
+                createQualification(allowedStatus, allowedStatusDetailsUnsuccessful)
+            )
+            whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
+                .thenReturn(qualificationsStored.asSuccess())
+            val actual = qualificationService.checkQualificationsForProtocol(params = params)
+
+            assertTrue(actual is ValidationResult.Ok)
+        }
+
+        @Test
+        fun wrongStatus_fail() {
+            val params: CheckQualificationsForProtocolParams = getParams()
+            val wrongStatus = QualificationStatus.UNSUCCESSFUL
+            val allowedStatus = QualificationStatus.PENDING
+            val allowedStatusDetails = QualificationStatusDetails.ACTIVE
+
+            val qualificationsStored = listOf(
+                createQualification(allowedStatus, allowedStatusDetails),
+                createQualification(wrongStatus, allowedStatusDetails)
+            )
+            whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
+                .thenReturn(qualificationsStored.asSuccess())
+
+            val actual = qualificationService.checkQualificationsForProtocol(params = params).error
+            val expectedErrorCode = "VR.COM-7.24.2"
+            val expectedErrorDescription = "Unsuitable qualification found by cpid '$CPID', ocid '$OCID', id '${qualificationsStored[1].id}''."
+
+            assertEquals(expectedErrorCode, actual.code)
+            assertEquals(expectedErrorDescription, actual.description)
+        }
+
+        @Test
+        fun wrongStatusDetails_fail() {
+            val params: CheckQualificationsForProtocolParams = getParams()
+            val allowedStatus = QualificationStatus.PENDING
+            val allowedStatusDetails = QualificationStatusDetails.ACTIVE
+            val wrongStatusDetails = QualificationStatusDetails.CONSIDERATION
+
+            val qualificationsStored = listOf(
+                createQualification(allowedStatus, wrongStatusDetails),
+                createQualification(allowedStatus, allowedStatusDetails)
+            )
+            whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
+                .thenReturn(qualificationsStored.asSuccess())
+
+            val actual = qualificationService.checkQualificationsForProtocol(params = params).error
+            val expectedErrorCode = "VR.COM-7.24.2"
+            val expectedErrorDescription = "Unsuitable qualification found by cpid '$CPID', ocid '$OCID', id '${qualificationsStored.first().id}''."
+
+            assertEquals(expectedErrorCode, actual.code)
+            assertEquals(expectedErrorDescription, actual.description)
+        }
+
+        @Test
+        fun noQualificationFound_fail() {
+            val params: CheckQualificationsForProtocolParams = getParams()
+
+            whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
+                .thenReturn(emptyList<Qualification>().asSuccess())
+
+            val actual = qualificationService.checkQualificationsForProtocol(params = params).error
+            val expectedErrorCode = "VR.COM-7.24.1"
+            val expectedErrorDescription = "No qualification found by cpid='$CPID' and ocid='$OCID'."
+
+            assertEquals(expectedErrorCode, actual.code)
+            assertEquals(expectedErrorDescription, actual.description)
+        }
+
+        private fun getParams() = CheckQualificationsForProtocolParams.tryCreate(
+            cpid = CPID.toString(),
+            ocid = OCID.toString()
+        ).get
+
+        private fun createQualification(
+            status: QualificationStatus,
+            statusDetails: QualificationStatusDetails
+        ) = Qualification(
+            id = QualificationId.generate(),
+            date = DATE,
+            owner = UUID.randomUUID(),
+            token = UUID.randomUUID(),
+            status = status,
+            scoring = Scoring.tryCreate("0.001").get,
+            statusDetails = statusDetails,
             relatedSubmission = UUID.randomUUID()
         )
     }
