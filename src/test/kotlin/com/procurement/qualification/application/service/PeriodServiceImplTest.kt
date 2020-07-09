@@ -2,6 +2,7 @@ package com.procurement.qualification.application.service
 
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
+import com.procurement.qualification.application.model.params.CheckQualificationPeriodParams
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.domain.functional.ValidationResult
 import com.procurement.qualification.domain.functional.asSuccess
@@ -9,7 +10,6 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.util.extension.format
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
-import com.procurement.qualification.infrastructure.handler.check.qualification.period.CheckQualificationPeriodParams
 import com.procurement.qualification.infrastructure.model.entity.PeriodEntity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

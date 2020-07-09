@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.handler.check.qualification.period
+package com.procurement.qualification.application.model.params
 
 import com.procurement.qualification.application.model.parseCpid
 import com.procurement.qualification.application.model.parseDate
