@@ -20,7 +20,8 @@ enum class Command2Type(@JsonValue override val key: String) : Action, EnumEleme
     SET_NEXT_FOR_QUALIFICATION("setNextForQualification"),
     START_QUALIFICATION_PERIOD("startQualificationPeriod"),
     CHECK_QUALIFICATION_PERIOD("checkQualificationPeriod"),
-    CHECK_QUALIFICATIONS_FOR_PROTOCOL("checkQualificationsForProtocol");
+    CHECK_QUALIFICATIONS_FOR_PROTOCOL("checkQualificationsForProtocol"),
+    ANALYZE_QUALIFICATION_FOR_INVITATIONS("analyzeQualificationsForInvitation");
 
     override fun toString(): String = key
 
