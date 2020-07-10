@@ -457,7 +457,7 @@ class QualificationServiceImpl(
                         if (nullStatusQualifications.isEmpty()) {
                             return null.asSuccess()
                         } else {
-                            val sortedQualifications = filteredWrappedQualifications.sorted()
+                            val sortedQualifications = nullStatusQualifications.sorted()
                             val qualificationWithMinScoringAndDate = sortedQualifications.first().qualification
 
                             val updatedQualifications = if (params.criteria.isNullOrEmpty()) {
