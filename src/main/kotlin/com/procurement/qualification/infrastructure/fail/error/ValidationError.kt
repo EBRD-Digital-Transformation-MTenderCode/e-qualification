@@ -156,11 +156,6 @@ sealed class ValidationError(
         description = "Request date '${requestDate.format()}' must be after stored period start date '${startDate.format()}'."
     )
 
-    class RequestDateIsNotBeforeEndDate(requestDate: LocalDateTime, endDate: LocalDateTime) : ValidationError(
-        numberError = "7.4.4",
-        description = "Request date '${requestDate.format()}' must precede stored period end date '${endDate.format()}'."
-    )
-
     class UnsuitableQualificationFound(cpid: Cpid, ocid: Ocid, id: QualificationId) : ValidationError(
         numberError = "7.24.2",
         description = "Unsuitable qualification found by cpid '$cpid', ocid '$ocid', id '$id'."

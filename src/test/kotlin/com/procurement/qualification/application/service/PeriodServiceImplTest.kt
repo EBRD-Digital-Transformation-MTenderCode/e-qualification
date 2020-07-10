@@ -117,44 +117,10 @@ internal class PeriodServiceImplTest {
             assertEquals(actual.code, "VR.COM-7.4.3")
         }
 
-        @Test
-        fun requestDateEqualsEndDate_fail() {
-            val requestDate = DATE
-            val params: CheckQualificationPeriodParams = getParams(requestDate)
-            val periodEntity = stubPeriodEntity(
-                startDate = requestDate.minusDays(1),
-                endDate = requestDate
-            )
-            whenever(periodRepository.findBy(cpid = params.cpid, ocid = params.ocid))
-                .thenReturn(periodEntity.asSuccess())
-
-            val actual = periodService.checkQualificationPeriod(params = params).error
-
-            assertTrue(actual is ValidationError.RequestDateIsNotBeforeEndDate)
-            assertEquals(actual.code, "VR.COM-7.4.4")
-        }
-
-        @Test
-        fun requestDateIsAfterEndDate_fail() {
-            val requestDate = DATE
-            val params: CheckQualificationPeriodParams = getParams(requestDate)
-            val periodEntity = stubPeriodEntity(
-                startDate = requestDate.minusDays(1),
-                endDate = requestDate.minusSeconds(1)
-            )
-            whenever(periodRepository.findBy(cpid = params.cpid, ocid = params.ocid))
-                .thenReturn(periodEntity.asSuccess())
-
-            val actual = periodService.checkQualificationPeriod(params = params).error
-
-            assertTrue(actual is ValidationError.RequestDateIsNotBeforeEndDate)
-            assertEquals(actual.code, "VR.COM-7.4.4")
-        }
-
         private fun getParams(date: LocalDateTime) = CheckQualificationPeriodParams.tryCreate(
             cpid = CPID.toString(),
             ocid = OCID.toString(),
-            date = DATE.format()
+            date = date.format()
         ).get
 
         private fun stubPeriodEntity(startDate: LocalDateTime, endDate: LocalDateTime) =

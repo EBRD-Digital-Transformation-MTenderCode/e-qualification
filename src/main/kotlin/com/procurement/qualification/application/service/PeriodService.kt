@@ -46,11 +46,6 @@ class PeriodServiceImpl(private val periodRepository: PeriodRepository) : Period
                 requestDate = params.date, startDate = periodEntity.startDate
             ).asValidationFailure()
 
-        if (!params.date.isBefore(periodEntity.endDate))
-            return ValidationError.RequestDateIsNotBeforeEndDate(
-                requestDate = params.date, endDate = periodEntity.endDate!!
-            ).asValidationFailure()
-
         return ValidationResult.ok()
     }
 }
