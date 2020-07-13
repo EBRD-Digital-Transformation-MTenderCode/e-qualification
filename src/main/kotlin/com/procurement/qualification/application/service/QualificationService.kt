@@ -643,6 +643,7 @@ class QualificationServiceImpl(
                             )
                         }
                         ?.map { it.coefficient }
+                        ?.takeIf { it.isNotEmpty() }
                         ?.reduce { start, next -> start * next }
                         ?: CoefficientRate(BigDecimal.ONE)
                 }
