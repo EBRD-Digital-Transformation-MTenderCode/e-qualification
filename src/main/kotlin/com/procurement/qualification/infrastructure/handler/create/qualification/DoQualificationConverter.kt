@@ -44,6 +44,7 @@ fun Qualification.convertToDoQualificationResult() =
         statusDetails = this.statusDetails,
         relatedSubmission = this.relatedSubmission,
         status = this.status,
+        description = this.description,
         date = this.date,
         scoring = this.scoring,
         requirementResponses = this.requirementResponses
