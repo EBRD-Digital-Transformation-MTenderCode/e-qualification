@@ -59,7 +59,7 @@ class CheckDeclarationParams private constructor(
         val id: RequirementResponseId,
         val value: RequirementResponseValue,
         val relatedTendererId: OrganizationId,
-        val responderId: PersonId,
+        val responder: Responder,
         val requirementId: RequirementId
     ) {
         companion object {
@@ -67,16 +67,12 @@ class CheckDeclarationParams private constructor(
                 id: String,
                 value: RequirementResponseValue,
                 relatedTendererId: String,
-                responderId: String,
+                responder: Responder,
                 requirementId: String
             ): Result<RequirementResponse, DataErrors> {
 
                 val parsedId = RequirementResponseId.tryCreate(text = id)
                     .orForwardFail { fail -> return fail }
-
-                val parsedPersonId = PersonId.parse(responderId)
-                    ?: return DataErrors.Validation.EmptyString(name = responderId)
-                        .asFailure()
 
                 val parsedOrganizationId = OrganizationId.parse(relatedTendererId)
                     ?: return DataErrors.Validation.EmptyString(name = relatedTendererId)
@@ -86,8 +82,26 @@ class CheckDeclarationParams private constructor(
                     ?: return DataErrors.Validation.EmptyString(name = requirementId)
                         .asFailure()
 
-                return RequirementResponse(parsedId, value, parsedOrganizationId, parsedPersonId, parsedRequirementId)
+                return RequirementResponse(parsedId, value, parsedOrganizationId, responder, parsedRequirementId)
                     .asSuccess()
+            }
+        }
+
+        class Responder private constructor(
+            val id: PersonId,
+            val name: String
+        ) {
+            companion object {
+                fun tryCreate(
+                    id: String,
+                    name: String
+                ): Result<Responder, DataErrors> {
+                    val parsedPersonId = PersonId.parse(id)
+                        ?: return DataErrors.Validation.EmptyString(name = id)
+                            .asFailure()
+                    return Responder(parsedPersonId, name)
+                        .asSuccess()
+                }
             }
         }
     }

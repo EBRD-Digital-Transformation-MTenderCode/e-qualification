@@ -78,6 +78,11 @@ sealed class ValidationError(
             description = "Invalid Requirement Response Id, actual='$actualId', expected='$expected'."
         )
 
+    class InvalidResponderNameOnCheckDeclaration(expected: String, actual: String) : ValidationError(
+        numberError = "7.16.5",
+        description = "Invalid Responder name, actual='$actual', expected='$expected'."
+    )
+
     sealed class QualificationNotFoundFor(
         numberError: String,
         cpid: Cpid,

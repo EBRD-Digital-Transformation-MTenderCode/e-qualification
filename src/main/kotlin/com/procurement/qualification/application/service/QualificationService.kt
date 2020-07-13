@@ -338,7 +338,7 @@ class QualificationServiceImpl(
 
         qualification.requirementResponses
             .find {
-                it.responder.id == params.requirementResponse.responderId
+                it.responder.id == params.requirementResponse.responder.id
                     && it.relatedTenderer.id == params.requirementResponse.relatedTendererId
                     && it.requirement.id == params.requirementResponse.requirementId
             }
@@ -347,6 +347,13 @@ class QualificationServiceImpl(
                     return ValidationError.InvalidRequirementResponseIdOnCheckDeclaration(
                         expected = this.id,
                         actualId = params.requirementResponse.id
+                    )
+                        .asValidationFailure()
+
+                if (params.requirementResponse.responder.name != this.responder.name)
+                    return ValidationError.InvalidResponderNameOnCheckDeclaration(
+                        actual = params.requirementResponse.responder.name,
+                        expected = this.responder.name
                     )
                         .asValidationFailure()
             }
