@@ -9,6 +9,7 @@ fun DoQualificationRequest.convert(): Result<DoQualificationParams, DataErrors> 
     DoQualificationParams.tryCreate(
         cpid = this.cpid,
         ocid = this.ocid,
+        date = this.date,
         qualifications = this.qualifications
             .map {
                 it.convert()
