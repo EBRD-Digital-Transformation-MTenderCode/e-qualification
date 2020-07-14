@@ -508,22 +508,29 @@ class QualificationServiceImpl(
                 qualificationIds = unknownQualifications
             ).asFailure()
 
+        val changedQualifications = mutableListOf<Qualification>()
         val updatedQualifications = qualifications
             .map { qualification ->
                 srcQualificationByIds[qualification.id]
-                    ?.let { src -> qualification.update(date = params.date, qualification = src) }
+                    ?.let { src ->
+                        qualification.update(date = params.date, qualification = src)
+                            .also {
+                                changedQualifications.add(it)
+                            }
+                    }
                     ?: qualification
             }
 
-        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
-
-        return DoQualificationResult(
-            qualifications = updatedQualifications
+        val result = DoQualificationResult(
+            qualifications = changedQualifications
                 .map {
                     it.convertToDoQualificationResult()
                 }
-        )
-            .asSuccess()
+        ).asSuccess<DoQualificationResult, Fail>()
+
+        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
+
+        return result
     }
 
     private fun Qualification.update(
