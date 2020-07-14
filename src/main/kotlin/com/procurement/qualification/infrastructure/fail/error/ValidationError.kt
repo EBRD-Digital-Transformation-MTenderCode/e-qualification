@@ -87,26 +87,17 @@ sealed class ValidationError(
 
     sealed class QualificationNotFoundFor : ValidationError {
         constructor(numberError: String, cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
-            super(
-                numberError = numberError,
-                description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'."
-            )
+            super(numberError, "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'.")
 
         constructor(numberError: String, cpid: Cpid, ocid: Ocid) :
+            super(numberError, "No qualification found by cpid='$cpid' and ocid='$ocid'.")
+
+        constructor(numberError: String, cpid: Cpid, ocid: Ocid, qualificationIds: Collection<QualificationId>) :
             super(
                 numberError = numberError,
-                description = "No qualification found by cpid='$cpid' and ocid='$ocid'."
+                description = "Qualifications not found by cpid='$cpid' and ocid='$ocid' and id='${qualificationIds.joinToString()}'."
             )
 
-    sealed class QualificationNotFoundFor(
-        numberError: String,
-        cpid: Cpid,
-        ocid: Ocid,
-        qualificationIds: Collection<QualificationId>
-    ) : ValidationError(
-        numberError = numberError,
-        description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationIds'."
-    ) {
         class CheckAccessToQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
                 numberError = "7.14.3", cpid = cpid, ocid = ocid, qualificationId = qualificationId
@@ -137,9 +128,9 @@ sealed class ValidationError(
                 numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
-        class DoQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+        class DoQualification(cpid: Cpid, ocid: Ocid, qualificationIds: Collection<QualificationId>) :
             QualificationNotFoundFor(
-                numberError = "7.20.1", ocid = ocid, cpid = cpid, qualificationId = qualificationId
+                numberError = "7.20.1", ocid = ocid, cpid = cpid, qualificationIds = qualificationIds
             )
 
         class CheckQualificationsForProtocol(cpid: Cpid, ocid: Ocid) :
