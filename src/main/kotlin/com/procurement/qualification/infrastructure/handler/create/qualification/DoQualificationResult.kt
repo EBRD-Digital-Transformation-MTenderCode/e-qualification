@@ -33,6 +33,8 @@ data class DoQualificationResult(
         @field:JsonProperty("scoring")  @param:JsonProperty("scoring") val scoring: Scoring?,
         @JsonInclude(JsonInclude.Include.NON_NULL)
         @field:JsonProperty("internalId")  @param:JsonProperty("internalId") val internalId: String?,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonProperty("description")  @param:JsonProperty("description") val description: String?,
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
         @field:JsonProperty("statusDetails")  @param:JsonProperty("statusDetails") val statusDetails: QualificationStatusDetails?

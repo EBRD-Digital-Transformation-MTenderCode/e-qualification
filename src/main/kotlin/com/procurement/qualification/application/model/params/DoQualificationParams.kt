@@ -13,11 +13,14 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.document.DocumentId
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.util.extension.tryParseLocalDateTime
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
+import java.time.LocalDateTime
 
 class DoQualificationParams private constructor(
     val cpid: Cpid,
     val ocid: Ocid,
+    val date: LocalDateTime,
     val qualifications: List<Qualification>
 ) {
 
@@ -25,6 +28,7 @@ class DoQualificationParams private constructor(
         fun tryCreate(
             cpid: String,
             ocid: String,
+            date: String,
             qualifications: List<Qualification>
         ): Result<DoQualificationParams, DataErrors> {
 
@@ -34,8 +38,23 @@ class DoQualificationParams private constructor(
             val parsedOcid = parseOcid(value = ocid)
                 .orForwardFail { fail -> return fail }
 
-            return DoQualificationParams(cpid = parsedCpid, ocid = parsedOcid, qualifications = qualifications)
-                .asSuccess()
+            val parsedDate = date.tryParseLocalDateTime()
+                .doReturn { pattern ->
+                    return Result.failure(
+                        DataErrors.Validation.DataFormatMismatch(
+                            name = "date",
+                            actualValue = date,
+                            expectedFormat = pattern
+                        )
+                    )
+                }
+
+            return DoQualificationParams(
+                cpid = parsedCpid,
+                ocid = parsedOcid,
+                date = parsedDate,
+                qualifications = qualifications
+            ).asSuccess()
         }
     }
 
@@ -99,7 +118,7 @@ class DoQualificationParams private constructor(
                         when (it) {
                             DocumentType.CONFLICT_OF_INTEREST,
                             DocumentType.EVALUATION_REPORTS,
-                            DocumentType.NOTICE-> true
+                            DocumentType.NOTICE -> true
                         }
                     }
                     .toSet()

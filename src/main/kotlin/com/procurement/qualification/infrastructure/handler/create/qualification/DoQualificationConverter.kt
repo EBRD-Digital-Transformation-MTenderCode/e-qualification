@@ -9,6 +9,7 @@ fun DoQualificationRequest.convert(): Result<DoQualificationParams, DataErrors> 
     DoQualificationParams.tryCreate(
         cpid = this.cpid,
         ocid = this.ocid,
+        date = this.date,
         qualifications = this.qualifications
             .map {
                 it.convert()
@@ -44,6 +45,7 @@ fun Qualification.convertToDoQualificationResult() =
         statusDetails = this.statusDetails,
         relatedSubmission = this.relatedSubmission,
         status = this.status,
+        description = this.description,
         date = this.date,
         scoring = this.scoring,
         requirementResponses = this.requirementResponses

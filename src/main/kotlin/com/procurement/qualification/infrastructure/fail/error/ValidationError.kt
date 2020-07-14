@@ -80,6 +80,11 @@ sealed class ValidationError(
             description = "Invalid Requirement Response Id, actual='$actualId', expected='$expected'."
         )
 
+    class InvalidResponderNameOnCheckDeclaration(expected: String, actual: String) : ValidationError(
+        numberError = "7.16.5",
+        description = "Invalid Responder name, actual='$actual', expected='$expected'."
+    )
+
     sealed class QualificationNotFoundFor : ValidationError {
         constructor(numberError: String, cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             super(
@@ -93,6 +98,15 @@ sealed class ValidationError(
                 description = "No qualification found by cpid='$cpid' and ocid='$ocid'."
             )
 
+    sealed class QualificationNotFoundFor(
+        numberError: String,
+        cpid: Cpid,
+        ocid: Ocid,
+        qualificationIds: Collection<QualificationId>
+    ) : ValidationError(
+        numberError = numberError,
+        description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationIds'."
+    ) {
         class CheckAccessToQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
                 numberError = "7.14.3", cpid = cpid, ocid = ocid, qualificationId = qualificationId
