@@ -5,9 +5,10 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class DoQualificationRequest(
-    @field:JsonProperty("cpid")  @param:JsonProperty("cpid") val cpid: String,
-    @field:JsonProperty("ocid")  @param:JsonProperty("ocid") val ocid: String,
-    @field:JsonProperty("qualifications")  @param:JsonProperty("qualifications") val qualifications: List<Qualification>
+    @field:JsonProperty("cpid") @param:JsonProperty("cpid") val cpid: String,
+    @field:JsonProperty("ocid") @param:JsonProperty("ocid") val ocid: String,
+    @field:JsonProperty("date") @param:JsonProperty("date") val date: String,
+    @field:JsonProperty("qualifications") @param:JsonProperty("qualifications") val qualifications: List<Qualification>
 ) {
     data class Qualification(
         @field:JsonProperty("id")  @param:JsonProperty("id") val id: String,
