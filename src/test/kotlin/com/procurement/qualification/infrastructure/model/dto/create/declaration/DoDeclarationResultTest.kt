@@ -8,7 +8,7 @@ class DoDeclarationResultTest : AbstractDTOTestBase<DoDeclarationResult>(DoDecla
 
     @Test
     fun full() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/create.declaration/do_declaration_result_full.json")
+        testBindingAndMapping(pathToJsonFile = "json/dto/create/declaration/do_declaration_result_full.json")
     }
 
 }

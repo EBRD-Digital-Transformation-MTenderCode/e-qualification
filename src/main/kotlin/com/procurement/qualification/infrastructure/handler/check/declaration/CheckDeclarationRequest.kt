@@ -1,6 +1,5 @@
 package com.procurement.qualification.infrastructure.handler.check.declaration
 
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 
@@ -15,9 +14,14 @@ data class CheckDeclarationRequest(
         @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
         @param:JsonProperty("value") @field:JsonProperty("value") val value: RequirementResponseValue,
         @param:JsonProperty("relatedTendererId") @field:JsonProperty("relatedTendererId") val relatedTendererId: String,
-        @param:JsonProperty("responderId") @field:JsonProperty("responderId") val responderId: String,
+        @param:JsonProperty("responder") @field:JsonProperty("responder") val responder: Responder,
         @param:JsonProperty("requirementId") @field:JsonProperty("requirementId") val requirementId: String
-    )
+    ) {
+        data class Responder(
+            @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
+            @param:JsonProperty("name") @field:JsonProperty("name") val name: String
+        )
+    }
 
     data class Criteria(
         @param:JsonProperty("id") @field:JsonProperty("id") val id: String,

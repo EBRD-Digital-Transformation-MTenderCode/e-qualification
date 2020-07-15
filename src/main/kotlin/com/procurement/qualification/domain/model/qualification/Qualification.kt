@@ -1,9 +1,11 @@
 package com.procurement.qualification.domain.model.qualification
 
+import com.procurement.qualification.domain.enums.DocumentType
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
+import com.procurement.qualification.domain.model.document.DocumentId
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.organization.OrganizationId
 import com.procurement.qualification.domain.model.person.PersonId
@@ -22,7 +24,10 @@ data class Qualification(
     val statusDetails: QualificationStatusDetails? = null,
     val relatedSubmission: SubmissionId,
     val scoring: Scoring?,
-    val requirementResponses: List<RequirementResponse> = emptyList()
+    val requirementResponses: List<RequirementResponse> = emptyList(),
+    val documents: List<Document> = emptyList(),
+    val internalId: String? = null,
+    val description: String? = null
 ) {
     data class RequirementResponse(
         val id: RequirementResponseId,
@@ -44,4 +49,11 @@ data class Qualification(
             val name: String
         )
     }
+
+    data class Document(
+        val id: DocumentId,
+        val documentType: DocumentType,
+        val title: String,
+        val description: String?
+    )
 }

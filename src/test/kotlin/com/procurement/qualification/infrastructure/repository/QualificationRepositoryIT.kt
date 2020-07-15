@@ -21,6 +21,7 @@ import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
 import com.procurement.qualification.infrastructure.configuration.DatabaseTestConfiguration
@@ -193,7 +194,7 @@ class QualificationRepositoryIT {
         insertQualification(qual2)
         val updatedQualifications = listOf(
             qual1.copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
-            qual2.copy(relatedSubmission = UUID.randomUUID())
+            qual2.copy(relatedSubmission = SubmissionId.generate())
         )
         qualificationRepository.updateAll(CPID, OCID, updatedQualifications)
         val updated = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
@@ -333,6 +334,6 @@ class QualificationRepositoryIT {
         status = QualificationStatus.ACTIVE,
         scoring = Scoring.tryCreate("0.001").get,
         statusDetails = QualificationStatusDetails.ACTIVE,
-        relatedSubmission = UUID.randomUUID()
+        relatedSubmission = SubmissionId.generate()
     )
 }

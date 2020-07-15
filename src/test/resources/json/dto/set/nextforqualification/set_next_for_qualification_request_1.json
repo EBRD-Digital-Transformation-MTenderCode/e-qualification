@@ -1,27 +1,33 @@
 {
   "cpid": "ocds-b3wdp1-MD-1580458690892",
   "ocid": "ocds-b3wdp1-MD-1580458690892-EV-1580458791896",
-  "qualificationId": "string",
-  "requirementResponse": {
-    "id": "string",
-    "value": "string",
-    "relatedTendererId": "string",
-    "responder": {
+  "submissions": [
+    {
       "id": "string",
-      "name": "name"
-    },
-    "requirementId": "string"
+      "date": "2020-07-03T09:41:36Z"
+    }
+  ],
+  "tender": {
+    "otherCriteria": {
+      "qualificationSystemMethods": [
+        "authomated"
+      ],
+      "reductionCriteria": "scoring"
+    }
   },
   "criteria": [
     {
       "id": "string",
+      "title": "string",
+      "source": "procuringEntity",
       "requirementGroups": [
         {
           "id": "string",
           "requirements": [
             {
               "id": "string",
-              "dataType": "number"
+              "title": "string",
+              "dataType": "string"
             }
           ]
         }

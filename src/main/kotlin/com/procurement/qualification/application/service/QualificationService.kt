@@ -1,26 +1,9 @@
 package com.procurement.qualification.application.service
 
-import com.procurement.qualification.application.model.params.CheckAccessToQualificationParams
-import com.procurement.qualification.application.model.params.CheckDeclarationParams
-import com.procurement.qualification.application.model.params.CheckQualificationStateParams
-import com.procurement.qualification.application.model.params.CreateQualificationsParams
-import com.procurement.qualification.application.model.params.DoConsiderationParams
-import com.procurement.qualification.application.model.params.DoDeclarationParams
-import com.procurement.qualification.application.model.params.FindQualificationIdsParams
-import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
-import com.procurement.qualification.application.model.params.RankQualificationsParams
+import com.procurement.qualification.application.model.params.*
 import com.procurement.qualification.application.repository.QualificationRepository
-import com.procurement.qualification.domain.enums.ConversionRelatesTo
-import com.procurement.qualification.domain.enums.QualificationStatus
-import com.procurement.qualification.domain.enums.QualificationStatusDetails
-import com.procurement.qualification.domain.enums.QualificationSystemMethod
-import com.procurement.qualification.domain.enums.ReductionCriteria
-import com.procurement.qualification.domain.enums.RequirementDataType
-import com.procurement.qualification.domain.functional.Result
-import com.procurement.qualification.domain.functional.ValidationResult
-import com.procurement.qualification.domain.functional.asFailure
-import com.procurement.qualification.domain.functional.asSuccess
-import com.procurement.qualification.domain.functional.asValidationFailure
+import com.procurement.qualification.domain.enums.*
+import com.procurement.qualification.domain.functional.*
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
@@ -33,11 +16,19 @@ import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
+import com.procurement.qualification.infrastructure.handler.create.declaration.convertQualificationsToDoDeclarationResult
+import com.procurement.qualification.infrastructure.handler.create.qualification.DoQualificationResult
+import com.procurement.qualification.infrastructure.handler.create.qualification.convertToDoQualificationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
+import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.convertToFindRequirementResponseByIdsResultRR
+import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
+import com.procurement.qualification.infrastructure.handler.set.nextforqualification.convertToSetNextForQualification
+import com.procurement.qualification.lib.toSetBy
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 interface QualificationService {
 
@@ -50,6 +41,8 @@ interface QualificationService {
     fun checkDeclaration(params: CheckDeclarationParams): ValidationResult<Fail>
     fun doConsideration(params: DoConsiderationParams): Result<DoConsiderationResult, Fail>
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
+    fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult?, Fail>
+    fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail>
 }
 
 @Service
@@ -327,7 +320,7 @@ class QualificationServiceImpl(
 
         qualification.requirementResponses
             .find {
-                it.responder.id == params.requirementResponse.responderId
+                it.responder.id == params.requirementResponse.responder.id
                     && it.relatedTenderer.id == params.requirementResponse.relatedTendererId
                     && it.requirement.id == params.requirementResponse.requirementId
             }
@@ -336,6 +329,13 @@ class QualificationServiceImpl(
                     return ValidationError.InvalidRequirementResponseIdOnCheckDeclaration(
                         expected = this.id,
                         actualId = params.requirementResponse.id
+                    )
+                        .asValidationFailure()
+
+                if (params.requirementResponse.responder.name != this.responder.name)
+                    return ValidationError.InvalidResponderNameOnCheckDeclaration(
+                        actual = params.requirementResponse.responder.name,
+                        expected = this.responder.name
                     )
                         .asValidationFailure()
             }
@@ -410,6 +410,166 @@ class QualificationServiceImpl(
         }).asSuccess()
     }
 
+    override fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult?, Fail> {
+
+        val cpid = params.cpid
+        val ocid = params.ocid
+
+        val qualifications = qualificationRepository.findBy(
+            cpid = cpid,
+            ocid = ocid
+        )
+            .orForwardFail { fail -> return fail }
+
+        val filteredWrappedQualifications = filterByRelatedSubmission(
+            qualifications = qualifications,
+            submissions = params.submissions
+        )
+            .orForwardFail { fail -> return fail }
+
+        val qualificationSystemMethod = params.tender.otherCriteria.qualificationSystemMethod
+        val reductionCriteria = params.tender.otherCriteria.reductionCriteria
+
+        return when (qualificationSystemMethod) {
+            QualificationSystemMethod.AUTOMATED -> when (reductionCriteria) {
+                ReductionCriteria.SCORING -> {
+                    val filteredQualifications = filteredWrappedQualifications.filter {
+                        it.qualification.statusDetails == null
+                            || it.qualification.statusDetails != QualificationStatusDetails.CONSIDERATION
+                            || it.qualification.statusDetails != QualificationStatusDetails.AWAITING
+                    }
+                    if (filteredQualifications.isEmpty()) {
+                        return null.asSuccess()
+                    } else {
+                        val nullStatusQualifications = filteredQualifications.filter { it.qualification.statusDetails == null }
+
+                        if (nullStatusQualifications.isEmpty()) {
+                            return null.asSuccess()
+                        } else {
+                            val sortedQualifications = nullStatusQualifications.sorted()
+                            val qualificationWithMinScoringAndDate = sortedQualifications.first().qualification
+
+                            val updatedQualifications = if (params.criteria.isNullOrEmpty()) {
+                                setStatusDetails(
+                                    statusDetails = QualificationStatusDetails.CONSIDERATION,
+                                    qualifications = listOf(qualificationWithMinScoringAndDate)
+                                )
+                            } else {
+                                setStatusDetails(
+                                    statusDetails = QualificationStatusDetails.AWAITING,
+                                    qualifications = listOf(qualificationWithMinScoringAndDate)
+                                )
+                            }
+
+                            qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
+
+                            return SetNextForQualificationResult(
+                                qualifications = updatedQualifications
+                                    .map { qualification -> qualification.convertToSetNextForQualification() }
+                            )
+                                .asSuccess()
+                        }
+                    }
+                }
+                ReductionCriteria.NONE -> null.asSuccess()
+            }
+            QualificationSystemMethod.MANUAL -> when (reductionCriteria) {
+                ReductionCriteria.SCORING -> null.asSuccess()
+                ReductionCriteria.NONE -> null.asSuccess()
+            }
+        }
+    }
+
+    override fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail> {
+
+        val cpid = params.cpid
+        val ocid = params.ocid
+
+        val qualifications = qualificationRepository
+            .findBy(cpid = cpid, ocid = ocid)
+            .orForwardFail { fail -> return fail }
+            .takeIf { items -> items.isNotEmpty() }
+            ?: return ValidationError.QualificationNotFoundFor.DoQualification(
+                cpid = cpid,
+                ocid = ocid,
+                qualificationIds = params.qualifications.map { qualification -> qualification.id }
+            ).asFailure()
+
+        val srcQualificationByIds = params.qualifications
+            .associateBy { it.id }
+
+        val dstQualificationByIds = qualifications.associateBy { it.id }
+
+        val unknownQualifications = getUnknownElements(received = srcQualificationByIds.keys, known = dstQualificationByIds.keys)
+        if (unknownQualifications.isNotEmpty())
+            return ValidationError.QualificationNotFoundFor.DoQualification(
+                cpid = cpid,
+                ocid = ocid,
+                qualificationIds = unknownQualifications
+            ).asFailure()
+
+        val changedQualifications = mutableListOf<Qualification>()
+        val updatedQualifications = qualifications
+            .map { qualification ->
+                srcQualificationByIds[qualification.id]
+                    ?.let { src ->
+                        qualification.update(date = params.date, qualification = src)
+                            .also {
+                                changedQualifications.add(it)
+                            }
+                    }
+                    ?: qualification
+            }
+
+        val result = DoQualificationResult(
+            qualifications = changedQualifications
+                .map {
+                    it.convertToDoQualificationResult()
+                }
+        ).asSuccess<DoQualificationResult, Fail>()
+
+        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
+
+        return result
+    }
+
+    private fun Qualification.update(
+        date: LocalDateTime,
+        qualification: DoQualificationParams.Qualification
+    ): Qualification {
+
+        val documentsById = qualification.documents
+            .associateBy { it.id }
+
+        val updatedDocuments = documents
+            .map { document ->
+                documentsById[document.id]
+                    ?.let { document.update(document = it) }
+                    ?: document
+            }
+
+        val newDocuments = getNewElements(received = documentsById.keys, known = documents.toSetBy { it.id })
+            .map { id ->
+                buildDocument(document = documentsById.getValue(id))
+            }
+
+        return copy(
+            date = date, //FR.COM-7.20.9
+            internalId = qualification.internalId ?: internalId,  //FR.COM-7.20.2
+            description = qualification.description ?: description, //FR.COM-7.20.3
+            documents = updatedDocuments + newDocuments,
+            statusDetails = qualification.statusDetails  //FR.COM-7.20.1
+        )
+    }
+
+    private fun Qualification.Document.update(
+        document: DoQualificationParams.Qualification.Document
+    ): Qualification.Document = copy(
+        title = document.title, //FR.COM-7.20.6
+        documentType = document.documentType, //FR.COM-7.20.5
+        description = document.description ?: description //FR.COM-7.20.7
+    )
+
     private fun filterByRelatedSubmissions(
         qualifications: List<Qualification>,
         submissions: List<RankQualificationsParams.Submission>
@@ -422,6 +582,23 @@ class QualificationServiceImpl(
                     submissionId = it.id
                 )
                     .asFailure()
+        }
+            .asSuccess()
+    }
+
+    private fun filterByRelatedSubmission(
+        qualifications: List<Qualification>,
+        submissions: List<SetNextForQualificationParams.Submission>
+    ): Result<List<SetNextForQualificationWrapper>, ValidationError.RelatedSubmissionNotEqualOnSetNextForQualification> {
+
+        val qualificationByRelatedSubmission = qualifications.associateBy { it.relatedSubmission }
+        return submissions.map {
+            val qualification = qualificationByRelatedSubmission[it.id]
+                ?: return ValidationError.RelatedSubmissionNotEqualOnSetNextForQualification(
+                    submissionId = it.id
+                )
+                    .asFailure()
+            SetNextForQualificationWrapper(qualification, it.date)
         }
             .asSuccess()
     }
@@ -476,6 +653,7 @@ class QualificationServiceImpl(
                             )
                         }
                         ?.map { it.coefficient }
+                        ?.takeIf { it.isNotEmpty() }
                         ?.reduce { start, next -> start * next }
                         ?: CoefficientRate(BigDecimal.ONE)
                 }
@@ -489,7 +667,14 @@ class QualificationServiceImpl(
         .filter { scoring == it.scoring }
         .count() > 1
 
+    private fun isSameScoring(qualifications: List<SetNextForQualificationWrapper>, scoring: Scoring) = qualifications
+        .filter { scoring == it.qualification.scoring }
+        .count() > 1
+
     private fun findMinDate(submissions: List<RankQualificationsParams.Submission>) =
+        submissions.minBy { it.date }
+
+    private fun findMinDate(submissions: List<SetNextForQualificationParams.Submission>) =
         submissions.minBy { it.date }
 
     private fun setStatusDetails(statusDetails: QualificationStatusDetails, qualifications: List<Qualification>) =
@@ -525,29 +710,6 @@ class QualificationServiceImpl(
         }
     }
 
-    private fun Qualification.RequirementResponse.convertToFindRequirementResponseByIdsResultRR() =
-        this.let { requirementResponse ->
-            FindRequirementResponseByIdsResult.Qualification.RequirementResponse(
-                id = requirementResponse.id,
-                value = requirementResponse.value,
-                relatedTenderer = requirementResponse.relatedTenderer
-                    .let {
-                        FindRequirementResponseByIdsResult.Qualification.RequirementResponse.RelatedTenderer(
-                            id = it.id
-                        )
-                    },
-                requirement = requirementResponse.requirement
-                    .let { FindRequirementResponseByIdsResult.Qualification.RequirementResponse.Requirement(id = it.id) },
-                responder = requirementResponse.responder
-                    .let {
-                        FindRequirementResponseByIdsResult.Qualification.RequirementResponse.Responder(
-                            id = it.id,
-                            name = it.name
-                        )
-                    }
-            )
-        }
-
     private fun isMatchingDataType(datatype: RequirementDataType, value: RequirementResponseValue) =
         when (value) {
             is RequirementResponseValue.AsString -> datatype == RequirementDataType.STRING
@@ -556,32 +718,13 @@ class QualificationServiceImpl(
             is RequirementResponseValue.AsInteger -> datatype == RequirementDataType.INTEGER
         }
 
-    private fun List<Qualification>.convertQualificationsToDoDeclarationResult(): DoDeclarationResult =
-        DoDeclarationResult(
-            qualifications = this.map { qualification ->
-                DoDeclarationResult.Qualification(
-                    id = qualification.id,
-                    requirementResponses = qualification.requirementResponses
-                        .map { rr ->
-                            DoDeclarationResult.Qualification.RequirementResponse(
-                                id = rr.id,
-                                value = rr.value,
-                                relatedTenderer = rr.relatedTenderer
-                                    .let { DoDeclarationResult.Qualification.RequirementResponse.RelatedTenderer(id = it.id) },
-                                requirement = rr.requirement
-                                    .let { DoDeclarationResult.Qualification.RequirementResponse.Requirement(id = it.id) },
-                                responder = rr.responder
-                                    .let {
-                                        DoDeclarationResult.Qualification.RequirementResponse.Responder(
-                                            id = it.id,
-                                            name = it.name
-                                        )
-                                    }
-                            )
-                        }
-                )
-            }
-        )
+    private fun buildDocument(document: DoQualificationParams.Qualification.Document): Qualification.Document =
+        Qualification.Document(
+            id = document.id,
+            description = document.description,
+            title = document.title,
+            documentType = document.documentType
+        ) //FR.COM-7.20.4
 
     private fun buildRequirementResponse(requirementResponse: DoDeclarationParams.Qualification.RequirementResponse): Qualification.RequirementResponse =
         Qualification.RequirementResponse(
@@ -602,5 +745,24 @@ class QualificationServiceImpl(
             state.status == qualification.status ||
                 state.statusDetails == qualification.statusDetails
         }
+    }
+}
+
+class SetNextForQualificationWrapper(
+    val qualification: Qualification,
+    val dateTime: LocalDateTime
+) : Comparable<SetNextForQualificationWrapper> {
+
+    override fun compareTo(other: SetNextForQualificationWrapper): Int {
+        val scoringResult = qualification.scoring!!.compareTo(other = other.qualification.scoring!!)
+        return if (scoringResult == 0) {
+            compareByDates(other.dateTime)
+        } else {
+            scoringResult
+        }
+    }
+
+    private fun compareByDates(other: LocalDateTime): Int {
+        return dateTime.compareTo(other)
     }
 }
