@@ -14,6 +14,8 @@ import com.procurement.qualification.domain.util.extension.getNewElements
 import com.procurement.qualification.domain.util.extension.getUnknownElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.handler.analyze.qualification.AnalyzeQualificationsForInvitationResult
+import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolParams
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationResult
 import com.procurement.qualification.infrastructure.handler.create.declaration.convertQualificationsToDoDeclarationResult
@@ -43,6 +45,8 @@ interface QualificationService {
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
     fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult?, Fail>
     fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail>
+    fun checkQualificationsForProtocol(params: CheckQualificationsForProtocolParams): ValidationResult<Fail>
+    fun analyzeQualificationsForInvitation(params: AnalyzeQualificationsForInvitationParams): Result<AnalyzeQualificationsForInvitationResult?, Fail>
 }
 
 @Service
@@ -560,6 +564,61 @@ class QualificationServiceImpl(
             documents = updatedDocuments + newDocuments,
             statusDetails = qualification.statusDetails  //FR.COM-7.20.1
         )
+    }
+
+    override fun checkQualificationsForProtocol(params: CheckQualificationsForProtocolParams): ValidationResult<Fail> {
+        val cpid = params.cpid
+        val ocid = params.ocid
+        val qualifications = qualificationRepository.findBy(cpid = cpid, ocid = ocid)
+            .doReturn { error -> return ValidationResult.error(error) }
+
+        if (qualifications.isEmpty())
+            return ValidationError.QualificationNotFoundFor.CheckQualificationsForProtocol(cpid = cpid, ocid = ocid)
+                .asValidationFailure()
+
+        val allowedStatusDetails = setOf(QualificationStatusDetails.ACTIVE, QualificationStatusDetails.UNSUCCESSFUL)
+
+        val unsuitableQualification = qualifications.find { qualification ->
+            qualification.status != QualificationStatus.PENDING
+                || qualification.statusDetails !in allowedStatusDetails
+        }
+
+        if (unsuitableQualification != null)
+            return ValidationError.UnsuitableQualificationFound(cpid, ocid, unsuitableQualification.id)
+                .asValidationFailure()
+
+        return ValidationResult.ok()
+    }
+
+    override fun analyzeQualificationsForInvitation(params: AnalyzeQualificationsForInvitationParams): Result<AnalyzeQualificationsForInvitationResult?, Fail> {
+        val qualifications = qualificationRepository.findBy(cpid = params.cpid, ocid = params.ocid)
+            .orForwardFail { fail -> return fail }
+
+        val suitableQualifications = qualifications.filter { qualification ->
+            qualification.status == QualificationStatus.PENDING
+                && qualification.statusDetails == QualificationStatusDetails.ACTIVE
+        }
+
+        val minimumQuantity = rulesService.findMinimumQualificationQuantity(
+            country = params.country, pmd = params.pmd
+        )
+            .orForwardFail { fail -> return fail }
+            ?: return ValidationError.RuleNotFound(pmd = params.pmd, country = params.country)
+                .asFailure()
+
+        if (suitableQualifications.size < minimumQuantity)
+            return null.asSuccess()
+
+        return AnalyzeQualificationsForInvitationResult(
+            qualifications = suitableQualifications.map { qualification ->
+                AnalyzeQualificationsForInvitationResult.Qualification(
+                    id = qualification.id,
+                    statusDetails = qualification.statusDetails!!,
+                    status = qualification.status,
+                    relatedSubmission = qualification.relatedSubmission
+                )
+            }
+        ).asSuccess()
     }
 
     private fun Qualification.Document.update(

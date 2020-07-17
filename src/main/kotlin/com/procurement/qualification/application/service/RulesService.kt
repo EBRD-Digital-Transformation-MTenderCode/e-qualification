@@ -6,6 +6,7 @@ import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.state.States
+import com.procurement.qualification.domain.util.extension.tryToLong
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
 import com.procurement.qualification.infrastructure.repository.CassandraQualificationRulesRepository
@@ -18,6 +19,11 @@ interface RulesService {
         pmd: Pmd,
         operationType: OperationType
     ): Result<States, Fail>
+
+    fun findMinimumQualificationQuantity(
+        country: String,
+        pmd: Pmd
+    ): Result<Long?, Fail>
 }
 
 @Service
@@ -28,6 +34,7 @@ class RulesServiceImpl(
 
     companion object {
         private const val VALID_STATES_PARAMETER = "validStates"
+        private const val QUALIFICATION_MINIMUM_PARAMETER = "minQtyQualificationsForInvitation"
     }
 
     override fun findValidStates(
@@ -62,4 +69,22 @@ class RulesServiceImpl(
                 }
         }
             .asSuccess()
+
+    override fun findMinimumQualificationQuantity(
+        country: String,
+        pmd: Pmd
+    ): Result<Long?, Fail> {
+
+        val minimumQuantity = qualificationRulesRepository.findBy(
+            country = country,
+            pmd = pmd,
+            parameter = QUALIFICATION_MINIMUM_PARAMETER
+        )
+            .orForwardFail { fail -> return fail }
+
+        return minimumQuantity
+            ?.tryToLong()
+            ?.orForwardFail { fail -> return fail }
+            .asSuccess()
+    }
 }
