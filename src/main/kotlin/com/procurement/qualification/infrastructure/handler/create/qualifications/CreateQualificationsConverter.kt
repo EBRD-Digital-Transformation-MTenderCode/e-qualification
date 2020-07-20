@@ -23,10 +23,11 @@ fun CreateQualificationsRequest.Submission.convert(): Result<CreateQualification
     CreateQualificationsParams.Submission.tryCreate(
         id = this.id,
         requirementResponses = this.requirementResponses
-            .map {
+            ?.map {
                 it.convert()
                     .orForwardFail { fail -> return fail }
             }
+            .orEmpty()
     )
 
 fun CreateQualificationsRequest.Submission.RequirementResponse.convert(): Result<CreateQualificationsParams.Submission.RequirementResponse, DataErrors> =
