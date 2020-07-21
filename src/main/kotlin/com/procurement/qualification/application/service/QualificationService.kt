@@ -51,7 +51,6 @@ import com.procurement.qualification.infrastructure.handler.determine.nextforqua
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.convertToFindRequirementResponseByIdsResultRR
 import com.procurement.qualification.infrastructure.handler.set.SetQualificationPeriodEndResult
-import com.procurement.qualification.infrastructure.handler.set.convert
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.convertToSetNextForQualification
 import com.procurement.qualification.lib.toSetBy
@@ -520,7 +519,7 @@ class QualificationServiceImpl(
 
         val updatedPeriod = storedPeriod.copy(endDate = params.date)
 
-        val result = updatedPeriod.convert()
+        val result = SetQualificationPeriodEndResult.fromDomain(updatedPeriod)
 
         periodRepository.saveOrUpdatePeriod(updatedPeriod)
 

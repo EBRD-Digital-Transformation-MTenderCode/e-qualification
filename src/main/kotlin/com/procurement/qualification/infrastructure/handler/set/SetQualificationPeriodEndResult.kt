@@ -16,13 +16,16 @@ data class SetQualificationPeriodEndResult(
             @param:JsonProperty("endDate") @field:JsonProperty("endDate") val endDate: LocalDateTime?
         )
     }
+
+    companion object {
+        fun fromDomain(periodEntity: PeriodEntity): SetQualificationPeriodEndResult =
+            SetQualificationPeriodEndResult(
+                preQualification = PreQualification(
+                    period = PreQualification.Period(
+                        endDate = periodEntity.endDate
+                    )
+                )
+            )
+    }
 }
 
-fun PeriodEntity.convert(): SetQualificationPeriodEndResult =
-    SetQualificationPeriodEndResult(
-        preQualification = SetQualificationPeriodEndResult.PreQualification(
-            period = SetQualificationPeriodEndResult.PreQualification.Period(
-                endDate = this.endDate
-            )
-        )
-    )
