@@ -6,6 +6,7 @@ import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import com.procurement.qualification.application.model.params.AnalyzeQualificationsForInvitationParams
 import com.procurement.qualification.application.model.params.DoConsiderationParams
+import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.enums.Pmd
 import com.procurement.qualification.domain.enums.QualificationStatus
@@ -42,9 +43,10 @@ internal class QualificationServiceImplTest {
     }
 
     val qualificationRepository: QualificationRepository = mock()
+    val periodRepository: PeriodRepository = mock()
     val generationService: GenerationServiceImpl = mock()
     val rulesService: RulesServiceImpl = mock()
-    val qualificationService = QualificationServiceImpl(qualificationRepository, generationService, rulesService)
+    val qualificationService = QualificationServiceImpl(qualificationRepository, periodRepository, generationService, rulesService)
 
     @Nested
     inner class DoConsideration {

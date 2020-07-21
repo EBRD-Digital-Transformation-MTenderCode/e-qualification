@@ -1,9 +1,33 @@
 package com.procurement.qualification.application.service
 
-import com.procurement.qualification.application.model.params.*
+import com.procurement.qualification.application.model.params.AnalyzeQualificationsForInvitationParams
+import com.procurement.qualification.application.model.params.CheckAccessToQualificationParams
+import com.procurement.qualification.application.model.params.CheckDeclarationParams
+import com.procurement.qualification.application.model.params.CheckQualificationStateParams
+import com.procurement.qualification.application.model.params.CreateQualificationsParams
+import com.procurement.qualification.application.model.params.DoConsiderationParams
+import com.procurement.qualification.application.model.params.DoDeclarationParams
+import com.procurement.qualification.application.model.params.DoQualificationParams
+import com.procurement.qualification.application.model.params.FindQualificationIdsParams
+import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
+import com.procurement.qualification.application.model.params.RankQualificationsParams
+import com.procurement.qualification.application.model.params.SetNextForQualificationParams
+import com.procurement.qualification.application.model.params.SetQualificationPeriodEndParams
+import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.QualificationRepository
-import com.procurement.qualification.domain.enums.*
-import com.procurement.qualification.domain.functional.*
+import com.procurement.qualification.domain.enums.ConversionRelatesTo
+import com.procurement.qualification.domain.enums.QualificationStatus
+import com.procurement.qualification.domain.enums.QualificationStatusDetails
+import com.procurement.qualification.domain.enums.QualificationSystemMethod
+import com.procurement.qualification.domain.enums.ReductionCriteria
+import com.procurement.qualification.domain.enums.RequirementDataType
+import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.functional.Result.Companion.failure
+import com.procurement.qualification.domain.functional.Result.Companion.success
+import com.procurement.qualification.domain.functional.ValidationResult
+import com.procurement.qualification.domain.functional.asFailure
+import com.procurement.qualification.domain.functional.asSuccess
+import com.procurement.qualification.domain.functional.asValidationFailure
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
@@ -14,6 +38,7 @@ import com.procurement.qualification.domain.util.extension.getNewElements
 import com.procurement.qualification.domain.util.extension.getUnknownElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.fail.error.ValidationError.PeriodNotFoundFor
 import com.procurement.qualification.infrastructure.handler.analyze.qualification.AnalyzeQualificationsForInvitationResult
 import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolParams
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
@@ -25,6 +50,8 @@ import com.procurement.qualification.infrastructure.handler.create.qualification
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.convertToFindRequirementResponseByIdsResultRR
+import com.procurement.qualification.infrastructure.handler.set.SetQualificationPeriodEndResult
+import com.procurement.qualification.infrastructure.handler.set.convert
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.convertToSetNextForQualification
 import com.procurement.qualification.lib.toSetBy
@@ -44,6 +71,7 @@ interface QualificationService {
     fun doConsideration(params: DoConsiderationParams): Result<DoConsiderationResult, Fail>
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
     fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult?, Fail>
+    fun setQualificationPeriodEnd(params: SetQualificationPeriodEndParams): Result<SetQualificationPeriodEndResult, Fail>
     fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail>
     fun checkQualificationsForProtocol(params: CheckQualificationsForProtocolParams): ValidationResult<Fail>
     fun analyzeQualificationsForInvitation(params: AnalyzeQualificationsForInvitationParams): Result<AnalyzeQualificationsForInvitationResult?, Fail>
@@ -52,6 +80,7 @@ interface QualificationService {
 @Service
 class QualificationServiceImpl(
     val qualificationRepository: QualificationRepository,
+    val periodRepository: PeriodRepository,
     val generationService: GenerationService,
     val rulesService: RulesService
 ) : QualificationService {
@@ -484,6 +513,20 @@ class QualificationServiceImpl(
         }
     }
 
+    override fun setQualificationPeriodEnd(params: SetQualificationPeriodEndParams): Result<SetQualificationPeriodEndResult, Fail> {
+        val storedPeriod = periodRepository.findBy(params.cpid, params.ocid)
+            .orForwardFail { fail -> return fail }
+            ?: return failure(PeriodNotFoundFor.SetQualificationPeriodEnd(params.cpid, params.ocid))
+
+        val updatedPeriod = storedPeriod.copy(endDate = params.date)
+
+        val result = updatedPeriod.convert()
+
+        periodRepository.saveOrUpdatePeriod(updatedPeriod)
+
+        return success(result)
+    }
+
     override fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail> {
 
         val cpid = params.cpid
@@ -504,7 +547,10 @@ class QualificationServiceImpl(
 
         val dstQualificationByIds = qualifications.associateBy { it.id }
 
-        val unknownQualifications = getUnknownElements(received = srcQualificationByIds.keys, known = dstQualificationByIds.keys)
+        val unknownQualifications = getUnknownElements(
+            received = srcQualificationByIds.keys,
+            known = dstQualificationByIds.keys
+        )
         if (unknownQualifications.isNotEmpty())
             return ValidationError.QualificationNotFoundFor.DoQualification(
                 cpid = cpid,
