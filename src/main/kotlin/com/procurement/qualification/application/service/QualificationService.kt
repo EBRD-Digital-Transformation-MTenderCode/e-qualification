@@ -49,7 +49,6 @@ import com.procurement.qualification.infrastructure.handler.create.qualification
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
 import com.procurement.qualification.infrastructure.handler.finalize.FinalizeQualificationsResult
-import com.procurement.qualification.infrastructure.handler.finalize.convert
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.convertToFindRequirementResponseByIdsResultRR
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
@@ -118,7 +117,7 @@ class QualificationServiceImpl(
             .toList()
 
         val result = FinalizeQualificationsResult(
-            qualifications = updatedQualifications.map { it.convert() }
+            qualifications = updatedQualifications.map { FinalizeQualificationsResult.fromDomain(it) }
         )
 
         qualificationRepository.saveAll(params.cpid, params.ocid, updatedQualifications)
