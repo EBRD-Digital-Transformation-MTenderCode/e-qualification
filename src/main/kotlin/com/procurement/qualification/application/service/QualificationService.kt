@@ -1,9 +1,33 @@
 package com.procurement.qualification.application.service
 
-import com.procurement.qualification.application.model.params.*
+import com.procurement.qualification.application.model.params.AnalyzeQualificationsForInvitationParams
+import com.procurement.qualification.application.model.params.CheckAccessToQualificationParams
+import com.procurement.qualification.application.model.params.CheckDeclarationParams
+import com.procurement.qualification.application.model.params.CheckQualificationStateParams
+import com.procurement.qualification.application.model.params.CreateQualificationsParams
+import com.procurement.qualification.application.model.params.DoConsiderationParams
+import com.procurement.qualification.application.model.params.DoDeclarationParams
+import com.procurement.qualification.application.model.params.DoQualificationParams
+import com.procurement.qualification.application.model.params.FinalizeQualificationsParams
+import com.procurement.qualification.application.model.params.FindQualificationIdsParams
+import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
+import com.procurement.qualification.application.model.params.RankQualificationsParams
+import com.procurement.qualification.application.model.params.SetNextForQualificationParams
 import com.procurement.qualification.application.repository.QualificationRepository
-import com.procurement.qualification.domain.enums.*
-import com.procurement.qualification.domain.functional.*
+import com.procurement.qualification.domain.enums.ConversionRelatesTo
+import com.procurement.qualification.domain.enums.QualificationStatus
+import com.procurement.qualification.domain.enums.QualificationStatusDetails
+import com.procurement.qualification.domain.enums.QualificationSystemMethod
+import com.procurement.qualification.domain.enums.ReductionCriteria
+import com.procurement.qualification.domain.enums.RequirementDataType
+import com.procurement.qualification.domain.functional.Option
+import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.functional.Result.Companion.failure
+import com.procurement.qualification.domain.functional.Result.Companion.success
+import com.procurement.qualification.domain.functional.ValidationResult
+import com.procurement.qualification.domain.functional.asFailure
+import com.procurement.qualification.domain.functional.asSuccess
+import com.procurement.qualification.domain.functional.asValidationFailure
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
@@ -14,6 +38,7 @@ import com.procurement.qualification.domain.util.extension.getNewElements
 import com.procurement.qualification.domain.util.extension.getUnknownElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.fail.error.ValidationError.QualificationNotFoundFor
 import com.procurement.qualification.infrastructure.handler.analyze.qualification.AnalyzeQualificationsForInvitationResult
 import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolParams
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationResult
@@ -23,6 +48,8 @@ import com.procurement.qualification.infrastructure.handler.create.qualification
 import com.procurement.qualification.infrastructure.handler.create.qualification.convertToDoQualificationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
+import com.procurement.qualification.infrastructure.handler.finalize.FinalizeQualificationsResult
+import com.procurement.qualification.infrastructure.handler.finalize.convert
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.convertToFindRequirementResponseByIdsResultRR
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
@@ -35,6 +62,7 @@ import java.time.LocalDateTime
 interface QualificationService {
 
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
+    fun finalizeQualifications(params: FinalizeQualificationsParams): Result<FinalizeQualificationsResult, Fail>
     fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident>
     fun rankQualifications(params: RankQualificationsParams): Result<List<RankQualificationsResult>, Fail>
     fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail>
@@ -71,6 +99,31 @@ class QualificationServiceImpl(
 
         return filteredQualifications.map { it.id }
             .asSuccess()
+    }
+
+    override fun finalizeQualifications(params: FinalizeQualificationsParams): Result<FinalizeQualificationsResult, Fail> {
+        val qualificationsfromDb = qualificationRepository
+            .findBy(params.cpid, params.ocid)
+            .map { submissions -> submissions.takeIf { it.isNotEmpty() } }
+            .doReturn { fail -> return failure(fail) }
+            ?: return failure(QualificationNotFoundFor.FinalizeQualifications(params.cpid, params.ocid))
+
+        val updatedQualifications = qualificationsfromDb.asSequence()
+            .map { qualification -> qualification to defineStateToUpdate(qualification.statusDetails) }
+            .filter { (_, newState) -> newState.isDefined }
+            .map { (qualification, newState) ->
+                val (status, statusDetails) = newState.get
+                qualification.copy(status = status, statusDetails = statusDetails)
+            }
+            .toList()
+
+        val result = FinalizeQualificationsResult(
+            qualifications = updatedQualifications.map { it.convert() }
+        )
+
+        qualificationRepository.saveAll(params.cpid, params.ocid, updatedQualifications)
+
+        return success(result)
     }
 
     override fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident> {
@@ -504,7 +557,10 @@ class QualificationServiceImpl(
 
         val dstQualificationByIds = qualifications.associateBy { it.id }
 
-        val unknownQualifications = getUnknownElements(received = srcQualificationByIds.keys, known = dstQualificationByIds.keys)
+        val unknownQualifications = getUnknownElements(
+            received = srcQualificationByIds.keys,
+            known = dstQualificationByIds.keys
+        )
         if (unknownQualifications.isNotEmpty())
             return ValidationError.QualificationNotFoundFor.DoQualification(
                 cpid = cpid,
@@ -620,6 +676,19 @@ class QualificationServiceImpl(
             }
         ).asSuccess()
     }
+
+    fun defineStateToUpdate(statusDetails: QualificationStatusDetails?): Option<Pair<QualificationStatus, QualificationStatusDetails>> =
+        when (statusDetails) {
+            QualificationStatusDetails.ACTIVE ->
+                Option.pure(QualificationStatus.ACTIVE to QualificationStatusDetails.BASED_ON_HUMAN_DECISION)
+            QualificationStatusDetails.CONSIDERATION ->
+                Option.pure(QualificationStatus.UNSUCCESSFUL to QualificationStatusDetails.BASED_ON_HUMAN_DECISION)
+
+            QualificationStatusDetails.AWAITING,
+            QualificationStatusDetails.UNSUCCESSFUL,
+            QualificationStatusDetails.BASED_ON_HUMAN_DECISION,
+            null -> Option.none()
+        }
 
     private fun Qualification.Document.update(
         document: DoQualificationParams.Qualification.Document
