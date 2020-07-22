@@ -19,13 +19,18 @@ import java.util.*
 
 class SetNextForQualificationTest {
 
+    companion object {
+        private val SAMPLE_TIME = LocalDateTime.now()
+        private val SAMPLE_UUID = UUID.randomUUID()
+    }
+
     @Test
     @DisplayName("FR.COM-7.22.1")
     fun `is need items for returning - consideration & awaiting at start`() {
         val qualifications = listOf(
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.AWAITING),
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.CONSIDERATION),
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL)
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.AWAITING),
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.CONSIDERATION),
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL)
         )
 
         val expectedResult = emptyList<Qualification>()
@@ -38,9 +43,9 @@ class SetNextForQualificationTest {
     @DisplayName("FR.COM-7.22.1")
     fun `is need items for returning - consideration & awaiting in the end`() {
         val qualifications = listOf(
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.AWAITING),
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.CONSIDERATION)
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.AWAITING),
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.CONSIDERATION)
         )
 
         val expectedResult = emptyList<Qualification>()
@@ -53,9 +58,9 @@ class SetNextForQualificationTest {
     @DisplayName("FR.COM-7.22.1")
     fun `is need items for returning - null - first, awaiting - last `() {
         val qualifications = listOf(
-            qualificationSample.copy(statusDetails = null),
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.AWAITING)
+            qualificationSample().copy(statusDetails = null),
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.AWAITING)
         )
 
         val expectedResult = emptyList<Qualification>()
@@ -68,8 +73,8 @@ class SetNextForQualificationTest {
     @DisplayName("FR.COM-7.22.1")
     fun `is need items for returning - without nulls, without awaiting || consideration`() {
         val qualifications = listOf(
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.ACTIVE)
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.ACTIVE)
         )
 
         val expectedResult = emptyList<Qualification>()
@@ -82,9 +87,9 @@ class SetNextForQualificationTest {
     @DisplayName("FR.COM-7.22.1")
     fun `is need items for returning - null's without awaiting `() {
         val qualifications = listOf(
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
-            qualificationSample.copy(statusDetails = QualificationStatusDetails.ACTIVE),
-            qualificationSample.copy(statusDetails = null)
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
+            qualificationSample().copy(statusDetails = QualificationStatusDetails.ACTIVE),
+            qualificationSample().copy(statusDetails = null)
         )
 
         val expectedResult = qualifications.filter { it.statusDetails == null }
@@ -94,14 +99,17 @@ class SetNextForQualificationTest {
         assertTrue(expectedResult.filter { it.statusDetails != null }.isEmpty())
     }
 
-    private val qualificationSample = Qualification(
-        id = QualificationId.tryCreateOrNull(UUID.randomUUID().toString())!!,
-        status = QualificationStatus.UNSUCCESSFUL,
-        statusDetails = null,
-        date = LocalDateTime.now(),
-        token = Token.randomUUID(),
-        relatedSubmission = SubmissionId.tryCreateOrNull(UUID.randomUUID().toString())!!,
-        owner = Owner.randomUUID(),
-        scoring = Scoring(BigDecimal.TEN)
-    )
+    private val qualificationSample: () -> Qualification = {
+        val sampleUuid = SAMPLE_UUID.toString()
+        Qualification(
+            id = QualificationId.tryCreateOrNull(UUID.randomUUID().toString())!!,
+            status = QualificationStatus.UNSUCCESSFUL,
+            statusDetails = null,
+            date = SAMPLE_TIME,
+            token = Token.fromString(sampleUuid),
+            relatedSubmission = SubmissionId.tryCreateOrNull(sampleUuid)!!,
+            owner = Owner.fromString(sampleUuid),
+            scoring = Scoring(BigDecimal.TEN)
+        )
+    }
 }
