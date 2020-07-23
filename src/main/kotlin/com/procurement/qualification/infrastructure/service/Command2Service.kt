@@ -2,9 +2,12 @@ package com.procurement.qualification.infrastructure.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.service.Logger
+import com.procurement.qualification.infrastructure.handler.analyze.qualification.AnalyzeQualificationsForInvitationHandler
 import com.procurement.qualification.infrastructure.handler.check.accesstoqualification.CheckAccessToQualificationHandler
 import com.procurement.qualification.infrastructure.handler.check.declaration.CheckDeclarationHandler
-import com.procurement.qualification.infrastructure.handler.check.qualificationstate.CheckQualificationStateHandler
+import com.procurement.qualification.infrastructure.handler.check.qualification.period.CheckQualificationPeriodHandler
+import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolHandler
+import com.procurement.qualification.infrastructure.handler.check.qualification.state.CheckQualificationStateHandler
 import com.procurement.qualification.infrastructure.handler.create.consideration.DoConsiderationHandler
 import com.procurement.qualification.infrastructure.handler.create.declaration.DoDeclarationHandler
 import com.procurement.qualification.infrastructure.handler.create.qualification.DoQualificationHandler
@@ -36,7 +39,10 @@ class Command2Service(
     private val findRequirementResponseByIdsHandler: FindRequirementResponseByIdsHandler,
     private val doConsiderationHandler: DoConsiderationHandler,
     private val setNextForQualificationHandler: SetNextForQualificationHandler,
-    private val doQualificationHandler: DoQualificationHandler
+    private val doQualificationHandler: DoQualificationHandler,
+    private val checkQualificationPeriodHandler: CheckQualificationPeriodHandler,
+    private val checkQualificationsForProtocolHandler: CheckQualificationsForProtocolHandler,
+    private val analyzeQualificationsForInvitationHandler: AnalyzeQualificationsForInvitationHandler
 ) {
 
     fun execute(node: JsonNode): ApiResponse2 {
@@ -71,6 +77,9 @@ class Command2Service(
             Command2Type.DO_CONSIDERATION -> doConsiderationHandler.handle(node = node)
             Command2Type.SET_NEXT_FOR_QUALIFICATION -> setNextForQualificationHandler.handle(node = node)
             Command2Type.DO_QUALIFICATION -> doQualificationHandler.handle(node = node)
+            Command2Type.CHECK_QUALIFICATION_PERIOD -> checkQualificationPeriodHandler.handle(node = node)
+            Command2Type.CHECK_QUALIFICATIONS_FOR_PROTOCOL -> checkQualificationsForProtocolHandler.handle(node = node)
+            Command2Type.ANALYZE_QUALIFICATION_FOR_INVITATIONS -> analyzeQualificationsForInvitationHandler.handle(node = node)
         }
     }
 }

@@ -7,12 +7,14 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
+import com.procurement.qualification.domain.model.date.format
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.requirementresponse.RequirementResponseId
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.infrastructure.fail.Fail
+import java.time.LocalDateTime
 
 sealed class ValidationError(
     numberError: String,
@@ -83,49 +85,69 @@ sealed class ValidationError(
         description = "Invalid Responder name, actual='$actual', expected='$expected'."
     )
 
-    sealed class QualificationNotFoundFor(
-        numberError: String,
-        cpid: Cpid,
-        ocid: Ocid,
-        qualificationIds: Collection<QualificationId>
-    ) : ValidationError(
-        numberError = numberError,
-        description = "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationIds'."
-    ) {
+    sealed class QualificationNotFoundFor : ValidationError {
+        constructor(numberError: String, cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
+            super(numberError, "Qualification not found by cpid='$cpid' and ocid='$ocid' and id='$qualificationId'.")
+
+        constructor(numberError: String, cpid: Cpid, ocid: Ocid) :
+            super(numberError, "No qualification found by cpid='$cpid' and ocid='$ocid'.")
+
+        constructor(numberError: String, cpid: Cpid, ocid: Ocid, qualificationIds: Collection<QualificationId>) :
+            super(
+                numberError = numberError,
+                description = "Qualifications not found by cpid='$cpid' and ocid='$ocid' and id='${qualificationIds.joinToString()}'."
+            )
+
         class CheckAccessToQualification(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
-                numberError = "7.14.3", cpid = cpid, ocid = ocid, qualificationIds = listOf(qualificationId)
+                numberError = "7.14.3", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
         class CheckQualificationState(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
-                numberError = "7.17.1", cpid = cpid, ocid = ocid, qualificationIds = listOf(qualificationId)
+                numberError = "7.17.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
         class DoDeclaration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
-                numberError = "7.19.1", cpid = cpid, ocid = ocid, qualificationIds = listOf(qualificationId)
+                numberError = "7.19.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
         class CheckDeclaration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
-                numberError = "7.16.1", cpid = cpid, ocid = ocid, qualificationIds = listOf(qualificationId)
+                numberError = "7.16.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
         class FindRequirementResponseByIds(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
-                numberError = "7.18.1", cpid = cpid, ocid = ocid, qualificationIds = listOf(qualificationId)
+                numberError = "7.18.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
         class DoConsideration(cpid: Cpid, ocid: Ocid, qualificationId: QualificationId) :
             QualificationNotFoundFor(
-                numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationIds = listOf(qualificationId)
+                numberError = "7.21.1", cpid = cpid, ocid = ocid, qualificationId = qualificationId
             )
 
         class DoQualification(cpid: Cpid, ocid: Ocid, qualificationIds: Collection<QualificationId>) :
             QualificationNotFoundFor(
                 numberError = "7.20.1", ocid = ocid, cpid = cpid, qualificationIds = qualificationIds
             )
+
+        class CheckQualificationsForProtocol(cpid: Cpid, ocid: Ocid) :
+            QualificationNotFoundFor(numberError = "7.24.1", cpid = cpid, ocid = ocid)
+    }
+
+    sealed class PeriodNotFoundFor(
+        numberError: String,
+        cpid: Cpid,
+        ocid: Ocid
+    ) : ValidationError(
+        numberError = numberError,
+        description = "Period not found by cpid='$cpid' and ocid='$ocid'."
+    ) {
+        class CheckQualificationPeriod(cpid: Cpid, ocid: Ocid) : PeriodNotFoundFor(
+            numberError = "7.4.1", cpid = cpid, ocid = ocid
+        )
     }
 
     class RelatedSubmissionNotEqualOnSetNextForQualification(submissionId: SubmissionId) :
@@ -133,4 +155,25 @@ sealed class ValidationError(
             numberError = "7.22.1",
             description = "Related submission in qualifications not found on submission id='$submissionId'."
         )
+
+    class RequestDateIsNotAfterStartDate(requestDate: LocalDateTime, startDate: LocalDateTime) : ValidationError(
+        numberError = "7.4.3",
+        description = "Request date '${requestDate.format()}' must be after stored period start date '${startDate.format()}'."
+    )
+
+    class UnsuitableQualificationFound(cpid: Cpid, ocid: Ocid, id: QualificationId) : ValidationError(
+        numberError = "7.24.2",
+        description = "Unsuitable qualification found by cpid '$cpid', ocid '$ocid', id '$id'."
+    )
+
+    class RuleNotFound : ValidationError {
+        constructor(description: String):
+            super(numberError = "17", description = description)
+
+        constructor(country: String, pmd: Pmd, operationType: OperationType?) :
+            this(description = "Rule not found by country '$country', pmd '$pmd', operationType $operationType.")
+
+        constructor(country: String, pmd: Pmd) :
+            this(description = "Rule not found by country '$country', pmd '$pmd'.")
+    }
 }

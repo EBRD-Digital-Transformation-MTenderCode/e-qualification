@@ -22,6 +22,7 @@ class CassandraQualificationRulesRepository(private val session: Session) : Qual
         private const val COLUMN_OPERATION_TYPE = "operation_type"
         private const val COLUMN_PARAMETER = "parameter"
         private const val COLUMN_VALUE = "value"
+        private const val ALL_OPERATION_TYPES_VALUE = "all"
 
         private const val FIND_BY_COUNTRY_PMD_OPERATION_TYPE_CQL = """
             SELECT $COLUMN_VALUE
@@ -38,7 +39,7 @@ class CassandraQualificationRulesRepository(private val session: Session) : Qual
     override fun findBy(
         country: String,
         pmd: Pmd,
-        operationType: OperationType,
+        operationType: OperationType?,
         parameter: String
     ): Result<String?, Fail> {
 
@@ -46,7 +47,7 @@ class CassandraQualificationRulesRepository(private val session: Session) : Qual
             .apply {
                 setString(COLUMN_COUNTRY, country)
                 setString(COLUMN_PMD, pmd.toString())
-                setString(COLUMN_OPERATION_TYPE, operationType.toString())
+                setString(COLUMN_OPERATION_TYPE, operationType?.toString() ?: ALL_OPERATION_TYPES_VALUE)
                 setString(COLUMN_PARAMETER, parameter)
             }
 

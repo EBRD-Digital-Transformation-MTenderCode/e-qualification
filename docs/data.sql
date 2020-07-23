@@ -44,3 +44,5 @@ CREATE TABLE IF NOT EXISTS qualification.qualification_rules
 INSERT INTO qualification.qualification_rules(country, pmd, operation_type, parameter, value) VALUES ('MD', 'GPA', 'qualificationConsideration', 'validStates', '[{"status":"pending","statusDetails":"awaiting"}]');
 INSERT INTO qualification.qualification_rules(country, pmd, operation_type, parameter, value) VALUES ('MD', 'GPA', 'qualificationDeclareNonConflictOfInterest', 'validStates', '[{"status":"pending","statusDetails":"consideration"}]');
 INSERT INTO qualification.qualification_rules(country, pmd, operation_type, parameter, value) VALUES ('MD', 'GPA', 'qualification', 'validStates', '[{"status":"pending","statusDetails":"consideration"},{"status":"pending","statusDetails":"active"},{"status":"pending","statusDetails":"unsuccessful"}]');
+INSERT INTO qualification.qualification_rules(country, pmd, operation_type, parameter, value) VALUES ('MD', 'GPA', 'all', 'minQtyQualificationsForInvitation', '4');
+INSERT INTO qualification.qualification_rules(country, pmd, operation_type, parameter, value) VALUES ('MD', 'TEST_GPA', 'all', 'minQtyQualificationsForInvitation', '4');

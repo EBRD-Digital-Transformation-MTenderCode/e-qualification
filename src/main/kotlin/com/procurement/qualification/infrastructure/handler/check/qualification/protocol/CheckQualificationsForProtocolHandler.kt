@@ -1,4 +1,4 @@
-package com.procurement.qualification.infrastructure.handler.check.qualificationstate
+package com.procurement.qualification.infrastructure.handler.check.qualification.protocol
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.service.Logger
@@ -12,7 +12,7 @@ import com.procurement.qualification.infrastructure.web.parser.tryGetParams
 import org.springframework.stereotype.Component
 
 @Component
-class CheckQualificationStateHandler(
+class CheckQualificationsForProtocolHandler(
     val transform: Transform,
     logger: Logger,
     val qualificationService: QualificationService
@@ -20,13 +20,13 @@ class CheckQualificationStateHandler(
 
     override fun execute(node: JsonNode): ValidationResult<Fail> {
 
-        val params = node.tryGetParams(target = CheckQualificationStateRequest::class.java, transform = transform)
+        val params = node.tryGetParams(target = CheckQualificationsForProtocolRequest::class.java, transform = transform)
             .doReturn { fail -> return ValidationResult.error(fail) }
             .convert()
             .doReturn { fail -> return ValidationResult.error(fail) }
 
-        return qualificationService.checkQualificationState(params = params)
+        return qualificationService.checkQualificationsForProtocol(params = params)
     }
 
-    override val action: Command2Type = Command2Type.CHECK_QUALIFICATION_STATE
+    override val action: Command2Type = Command2Type.CHECK_QUALIFICATIONS_FOR_PROTOCOL
 }
