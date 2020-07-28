@@ -6,6 +6,6 @@ spring:
     name: e-qualification
 
 cassandra:
-  contact-points: 127.0.0.1
+  contact-points: localhost
   keyspace-name: qualification
   port: 9042
