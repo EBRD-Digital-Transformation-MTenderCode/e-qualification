@@ -135,6 +135,9 @@ sealed class ValidationError(
 
         class CheckQualificationsForProtocol(cpid: Cpid, ocid: Ocid) :
             QualificationNotFoundFor(numberError = "7.24.1", cpid = cpid, ocid = ocid)
+
+        class FinalizeQualifications(cpid: Cpid, ocid: Ocid) :
+            QualificationNotFoundFor(numberError = "7.26.1", cpid = cpid, ocid = ocid)
     }
 
     sealed class PeriodNotFoundFor(

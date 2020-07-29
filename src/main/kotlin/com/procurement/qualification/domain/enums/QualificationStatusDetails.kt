@@ -7,6 +7,7 @@ enum class QualificationStatusDetails(@JsonValue override val key: String) : Enu
 
     ACTIVE("active"),
     AWAITING("awaiting"),
+    BASED_ON_HUMAN_DECISION("basedOnHumanDecision"),
     CONSIDERATION("consideration"),
     UNSUCCESSFUL("unsuccessful");
 
