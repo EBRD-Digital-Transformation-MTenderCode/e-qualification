@@ -53,6 +53,7 @@ import com.procurement.qualification.infrastructure.handler.set.nextforqualifica
 import com.procurement.qualification.lib.toSetBy
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDateTime
 
 interface QualificationService {
@@ -98,9 +99,19 @@ class QualificationServiceImpl(
 
     override fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident> {
 
+        val tender = params.tender
+        val isNeedCalculateScoring = isCalculateScoringNeeded(
+            tender.otherCriteria.reductionCriteria,
+            tender.otherCriteria.qualificationSystemMethod
+        )
+
         val qualifications = params.submissions
             .map { submission ->
-                val scoring: Scoring? = calculateScoring(submission = submission, params = params)
+                val scoring: Scoring? = if (isNeedCalculateScoring) {
+                    val coefficients = getCoefficients(tender.conversions, submission.requirementResponses)
+                    calculateScoring(coefficients = coefficients)
+                } else
+                    null
 
                 Qualification(
                     id = QualificationId.generate(),
@@ -645,50 +656,6 @@ class QualificationServiceImpl(
         )
     }
 
-    private fun calculateScoring(
-        submission: CreateQualificationsParams.Submission,
-        params: CreateQualificationsParams
-    ): Scoring? = when (params.tender.otherCriteria.reductionCriteria) {
-        ReductionCriteria.SCORING -> {
-            when (params.tender.otherCriteria.qualificationSystemMethod) {
-                QualificationSystemMethod.MANUAL -> null
-                QualificationSystemMethod.AUTOMATED -> {
-                    calculateAutomatedScoring(submission = submission, conversions = params.tender.conversions)
-                }
-            }
-        }
-        ReductionCriteria.NONE -> null
-    }
-
-    private fun calculateAutomatedScoring(
-        conversions: List<CreateQualificationsParams.Tender.Conversion>,
-        submission: CreateQualificationsParams.Submission
-    ): Scoring {
-        val conversionsRelatesToRequirement = conversions
-            .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
-            .associateBy { it.relatedItem }
-
-        return Scoring.invoke(
-            value = submission.requirementResponses
-                .map { requirementResponse ->
-                    conversionsRelatesToRequirement[requirementResponse.requirement.id.toString()]
-                        ?.coefficients
-                        ?.filter {
-                            isMatchCoefficientValueAndRequirementValue(
-                                coefficientValue = it.value,
-                                requirementValue = requirementResponse.value
-                            )
-                        }
-                        ?.map { it.coefficient }
-                        ?.takeIf { it.isNotEmpty() }
-                        ?.reduce { start, next -> start * next }
-                        ?: CoefficientRate(BigDecimal.ONE)
-                }
-                .reduce { start, next -> start * next }
-                .rate
-        )
-    }
-
     private fun findMinScoring(qualifications: List<Qualification>) = qualifications.minBy { it.scoring!! }
     private fun hasSameScoring(qualifications: List<Qualification>, scoring: Scoring) = qualifications
         .filter { scoring == it.scoring }
@@ -706,36 +673,6 @@ class QualificationServiceImpl(
 
     private fun setStatusDetails(statusDetails: QualificationStatusDetails, qualifications: List<Qualification>) =
         qualifications.map { it.copy(statusDetails = statusDetails) }
-
-    private fun isMatchCoefficientValueAndRequirementValue(
-        coefficientValue: CoefficientValue,
-        requirementValue: RequirementResponseValue
-    ): Boolean = when (coefficientValue) {
-        is CoefficientValue.AsBoolean -> when (requirementValue) {
-            is RequirementResponseValue.AsBoolean -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsString,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsString -> when (requirementValue) {
-            is RequirementResponseValue.AsString -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsNumber -> when (requirementValue) {
-            is RequirementResponseValue.AsNumber -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsString,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsInteger -> when (requirementValue) {
-            is RequirementResponseValue.AsInteger -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsString -> false
-        }
-    }
 
     private fun isMatchingDataType(datatype: RequirementDataType, value: RequirementResponseValue) =
         when (value) {
@@ -771,6 +708,78 @@ class QualificationServiceImpl(
         return states.any { state ->
             state.status == qualification.status ||
                 state.statusDetails == qualification.statusDetails
+        }
+    }
+
+    companion object {
+        fun isCalculateScoringNeeded(reductionCriteria: ReductionCriteria, qualificationSystemMethod: QualificationSystemMethod): Boolean = when (reductionCriteria) {
+            ReductionCriteria.SCORING -> {
+                when (qualificationSystemMethod) {
+                    QualificationSystemMethod.MANUAL -> false
+                    QualificationSystemMethod.AUTOMATED -> true
+                }
+            }
+            ReductionCriteria.NONE -> false
+        }
+
+        fun getCoefficients(
+            conversions: List<CreateQualificationsParams.Tender.Conversion>,
+            requirementResponses: List<CreateQualificationsParams.Submission.RequirementResponse>
+        ): List<CoefficientRate> {
+            if (requirementResponses.isEmpty()) return emptyList()
+
+            val conversionsRelatesToRequirement: Map<String, CreateQualificationsParams.Tender.Conversion> = conversions
+                .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
+                .associateBy { it.relatedItem }
+
+            return requirementResponses
+                .mapNotNull { requirementResponse ->
+                    val id = requirementResponse.requirement.id.toString()
+                    conversionsRelatesToRequirement[id]
+                        ?.coefficients
+                        ?.firstOrNull { coefficient ->
+                            isMatchCoefficientValueAndRequirementValue(coefficient.value, requirementResponse.value)
+                        }
+                        ?.coefficient
+                }
+        }
+
+        fun calculateScoring(coefficients: List<CoefficientRate>): Scoring {
+            val rate: BigDecimal = coefficients.takeIf { it.isNotEmpty() }
+                ?.reduce { start, next -> start * next }
+                ?.rate
+                ?: BigDecimal.ONE
+            return Scoring(rate.setScale(3, RoundingMode.HALF_UP))
+        }
+
+        fun isMatchCoefficientValueAndRequirementValue(
+            coefficientValue: CoefficientValue,
+            requirementValue: RequirementResponseValue
+        ): Boolean = when (coefficientValue) {
+            is CoefficientValue.AsBoolean -> when (requirementValue) {
+                is RequirementResponseValue.AsBoolean -> coefficientValue.value == requirementValue.value
+                is RequirementResponseValue.AsString,
+                is RequirementResponseValue.AsNumber,
+                is RequirementResponseValue.AsInteger -> false
+            }
+            is CoefficientValue.AsString -> when (requirementValue) {
+                is RequirementResponseValue.AsString -> coefficientValue.value == requirementValue.value
+                is RequirementResponseValue.AsBoolean,
+                is RequirementResponseValue.AsNumber,
+                is RequirementResponseValue.AsInteger -> false
+            }
+            is CoefficientValue.AsNumber -> when (requirementValue) {
+                is RequirementResponseValue.AsNumber -> coefficientValue.value == requirementValue.value
+                is RequirementResponseValue.AsBoolean,
+                is RequirementResponseValue.AsString,
+                is RequirementResponseValue.AsInteger -> false
+            }
+            is CoefficientValue.AsInteger -> when (requirementValue) {
+                is RequirementResponseValue.AsInteger -> coefficientValue.value == requirementValue.value
+                is RequirementResponseValue.AsBoolean,
+                is RequirementResponseValue.AsNumber,
+                is RequirementResponseValue.AsString -> false
+            }
         }
     }
 }
