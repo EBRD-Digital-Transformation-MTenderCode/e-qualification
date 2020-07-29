@@ -154,15 +154,6 @@ class CreateQualificationsTest {
                 }
             }
             return list.asSequence().asStream()
-
-
-            /*val list = listOf(
-                Arguments.of(ReductionCriteria.SCORING, QualificationSystemMethod.AUTOMATED, true),
-                Arguments.of(ReductionCriteria.NONE, QualificationSystemMethod.AUTOMATED, false),
-                Arguments.of(ReductionCriteria.SCORING, QualificationSystemMethod.MANUAL, false),
-                Arguments.of(ReductionCriteria.NONE, QualificationSystemMethod.MANUAL, false)
-            )
-            return list.asSequence().asStream()*/
         }
 
         @JvmStatic
