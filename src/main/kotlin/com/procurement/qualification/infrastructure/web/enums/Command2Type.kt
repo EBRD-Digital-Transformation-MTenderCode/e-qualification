@@ -17,10 +17,12 @@ enum class Command2Type(@JsonValue override val key: String) : Action, EnumEleme
     DO_CONSIDERATION("doConsideration"),
     DO_DECLARATION("doDeclaration"),
     DO_QUALIFICATION("doQualification"),
+    FINALIZE_QUALIFICATIONS("finalizeQualifications"),
     FIND_QUALIFICATION_IDS("findQualificationIds"),
     FIND_REQUIREMENT_RESPONSE_BY_IDS("findRequirementResponseByIds"),
     RANK_QUALIFICATIONS("rankQualifications"),
     SET_NEXT_FOR_QUALIFICATION("setNextForQualification"),
+    START_QUALIFICATION_PERIOD("startQualificationPeriod"),
     SET_QUALIFICATION_PERIOD_END("setQualificationPeriodEnd"),
     START_QUALIFICATION_PERIOD("startQualificationPeriod");
 

@@ -73,6 +73,7 @@ class DoQualificationParams private constructor(
                         QualificationStatusDetails.AWAITING,
                         QualificationStatusDetails.CONSIDERATION,
                         QualificationStatusDetails.UNSUCCESSFUL -> true
+                        QualificationStatusDetails.BASED_ON_HUMAN_DECISION -> false
                     }
                 }
                 .toSet()
