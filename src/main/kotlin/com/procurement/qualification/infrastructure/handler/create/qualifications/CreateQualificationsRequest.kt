@@ -17,7 +17,9 @@ data class CreateQualificationsRequest(
 ) {
     data class Submission(
         @field:JsonProperty("id") @param:JsonProperty("id") val id: String,
-        @field:JsonProperty("requirementResponses") @param:JsonProperty("requirementResponses") val requirementResponses: List<RequirementResponse>
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        @field:JsonProperty("requirementResponses") @param:JsonProperty("requirementResponses") val requirementResponses: List<RequirementResponse>?
     ) {
         data class RequirementResponse(
             @field:JsonProperty("id") @param:JsonProperty("id") val id: String,
