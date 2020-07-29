@@ -77,7 +77,7 @@ class QualificationServiceImpl(
     override fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident> {
 
         val tender = params.tender
-        val isNeedCalculateScoring = isNeedCalculateScoring(
+        val isNeedCalculateScoring = isCalculateScoringNeeded(
             tender.otherCriteria.reductionCriteria,
             tender.otherCriteria.qualificationSystemMethod
         )
@@ -744,7 +744,7 @@ class QualificationServiceImpl(
     }
 
     companion object {
-        fun isNeedCalculateScoring(reductionCriteria: ReductionCriteria, qualificationSystemMethod: QualificationSystemMethod): Boolean = when (reductionCriteria) {
+        fun isCalculateScoringNeeded(reductionCriteria: ReductionCriteria, qualificationSystemMethod: QualificationSystemMethod): Boolean = when (reductionCriteria) {
             ReductionCriteria.SCORING -> {
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.MANUAL -> false

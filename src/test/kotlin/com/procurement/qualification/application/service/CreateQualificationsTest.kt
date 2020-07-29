@@ -37,7 +37,7 @@ class CreateQualificationsTest {
     @MethodSource
     @DisplayName("FR.COM-7.11.6 is need calculate scoring")
     fun isNeedCalculateScoring(reductionCriteria: ReductionCriteria, qualificationSystemMethod: QualificationSystemMethod, result: Boolean) {
-        val actual = QualificationServiceImpl.isNeedCalculateScoring(reductionCriteria, qualificationSystemMethod)
+        val actual = QualificationServiceImpl.isCalculateScoringNeeded(reductionCriteria, qualificationSystemMethod)
         assertEquals(result, actual)
     }
 
