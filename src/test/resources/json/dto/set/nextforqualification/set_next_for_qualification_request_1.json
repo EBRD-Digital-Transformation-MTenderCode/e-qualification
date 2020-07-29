@@ -17,21 +17,7 @@
   },
   "criteria": [
     {
-      "id": "string",
-      "title": "string",
-      "source": "procuringEntity",
-      "requirementGroups": [
-        {
-          "id": "string",
-          "requirements": [
-            {
-              "id": "string",
-              "title": "string",
-              "dataType": "string"
-            }
-          ]
-        }
-      ]
+      "id": "string"
     }
   ]
 }

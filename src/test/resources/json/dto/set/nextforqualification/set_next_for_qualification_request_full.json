@@ -17,26 +17,7 @@
   },
   "criteria": [
     {
-      "id": "string",
-      "title": "string",
-      "description": "string",
-      "source": "procuringEntity",
-      "relatesTo": "tenderer",
-      "relatedItem": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "requirementGroups": [
-        {
-          "id": "string",
-          "descriptions": "string",
-          "requirements": [
-            {
-              "id": "string",
-              "title": "string",
-              "description": "string",
-              "dataType": "string"
-            }
-          ]
-        }
-      ]
+      "id": "string"
     }
   ]
 }
