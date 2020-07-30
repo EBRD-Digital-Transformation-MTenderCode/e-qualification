@@ -148,7 +148,7 @@ class QualificationRepositoryIT {
     @Test
     fun save() {
         val qualification = createQualification()
-        qualificationRepository.save(CPID, OCID, qualification)
+        qualificationRepository.add(CPID, OCID, qualification)
         val savedPeriod = qualificationRepository.findBy(CPID, OCID).get
 
         val expectedList = listOf(qualification)
@@ -167,7 +167,7 @@ class QualificationRepositoryIT {
             .whenever(session)
             .execute(any<BoundStatement>())
 
-        val actual = qualificationRepository.save(CPID, OCID, createQualification())
+        val actual = qualificationRepository.add(CPID, OCID, createQualification())
 
         assertTrue(actual.isFail)
         assertTrue(actual.error is Fail.Incident.Database.Interaction)
@@ -178,7 +178,7 @@ class QualificationRepositoryIT {
         val qual1 = createQualification()
         val qual2 = createQualification()
         val expectedQualifications = listOf(qual1, qual2)
-        qualificationRepository.saveAll(CPID, OCID, expectedQualifications)
+        qualificationRepository.add(CPID, OCID, expectedQualifications)
         val savedQualifications = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
         expectedQualifications.forEach { expected ->
             val actualQualification = savedQualifications.find { it.id == expected.id }!!
@@ -196,7 +196,7 @@ class QualificationRepositoryIT {
             qual1.copy(statusDetails = QualificationStatusDetails.UNSUCCESSFUL),
             qual2.copy(relatedSubmission = SubmissionId.generate())
         )
-        qualificationRepository.updateAll(CPID, OCID, updatedQualifications)
+        qualificationRepository.update(CPID, OCID, updatedQualifications)
         val updated = qualificationRepository.findBy(cpid = CPID, ocid = OCID).get
         updated.forEach { expected ->
             val actualQualification = updatedQualifications.find { it.id == expected.id }!!
@@ -253,7 +253,7 @@ class QualificationRepositoryIT {
             .whenever(session)
             .execute(any<BatchStatement>())
 
-        val actual = qualificationRepository.saveAll(CPID, OCID, listOf(createQualification()))
+        val actual = qualificationRepository.add(CPID, OCID, listOf(createQualification()))
 
         assertTrue(actual.isFail)
         assertTrue(actual.error is Fail.Incident.Database.Interaction)

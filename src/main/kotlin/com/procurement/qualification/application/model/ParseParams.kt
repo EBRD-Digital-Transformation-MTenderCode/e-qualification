@@ -3,6 +3,7 @@ package com.procurement.qualification.application.model
 import com.procurement.qualification.domain.enums.EnumElementProvider
 import com.procurement.qualification.domain.enums.EnumElementProvider.Companion.keysAsStrings
 import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.fail.error.DataTimeError
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
@@ -61,17 +62,20 @@ fun <T> parseEnum(
 }
 
 
-fun parseDate(value: String, attributeName: String): Result<LocalDateTime, DataErrors.Validation.DataFormatMismatch> =
+fun parseDate(value: String, attributeName: String): Result<LocalDateTime, DataErrors.Validation> =
     value.tryParseLocalDateTime()
-        .doReturn { pattern ->
-            return Result.failure(
-                DataErrors.Validation.DataFormatMismatch(
+        .mapError { fail ->
+            when (fail) {
+                is DataTimeError.InvalidFormat -> DataErrors.Validation.DataFormatMismatch(
                     name = attributeName,
                     actualValue = value,
-                    expectedFormat = pattern
+                    expectedFormat = fail.pattern
                 )
-            )
-        }.asSuccess()
+
+                is DataTimeError.InvalidDateTime ->
+                    DataErrors.Validation.InvalidDateTime(name = attributeName, actualValue = value)
+            }
+        }
 
 fun parseOwner(value: String): Result<Owner, DataErrors.Validation.DataFormatMismatch> =
     value.tryOwner()
