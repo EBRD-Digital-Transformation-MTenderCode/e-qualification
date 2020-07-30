@@ -3,7 +3,8 @@
     {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       "status": "pending",
-      "statusDetails": "active"
+      "statusDetails": "active",
+      "relatedSubmission": "31fefafd-b81a-473c-8386-7666e790fd1b"
     }
   ]
 }
