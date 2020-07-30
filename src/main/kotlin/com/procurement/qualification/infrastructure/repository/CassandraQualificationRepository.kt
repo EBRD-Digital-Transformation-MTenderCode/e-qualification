@@ -146,7 +146,7 @@ class CassandraQualificationRepository(
             .asSuccess()
     }
 
-    override fun save(cpid: Cpid, ocid: Ocid, qualification: Qualification): MaybeFail<Fail.Incident> {
+    override fun add(cpid: Cpid, ocid: Ocid, qualification: Qualification): MaybeFail<Fail.Incident> {
         val data = generateJsonData(qualification)
             .doReturn { fail -> return MaybeFail.fail(fail) }
 
@@ -164,7 +164,7 @@ class CassandraQualificationRepository(
         return MaybeFail.none()
     }
 
-    override fun saveAll(cpid: Cpid, ocid: Ocid, qualifications: List<Qualification>): MaybeFail<Fail.Incident> {
+    override fun add(cpid: Cpid, ocid: Ocid, qualifications: List<Qualification>): MaybeFail<Fail.Incident> {
         val statement = BatchStatement()
 
         qualifications.forEach { qualification ->
@@ -188,7 +188,7 @@ class CassandraQualificationRepository(
         return MaybeFail.none()
     }
 
-    override fun updateAll(cpid: Cpid, ocid: Ocid, qualifications: List<Qualification>): MaybeFail<Fail.Incident> {
+    override fun update(cpid: Cpid, ocid: Ocid, qualifications: List<Qualification>): MaybeFail<Fail.Incident> {
         val statement = BatchStatement()
 
         qualifications.forEach { qualification ->

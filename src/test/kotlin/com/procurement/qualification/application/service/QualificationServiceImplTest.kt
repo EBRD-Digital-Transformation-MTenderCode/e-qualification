@@ -99,7 +99,7 @@ internal class QualificationServiceImplTest {
 
             qualificationService.doConsideration(params = params)
 
-            verify(qualificationRepository, times(1)).updateAll(
+            verify(qualificationRepository, times(1)).update(
                 cpid = params.cpid,
                 ocid = params.ocid,
                 qualifications = updatedQualifications

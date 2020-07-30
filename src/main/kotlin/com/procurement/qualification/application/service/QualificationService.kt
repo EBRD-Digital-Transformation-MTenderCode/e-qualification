@@ -128,7 +128,7 @@ class QualificationServiceImpl(
             qualifications = updatedQualifications.map { FinalizeQualificationsResult.fromDomain(it) }
         )
 
-        qualificationRepository.saveAll(params.cpid, params.ocid, updatedQualifications)
+        qualificationRepository.update(params.cpid, params.ocid, updatedQualifications)
 
         return success(result)
     }
@@ -161,7 +161,7 @@ class QualificationServiceImpl(
 
             }
 
-        qualificationRepository.saveAll(params.cpid, params.ocid, qualifications)
+        qualificationRepository.add(params.cpid, params.ocid, qualifications)
 
         return qualifications.map { qualification ->
             CreateQualificationsResult(
@@ -231,7 +231,7 @@ class QualificationServiceImpl(
             }
         }
 
-        qualificationRepository.updateAll(params.cpid, params.ocid, updatedQualifications)
+        qualificationRepository.update(params.cpid, params.ocid, updatedQualifications)
             .doOnFail { fail -> return fail.asFailure() }
 
         return updatedQualifications
@@ -347,7 +347,7 @@ class QualificationServiceImpl(
                 qualification.copy(requirementResponses = updatedRequirementResponses + newRequirementResponses)
             }
 
-        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
+        qualificationRepository.update(cpid, ocid, updatedQualifications)
             .doOnFail { fail -> return fail.asFailure() }
 
         return updatedQualifications.convertQualificationsToDoDeclarationResult()
@@ -472,7 +472,7 @@ class QualificationServiceImpl(
             qualification.copy(statusDetails = QualificationStatusDetails.CONSIDERATION)
         }
 
-        qualificationRepository.updateAll(
+        qualificationRepository.update(
             cpid = params.cpid, ocid = params.ocid, qualifications = updatedQualifications
         )
 
@@ -506,7 +506,7 @@ class QualificationServiceImpl(
         }
 
         val result = qualificationForUpdate
-            ?.also { qualificationRepository.updateAll(params.cpid, params.ocid, listOf(qualificationForUpdate)) }
+            ?.also { qualificationRepository.update(params.cpid, params.ocid, listOf(qualificationForUpdate)) }
             ?.let { SetNextForQualificationResult(listOf(qualificationForUpdate.convertToSetNextForQualification())) }
 
         return success(result)
@@ -578,7 +578,7 @@ class QualificationServiceImpl(
                 }
         ).asSuccess<DoQualificationResult, Fail>()
 
-        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
+        qualificationRepository.update(cpid, ocid, updatedQualifications)
 
         return result
     }
@@ -671,11 +671,11 @@ class QualificationServiceImpl(
         when (statusDetails) {
             QualificationStatusDetails.ACTIVE ->
                 Option.pure(QualificationStatus.ACTIVE to QualificationStatusDetails.BASED_ON_HUMAN_DECISION)
-            QualificationStatusDetails.CONSIDERATION ->
+            QualificationStatusDetails.UNSUCCESSFUL->
                 Option.pure(QualificationStatus.UNSUCCESSFUL to QualificationStatusDetails.BASED_ON_HUMAN_DECISION)
 
             QualificationStatusDetails.AWAITING,
-            QualificationStatusDetails.UNSUCCESSFUL,
+            QualificationStatusDetails.CONSIDERATION,
             QualificationStatusDetails.BASED_ON_HUMAN_DECISION,
             null -> Option.none()
         }
