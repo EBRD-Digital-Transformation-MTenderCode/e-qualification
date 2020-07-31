@@ -135,6 +135,9 @@ sealed class ValidationError(
 
         class CheckQualificationsForProtocol(cpid: Cpid, ocid: Ocid) :
             QualificationNotFoundFor(numberError = "7.24.1", cpid = cpid, ocid = ocid)
+
+        class FinalizeQualifications(cpid: Cpid, ocid: Ocid) :
+            QualificationNotFoundFor(numberError = "7.26.1", cpid = cpid, ocid = ocid)
     }
 
     sealed class PeriodNotFoundFor(
@@ -147,6 +150,10 @@ sealed class ValidationError(
     ) {
         class CheckQualificationPeriod(cpid: Cpid, ocid: Ocid) : PeriodNotFoundFor(
             numberError = "7.4.1", cpid = cpid, ocid = ocid
+        )
+
+        class SetQualificationPeriodEnd(cpid: Cpid, ocid: Ocid) : PeriodNotFoundFor(
+            numberError = "7.23.1", cpid = cpid, ocid = ocid
         )
     }
 
@@ -167,7 +174,7 @@ sealed class ValidationError(
     )
 
     class RuleNotFound : ValidationError {
-        constructor(description: String):
+        constructor(description: String) :
             super(numberError = "17", description = description)
 
         constructor(country: String, pmd: Pmd, operationType: OperationType?) :

@@ -57,6 +57,7 @@ class FindQualificationIdsParams private constructor(
                         QualificationStatusDetails.CONSIDERATION,
                         QualificationStatusDetails.ACTIVE,
                         QualificationStatusDetails.UNSUCCESSFUL -> true
+                        QualificationStatusDetails.BASED_ON_HUMAN_DECISION -> false
                     }
                 }
                 .toSetBy { it }

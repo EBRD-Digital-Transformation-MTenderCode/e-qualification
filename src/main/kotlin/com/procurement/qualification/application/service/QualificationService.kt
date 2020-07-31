@@ -8,10 +8,13 @@ import com.procurement.qualification.application.model.params.CreateQualificatio
 import com.procurement.qualification.application.model.params.DoConsiderationParams
 import com.procurement.qualification.application.model.params.DoDeclarationParams
 import com.procurement.qualification.application.model.params.DoQualificationParams
+import com.procurement.qualification.application.model.params.FinalizeQualificationsParams
 import com.procurement.qualification.application.model.params.FindQualificationIdsParams
 import com.procurement.qualification.application.model.params.FindRequirementResponseByIdsParams
 import com.procurement.qualification.application.model.params.RankQualificationsParams
 import com.procurement.qualification.application.model.params.SetNextForQualificationParams
+import com.procurement.qualification.application.model.params.SetQualificationPeriodEndParams
+import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationStatus
@@ -19,6 +22,7 @@ import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
 import com.procurement.qualification.domain.enums.RequirementDataType
+import com.procurement.qualification.domain.functional.Option
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.Result.Companion.failure
 import com.procurement.qualification.domain.functional.Result.Companion.success
@@ -36,6 +40,8 @@ import com.procurement.qualification.domain.util.extension.getNewElements
 import com.procurement.qualification.domain.util.extension.getUnknownElements
 import com.procurement.qualification.infrastructure.fail.Fail
 import com.procurement.qualification.infrastructure.fail.error.ValidationError
+import com.procurement.qualification.infrastructure.fail.error.ValidationError.PeriodNotFoundFor
+import com.procurement.qualification.infrastructure.fail.error.ValidationError.QualificationNotFoundFor
 import com.procurement.qualification.infrastructure.fail.error.ValidationError.RelatedSubmissionNotEqualOnSetNextForQualification
 import com.procurement.qualification.infrastructure.handler.analyze.qualification.AnalyzeQualificationsForInvitationResult
 import com.procurement.qualification.infrastructure.handler.check.qualification.protocol.CheckQualificationsForProtocolParams
@@ -46,18 +52,22 @@ import com.procurement.qualification.infrastructure.handler.create.qualification
 import com.procurement.qualification.infrastructure.handler.create.qualification.convertToDoQualificationResult
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsResult
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsResult
+import com.procurement.qualification.infrastructure.handler.finalize.FinalizeQualificationsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsResult
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.convertToFindRequirementResponseByIdsResultRR
+import com.procurement.qualification.infrastructure.handler.set.SetQualificationPeriodEndResult
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationResult
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.convertToSetNextForQualification
 import com.procurement.qualification.lib.toSetBy
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDateTime
 
 interface QualificationService {
 
     fun findQualificationIds(params: FindQualificationIdsParams): Result<List<QualificationId>, Fail>
+    fun finalizeQualifications(params: FinalizeQualificationsParams): Result<FinalizeQualificationsResult, Fail>
     fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident>
     fun rankQualifications(params: RankQualificationsParams): Result<List<RankQualificationsResult>, Fail>
     fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail>
@@ -67,6 +77,7 @@ interface QualificationService {
     fun doConsideration(params: DoConsiderationParams): Result<DoConsiderationResult, Fail>
     fun findRequirementResponseByIds(params: FindRequirementResponseByIdsParams): Result<FindRequirementResponseByIdsResult?, Fail>
     fun setNextForQualification(params: SetNextForQualificationParams): Result<SetNextForQualificationResult?, Fail>
+    fun setQualificationPeriodEnd(params: SetQualificationPeriodEndParams): Result<SetQualificationPeriodEndResult, Fail>
     fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail>
     fun checkQualificationsForProtocol(params: CheckQualificationsForProtocolParams): ValidationResult<Fail>
     fun analyzeQualificationsForInvitation(params: AnalyzeQualificationsForInvitationParams): Result<AnalyzeQualificationsForInvitationResult?, Fail>
@@ -75,6 +86,7 @@ interface QualificationService {
 @Service
 class QualificationServiceImpl(
     val qualificationRepository: QualificationRepository,
+    val periodRepository: PeriodRepository,
     val generationService: GenerationService,
     val rulesService: RulesService
 ) : QualificationService {
@@ -96,11 +108,46 @@ class QualificationServiceImpl(
             .asSuccess()
     }
 
+    override fun finalizeQualifications(params: FinalizeQualificationsParams): Result<FinalizeQualificationsResult, Fail> {
+        val qualificationsfromDb = qualificationRepository
+            .findBy(params.cpid, params.ocid)
+            .map { submissions -> submissions.takeIf { it.isNotEmpty() } }
+            .doReturn { fail -> return failure(fail) }
+            ?: return failure(QualificationNotFoundFor.FinalizeQualifications(params.cpid, params.ocid))
+
+        val updatedQualifications = qualificationsfromDb.asSequence()
+            .map { qualification -> qualification to defineStateToUpdate(qualification.statusDetails) }
+            .filter { (_, newState) -> newState.isDefined }
+            .map { (qualification, newState) ->
+                val (status, statusDetails) = newState.get
+                qualification.copy(status = status, statusDetails = statusDetails)
+            }
+            .toList()
+
+        val result = FinalizeQualificationsResult(
+            qualifications = updatedQualifications.map { FinalizeQualificationsResult.fromDomain(it) }
+        )
+
+        qualificationRepository.update(params.cpid, params.ocid, updatedQualifications)
+
+        return success(result)
+    }
+
     override fun createQualifications(params: CreateQualificationsParams): Result<List<CreateQualificationsResult>, Fail.Incident> {
+
+        val tender = params.tender
+        val isNeedCalculateScoring = isCalculateScoringNeeded(
+            tender.otherCriteria.reductionCriteria,
+            tender.otherCriteria.qualificationSystemMethod
+        )
 
         val qualifications = params.submissions
             .map { submission ->
-                val scoring: Scoring? = calculateScoring(submission = submission, params = params)
+                val scoring: Scoring? = if (isNeedCalculateScoring) {
+                    val coefficients = getCoefficients(tender.conversions, submission.requirementResponses)
+                    calculateScoring(coefficients = coefficients)
+                } else
+                    null
 
                 Qualification(
                     id = QualificationId.generate(),
@@ -114,7 +161,7 @@ class QualificationServiceImpl(
 
             }
 
-        qualificationRepository.saveAll(params.cpid, params.ocid, qualifications)
+        qualificationRepository.add(params.cpid, params.ocid, qualifications)
 
         return qualifications.map { qualification ->
             CreateQualificationsResult(
@@ -184,7 +231,7 @@ class QualificationServiceImpl(
             }
         }
 
-        qualificationRepository.updateAll(params.cpid, params.ocid, updatedQualifications)
+        qualificationRepository.update(params.cpid, params.ocid, updatedQualifications)
             .doOnFail { fail -> return fail.asFailure() }
 
         return updatedQualifications
@@ -300,7 +347,7 @@ class QualificationServiceImpl(
                 qualification.copy(requirementResponses = updatedRequirementResponses + newRequirementResponses)
             }
 
-        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
+        qualificationRepository.update(cpid, ocid, updatedQualifications)
             .doOnFail { fail -> return fail.asFailure() }
 
         return updatedQualifications.convertQualificationsToDoDeclarationResult()
@@ -425,7 +472,7 @@ class QualificationServiceImpl(
             qualification.copy(statusDetails = QualificationStatusDetails.CONSIDERATION)
         }
 
-        qualificationRepository.updateAll(
+        qualificationRepository.update(
             cpid = params.cpid, ocid = params.ocid, qualifications = updatedQualifications
         )
 
@@ -459,11 +506,25 @@ class QualificationServiceImpl(
         }
 
         val result = qualificationForUpdate
-            ?.also { qualificationRepository.updateAll(params.cpid, params.ocid, listOf(qualificationForUpdate)) }
+            ?.also { qualificationRepository.update(params.cpid, params.ocid, listOf(qualificationForUpdate)) }
             ?.let { SetNextForQualificationResult(listOf(qualificationForUpdate.convertToSetNextForQualification())) }
 
         return success(result)
 
+    }
+
+    override fun setQualificationPeriodEnd(params: SetQualificationPeriodEndParams): Result<SetQualificationPeriodEndResult, Fail> {
+        val storedPeriod = periodRepository.findBy(params.cpid, params.ocid)
+            .orForwardFail { fail -> return fail }
+            ?: return failure(PeriodNotFoundFor.SetQualificationPeriodEnd(params.cpid, params.ocid))
+
+        val updatedPeriod = storedPeriod.copy(endDate = params.date)
+
+        val result = SetQualificationPeriodEndResult.fromDomain(updatedPeriod)
+
+        periodRepository.saveOrUpdatePeriod(updatedPeriod)
+
+        return success(result)
     }
 
     override fun doQualification(params: DoQualificationParams): Result<DoQualificationResult, Fail> {
@@ -517,7 +578,7 @@ class QualificationServiceImpl(
                 }
         ).asSuccess<DoQualificationResult, Fail>()
 
-        qualificationRepository.updateAll(cpid, ocid, updatedQualifications)
+        qualificationRepository.update(cpid, ocid, updatedQualifications)
 
         return result
     }
@@ -606,6 +667,19 @@ class QualificationServiceImpl(
         ).asSuccess()
     }
 
+    fun defineStateToUpdate(statusDetails: QualificationStatusDetails?): Option<Pair<QualificationStatus, QualificationStatusDetails>> =
+        when (statusDetails) {
+            QualificationStatusDetails.ACTIVE ->
+                Option.pure(QualificationStatus.ACTIVE to QualificationStatusDetails.BASED_ON_HUMAN_DECISION)
+            QualificationStatusDetails.UNSUCCESSFUL->
+                Option.pure(QualificationStatus.UNSUCCESSFUL to QualificationStatusDetails.BASED_ON_HUMAN_DECISION)
+
+            QualificationStatusDetails.AWAITING,
+            QualificationStatusDetails.CONSIDERATION,
+            QualificationStatusDetails.BASED_ON_HUMAN_DECISION,
+            null -> Option.none()
+        }
+
     private fun Qualification.Document.update(
         document: DoQualificationParams.Qualification.Document
     ): Qualification.Document = copy(
@@ -645,50 +719,6 @@ class QualificationServiceImpl(
         )
     }
 
-    private fun calculateScoring(
-        submission: CreateQualificationsParams.Submission,
-        params: CreateQualificationsParams
-    ): Scoring? = when (params.tender.otherCriteria.reductionCriteria) {
-        ReductionCriteria.SCORING -> {
-            when (params.tender.otherCriteria.qualificationSystemMethod) {
-                QualificationSystemMethod.MANUAL -> null
-                QualificationSystemMethod.AUTOMATED -> {
-                    calculateAutomatedScoring(submission = submission, conversions = params.tender.conversions)
-                }
-            }
-        }
-        ReductionCriteria.NONE -> null
-    }
-
-    private fun calculateAutomatedScoring(
-        conversions: List<CreateQualificationsParams.Tender.Conversion>,
-        submission: CreateQualificationsParams.Submission
-    ): Scoring {
-        val conversionsRelatesToRequirement = conversions
-            .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
-            .associateBy { it.relatedItem }
-
-        return Scoring.invoke(
-            value = submission.requirementResponses
-                .map { requirementResponse ->
-                    conversionsRelatesToRequirement[requirementResponse.requirement.id.toString()]
-                        ?.coefficients
-                        ?.filter {
-                            isMatchCoefficientValueAndRequirementValue(
-                                coefficientValue = it.value,
-                                requirementValue = requirementResponse.value
-                            )
-                        }
-                        ?.map { it.coefficient }
-                        ?.takeIf { it.isNotEmpty() }
-                        ?.reduce { start, next -> start * next }
-                        ?: CoefficientRate(BigDecimal.ONE)
-                }
-                .reduce { start, next -> start * next }
-                .rate
-        )
-    }
-
     private fun findMinScoring(qualifications: List<Qualification>) = qualifications.minBy { it.scoring!! }
     private fun hasSameScoring(qualifications: List<Qualification>, scoring: Scoring) = qualifications
         .filter { scoring == it.scoring }
@@ -706,36 +736,6 @@ class QualificationServiceImpl(
 
     private fun setStatusDetails(statusDetails: QualificationStatusDetails, qualifications: List<Qualification>) =
         qualifications.map { it.copy(statusDetails = statusDetails) }
-
-    private fun isMatchCoefficientValueAndRequirementValue(
-        coefficientValue: CoefficientValue,
-        requirementValue: RequirementResponseValue
-    ): Boolean = when (coefficientValue) {
-        is CoefficientValue.AsBoolean -> when (requirementValue) {
-            is RequirementResponseValue.AsBoolean -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsString,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsString -> when (requirementValue) {
-            is RequirementResponseValue.AsString -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsNumber -> when (requirementValue) {
-            is RequirementResponseValue.AsNumber -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsString,
-            is RequirementResponseValue.AsInteger -> false
-        }
-        is CoefficientValue.AsInteger -> when (requirementValue) {
-            is RequirementResponseValue.AsInteger -> coefficientValue.value == requirementValue.value
-            is RequirementResponseValue.AsBoolean,
-            is RequirementResponseValue.AsNumber,
-            is RequirementResponseValue.AsString -> false
-        }
-    }
 
     private fun isMatchingDataType(datatype: RequirementDataType, value: RequirementResponseValue) =
         when (value) {
@@ -771,6 +771,78 @@ class QualificationServiceImpl(
         return states.any { state ->
             state.status == qualification.status ||
                 state.statusDetails == qualification.statusDetails
+        }
+    }
+
+    companion object {
+        fun isCalculateScoringNeeded(reductionCriteria: ReductionCriteria, qualificationSystemMethod: QualificationSystemMethod): Boolean = when (reductionCriteria) {
+            ReductionCriteria.SCORING -> {
+                when (qualificationSystemMethod) {
+                    QualificationSystemMethod.MANUAL -> false
+                    QualificationSystemMethod.AUTOMATED -> true
+                }
+            }
+            ReductionCriteria.NONE -> false
+        }
+
+        fun getCoefficients(
+            conversions: List<CreateQualificationsParams.Tender.Conversion>,
+            requirementResponses: List<CreateQualificationsParams.Submission.RequirementResponse>
+        ): List<CoefficientRate> {
+            if (requirementResponses.isEmpty()) return emptyList()
+
+            val conversionsRelatesToRequirement: Map<String, CreateQualificationsParams.Tender.Conversion> = conversions
+                .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
+                .associateBy { it.relatedItem }
+
+            return requirementResponses
+                .mapNotNull { requirementResponse ->
+                    val id = requirementResponse.requirement.id.toString()
+                    conversionsRelatesToRequirement[id]
+                        ?.coefficients
+                        ?.firstOrNull { coefficient ->
+                            isMatchCoefficientValueAndRequirementValue(coefficient.value, requirementResponse.value)
+                        }
+                        ?.coefficient
+                }
+        }
+
+        fun calculateScoring(coefficients: List<CoefficientRate>): Scoring {
+            val rate: BigDecimal = coefficients.takeIf { it.isNotEmpty() }
+                ?.reduce { start, next -> start * next }
+                ?.rate
+                ?: BigDecimal.ONE
+            return Scoring(rate.setScale(3, RoundingMode.HALF_UP))
+        }
+
+        fun isMatchCoefficientValueAndRequirementValue(
+            coefficientValue: CoefficientValue,
+            requirementValue: RequirementResponseValue
+        ): Boolean = when (coefficientValue) {
+            is CoefficientValue.AsBoolean -> when (requirementValue) {
+                is RequirementResponseValue.AsBoolean -> coefficientValue.value == requirementValue.value
+                is RequirementResponseValue.AsString,
+                is RequirementResponseValue.AsNumber,
+                is RequirementResponseValue.AsInteger -> false
+            }
+            is CoefficientValue.AsString -> when (requirementValue) {
+                is RequirementResponseValue.AsString -> coefficientValue.value == requirementValue.value
+                is RequirementResponseValue.AsBoolean,
+                is RequirementResponseValue.AsNumber,
+                is RequirementResponseValue.AsInteger -> false
+            }
+            is CoefficientValue.AsNumber -> when (requirementValue) {
+                is RequirementResponseValue.AsNumber -> coefficientValue.value == requirementValue.value
+                is RequirementResponseValue.AsBoolean,
+                is RequirementResponseValue.AsString,
+                is RequirementResponseValue.AsInteger -> false
+            }
+            is CoefficientValue.AsInteger -> when (requirementValue) {
+                is RequirementResponseValue.AsInteger -> coefficientValue.value == requirementValue.value
+                is RequirementResponseValue.AsBoolean,
+                is RequirementResponseValue.AsNumber,
+                is RequirementResponseValue.AsString -> false
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.procurement.qualification.application.model.params
 
 import com.procurement.qualification.application.model.parseCpid
+import com.procurement.qualification.application.model.parseDate
 import com.procurement.qualification.application.model.parseEnum
 import com.procurement.qualification.application.model.parseOcid
 import com.procurement.qualification.application.model.parseQualificationId
@@ -13,7 +14,6 @@ import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.document.DocumentId
 import com.procurement.qualification.domain.model.qualification.QualificationId
-import com.procurement.qualification.domain.util.extension.tryParseLocalDateTime
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 import java.time.LocalDateTime
 
@@ -38,16 +38,8 @@ class DoQualificationParams private constructor(
             val parsedOcid = parseOcid(value = ocid)
                 .orForwardFail { fail -> return fail }
 
-            val parsedDate = date.tryParseLocalDateTime()
-                .doReturn { pattern ->
-                    return Result.failure(
-                        DataErrors.Validation.DataFormatMismatch(
-                            name = "date",
-                            actualValue = date,
-                            expectedFormat = pattern
-                        )
-                    )
-                }
+            val parsedDate = parseDate(date, "date")
+                .orForwardFail { fail -> return fail }
 
             return DoQualificationParams(
                 cpid = parsedCpid,
@@ -73,6 +65,7 @@ class DoQualificationParams private constructor(
                         QualificationStatusDetails.AWAITING,
                         QualificationStatusDetails.CONSIDERATION,
                         QualificationStatusDetails.UNSUCCESSFUL -> true
+                        QualificationStatusDetails.BASED_ON_HUMAN_DECISION -> false
                     }
                 }
                 .toSet()

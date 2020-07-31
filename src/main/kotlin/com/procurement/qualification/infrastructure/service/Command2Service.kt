@@ -13,8 +13,10 @@ import com.procurement.qualification.infrastructure.handler.create.declaration.D
 import com.procurement.qualification.infrastructure.handler.create.qualification.DoQualificationHandler
 import com.procurement.qualification.infrastructure.handler.create.qualifications.CreateQualificationsHandler
 import com.procurement.qualification.infrastructure.handler.determine.nextforqualification.RankQualificationsHandler
+import com.procurement.qualification.infrastructure.handler.finalize.FinalizeQualificationsHandler
 import com.procurement.qualification.infrastructure.handler.find.qualificationids.FindQualificationIdsHandler
 import com.procurement.qualification.infrastructure.handler.find.requirementresponsebyids.FindRequirementResponseByIdsHandler
+import com.procurement.qualification.infrastructure.handler.set.SetQualificationPeriodEndHandler
 import com.procurement.qualification.infrastructure.handler.set.nextforqualification.SetNextForQualificationHandler
 import com.procurement.qualification.infrastructure.handler.start.qualificationperiod.StartQualificationPeriodHandler
 import com.procurement.qualification.infrastructure.web.dto.response.ApiResponse2
@@ -39,10 +41,12 @@ class Command2Service(
     private val findRequirementResponseByIdsHandler: FindRequirementResponseByIdsHandler,
     private val doConsiderationHandler: DoConsiderationHandler,
     private val setNextForQualificationHandler: SetNextForQualificationHandler,
+    private val setQualificationPeriodEndHandler: SetQualificationPeriodEndHandler,
     private val doQualificationHandler: DoQualificationHandler,
     private val checkQualificationPeriodHandler: CheckQualificationPeriodHandler,
     private val checkQualificationsForProtocolHandler: CheckQualificationsForProtocolHandler,
-    private val analyzeQualificationsForInvitationHandler: AnalyzeQualificationsForInvitationHandler
+    private val analyzeQualificationsForInvitationHandler: AnalyzeQualificationsForInvitationHandler,
+    private val finalizeQualificationsHandler: FinalizeQualificationsHandler
 ) {
 
     fun execute(node: JsonNode): ApiResponse2 {
@@ -76,10 +80,12 @@ class Command2Service(
             Command2Type.FIND_REQUIREMENT_RESPONSE_BY_IDS -> findRequirementResponseByIdsHandler.handle(node = node)
             Command2Type.DO_CONSIDERATION -> doConsiderationHandler.handle(node = node)
             Command2Type.SET_NEXT_FOR_QUALIFICATION -> setNextForQualificationHandler.handle(node = node)
+            Command2Type.SET_QUALIFICATION_PERIOD_END -> setQualificationPeriodEndHandler.handle(node = node)
             Command2Type.DO_QUALIFICATION -> doQualificationHandler.handle(node = node)
             Command2Type.CHECK_QUALIFICATION_PERIOD -> checkQualificationPeriodHandler.handle(node = node)
             Command2Type.CHECK_QUALIFICATIONS_FOR_PROTOCOL -> checkQualificationsForProtocolHandler.handle(node = node)
             Command2Type.ANALYZE_QUALIFICATION_FOR_INVITATIONS -> analyzeQualificationsForInvitationHandler.handle(node = node)
+            Command2Type.FINALIZE_QUALIFICATIONS -> finalizeQualificationsHandler.handle(node = node)
         }
     }
 }
