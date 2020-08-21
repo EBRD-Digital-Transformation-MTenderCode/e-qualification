@@ -2,7 +2,7 @@ package com.procurement.qualification.application.model
 
 import com.procurement.qualification.domain.enums.EnumElementProvider
 import com.procurement.qualification.domain.enums.EnumElementProvider.Companion.keysAsStrings
-import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.fail.error.DataTimeError
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
@@ -39,9 +39,9 @@ fun parseOcid(value: String): Result<Ocid, DataErrors.Validation.DataMismatchToP
         )
 
 fun parsePmd(
-    value: String, allowedEnums: List<Pmd>, attributeName: String = "pmd"
-): Result<Pmd, DataErrors> =
-    parseEnum(value = value, allowedEnums = allowedEnums, attributeName = attributeName, target = Pmd)
+    value: String, allowedEnums: List<ProcurementMethodDetails>, attributeName: String = "pmd"
+): Result<ProcurementMethodDetails, DataErrors> =
+    parseEnum(value = value, allowedEnums = allowedEnums, attributeName = attributeName, target = ProcurementMethodDetails)
 
 
 fun <T> parseEnum(

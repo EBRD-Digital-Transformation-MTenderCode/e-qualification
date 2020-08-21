@@ -4,7 +4,7 @@ import com.datastax.driver.core.Row
 import com.datastax.driver.core.Session
 import com.procurement.qualification.application.repository.QualificationRulesRepository
 import com.procurement.qualification.domain.enums.OperationType
-import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.infrastructure.extension.cassandra.tryExecute
@@ -38,7 +38,7 @@ class CassandraQualificationRulesRepository(private val session: Session) : Qual
 
     override fun findBy(
         country: String,
-        pmd: Pmd,
+        pmd: ProcurementMethodDetails,
         operationType: OperationType?,
         parameter: String
     ): Result<String?, Fail> {

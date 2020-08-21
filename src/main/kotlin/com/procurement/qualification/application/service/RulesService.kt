@@ -1,7 +1,7 @@
 package com.procurement.qualification.application.service
 
 import com.procurement.qualification.domain.enums.OperationType
-import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
@@ -16,13 +16,13 @@ interface RulesService {
 
     fun findValidStates(
         country: String,
-        pmd: Pmd,
+        pmd: ProcurementMethodDetails,
         operationType: OperationType
     ): Result<States, Fail>
 
     fun findMinimumQualificationQuantity(
         country: String,
-        pmd: Pmd
+        pmd: ProcurementMethodDetails
     ): Result<Long?, Fail>
 }
 
@@ -39,7 +39,7 @@ class RulesServiceImpl(
 
     override fun findValidStates(
         country: String,
-        pmd: Pmd,
+        pmd: ProcurementMethodDetails,
         operationType: OperationType
     ): Result<States, Fail> {
 
@@ -72,7 +72,7 @@ class RulesServiceImpl(
 
     override fun findMinimumQualificationQuantity(
         country: String,
-        pmd: Pmd
+        pmd: ProcurementMethodDetails
     ): Result<Long?, Fail> {
 
         val minimumQuantity = qualificationRulesRepository.findBy(
