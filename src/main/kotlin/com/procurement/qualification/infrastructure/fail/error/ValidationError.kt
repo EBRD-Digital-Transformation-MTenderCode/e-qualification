@@ -1,7 +1,7 @@
 package com.procurement.qualification.infrastructure.fail.error
 
 import com.procurement.qualification.domain.enums.OperationType
-import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.enums.RequirementDataType
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
@@ -47,7 +47,7 @@ sealed class ValidationError(
 
     class QualificationStatesNotFound(
         country: String,
-        pmd: Pmd,
+        pmd: ProcurementMethodDetails,
         operationType: OperationType
     ) : ValidationError(
         numberError = "17",
@@ -177,10 +177,10 @@ sealed class ValidationError(
         constructor(description: String) :
             super(numberError = "17", description = description)
 
-        constructor(country: String, pmd: Pmd, operationType: OperationType?) :
+        constructor(country: String, pmd: ProcurementMethodDetails, operationType: OperationType?) :
             this(description = "Rule not found by country '$country', pmd '$pmd', operationType $operationType.")
 
-        constructor(country: String, pmd: Pmd) :
+        constructor(country: String, pmd: ProcurementMethodDetails) :
             this(description = "Rule not found by country '$country', pmd '$pmd'.")
     }
 }

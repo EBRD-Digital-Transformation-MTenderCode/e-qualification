@@ -9,7 +9,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.nhaarman.mockito_kotlin.spy
 import com.procurement.qualification.application.repository.QualificationRulesRepository
 import com.procurement.qualification.domain.enums.OperationType
-import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.infrastructure.configuration.DatabaseTestConfiguration
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,7 +26,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 class QualificationRulesRepositoryIT {
     companion object {
         private const val COUNTRY = "country"
-        private val PMD = Pmd.creator("GPA")
+        private val PMD = ProcurementMethodDetails.creator("GPA")
         private val OPERATION_TYPE = OperationType.creator("qualificationDeclareNonConflictOfInterest")
         private const val VALUE = "some data"
 
