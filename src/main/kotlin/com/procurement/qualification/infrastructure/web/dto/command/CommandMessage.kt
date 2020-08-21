@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.procurement.qualification.application.model.parseCpid
 import com.procurement.qualification.application.model.parseOcid
 import com.procurement.qualification.domain.enums.EnumElementProvider
-import com.procurement.qualification.domain.enums.ProcurementMethod
+import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.enums.Stage
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.Result.Companion.failure
@@ -57,17 +57,17 @@ val CommandMessage.country: Result<String, DataErrors>
     get() = this.context.country?.asSuccess()
         ?: failure(DataErrors.Validation.MissingRequiredAttribute(name = "country"))
 
-val CommandMessage.pmd: Result<ProcurementMethod, DataErrors>
+val CommandMessage.pmd: Result<ProcurementMethodDetails, DataErrors>
     get() {
         val pmdAttributeName = "pmd"
         val pmd = this.context.pmd
             ?: return failure(DataErrors.Validation.MissingRequiredAttribute(name = pmdAttributeName))
-        return ProcurementMethod.tryOf(pmd)
+        return ProcurementMethodDetails.tryOf(pmd)
             .doReturn {
                 return failure(
                     DataErrors.Validation.UnknownValue(
                         name = pmdAttributeName,
-                        expectedValues = ProcurementMethod.values().map { it.name },
+                        expectedValues = ProcurementMethodDetails.allowedElements.map { it.name },
                         actualValue = pmd
                     )
                 )

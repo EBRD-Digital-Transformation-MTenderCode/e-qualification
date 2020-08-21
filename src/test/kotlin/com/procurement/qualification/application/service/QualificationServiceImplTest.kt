@@ -8,7 +8,7 @@ import com.procurement.qualification.application.model.params.AnalyzeQualificati
 import com.procurement.qualification.application.model.params.DoConsiderationParams
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.QualificationRepository
-import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.functional.ValidationResult
@@ -36,7 +36,7 @@ internal class QualificationServiceImplTest {
         val CPID = Cpid.tryCreateOrNull("ocds-b3wdp1-MD-1580458690892") ?: throw RuntimeException()
         val OCID = Ocid.tryCreateOrNull("ocds-b3wdp1-MD-1580458690892-EV-1580458791896") ?: throw RuntimeException()
         val COUNTRY = "MD"
-        val PMD = Pmd.GPA
+        val PMD = ProcurementMethodDetails.GPA
         private val DATE = JsonDateTimeDeserializer.deserialize(JsonDateTimeSerializer.serialize(LocalDateTime.now()))
         val QUALIFICATION_ID_FIRST = QualificationId.generate()
         val QUALIFICATION_ID_SECOND = QualificationId.generate()
