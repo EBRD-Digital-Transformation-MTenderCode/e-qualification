@@ -5,7 +5,7 @@ import com.procurement.qualification.application.model.parseEnum
 import com.procurement.qualification.application.model.parseOcid
 import com.procurement.qualification.application.model.parseQualificationId
 import com.procurement.qualification.domain.enums.OperationType
-import com.procurement.qualification.domain.enums.Pmd
+import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
@@ -17,17 +17,28 @@ class CheckQualificationStateParams private constructor(
     val cpid: Cpid,
     val ocid: Ocid,
     val country: String,
-    val pmd: Pmd,
+    val pmd: ProcurementMethodDetails,
     val operationType: OperationType,
     val qualificationId: QualificationId
 ) {
     companion object {
 
-        private val allowedPmd = Pmd.allowedElements
+        private val allowedPmd = ProcurementMethodDetails.allowedElements
             .filter {
                 when (it) {
-                    Pmd.GPA,
-                    Pmd.TEST_GPA -> true
+                    ProcurementMethodDetails.RT, ProcurementMethodDetails.TEST_RT,
+                    ProcurementMethodDetails.GPA, ProcurementMethodDetails.TEST_GPA -> true
+
+                    ProcurementMethodDetails.CD, ProcurementMethodDetails.TEST_CD,
+                    ProcurementMethodDetails.DA, ProcurementMethodDetails.TEST_DA,
+                    ProcurementMethodDetails.DC, ProcurementMethodDetails.TEST_DC,
+                    ProcurementMethodDetails.FA, ProcurementMethodDetails.TEST_FA,
+                    ProcurementMethodDetails.IP, ProcurementMethodDetails.TEST_IP,
+                    ProcurementMethodDetails.MV, ProcurementMethodDetails.TEST_MV,
+                    ProcurementMethodDetails.NP, ProcurementMethodDetails.TEST_NP,
+                    ProcurementMethodDetails.OP, ProcurementMethodDetails.TEST_OP,
+                    ProcurementMethodDetails.OT, ProcurementMethodDetails.TEST_OT,
+                    ProcurementMethodDetails.SV, ProcurementMethodDetails.TEST_SV -> false
                 }
             }
             .toSet()
@@ -57,7 +68,7 @@ class CheckQualificationStateParams private constructor(
             val parsedOcid = parseOcid(value = ocid)
                 .orForwardFail { fail -> return fail }
 
-            val parsedPmd = parseEnum(value = pmd, allowedEnums = allowedPmd, attributeName = "pmd", target = Pmd)
+            val parsedPmd = parseEnum(value = pmd, allowedEnums = allowedPmd, attributeName = "pmd", target = ProcurementMethodDetails)
                 .orForwardFail { fail -> return fail }
 
             val parsedOperationType = parseEnum(
