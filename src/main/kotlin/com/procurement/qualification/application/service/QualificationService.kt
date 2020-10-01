@@ -875,6 +875,7 @@ fun getQualificationsForProcessing(qualifications: List<Qualification>): List<Qu
             QualificationStatusDetails.CONSIDERATION -> return emptyList()
 
             QualificationStatusDetails.ACTIVE,
+            QualificationStatusDetails.BASED_ON_HUMAN_DECISION,
             QualificationStatusDetails.UNSUCCESSFUL -> Unit
 
             null -> qualificationsWithoutStatusDetails.add(qualification)

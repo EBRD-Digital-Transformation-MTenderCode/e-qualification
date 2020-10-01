@@ -23,12 +23,14 @@ class AnalyzeQualificationsForInvitationParams private constructor(
                 ProcurementMethodDetails.GPA, ProcurementMethodDetails.TEST_GPA -> true
 
                 ProcurementMethodDetails.CD, ProcurementMethodDetails.TEST_CD,
+                ProcurementMethodDetails.CF, ProcurementMethodDetails.TEST_CF,
                 ProcurementMethodDetails.DA, ProcurementMethodDetails.TEST_DA,
                 ProcurementMethodDetails.DC, ProcurementMethodDetails.TEST_DC,
                 ProcurementMethodDetails.FA, ProcurementMethodDetails.TEST_FA,
                 ProcurementMethodDetails.IP, ProcurementMethodDetails.TEST_IP,
                 ProcurementMethodDetails.MV, ProcurementMethodDetails.TEST_MV,
                 ProcurementMethodDetails.NP, ProcurementMethodDetails.TEST_NP,
+                ProcurementMethodDetails.OF, ProcurementMethodDetails.TEST_OF,
                 ProcurementMethodDetails.OP, ProcurementMethodDetails.TEST_OP,
                 ProcurementMethodDetails.OT, ProcurementMethodDetails.TEST_OT,
                 ProcurementMethodDetails.SV, ProcurementMethodDetails.TEST_SV -> false
