@@ -19,8 +19,10 @@ class AnalyzeQualificationsForInvitationParams private constructor(
     companion object {
         val allowedPmd = ProcurementMethodDetails.allowedElements.filter {
             when (it) {
-                ProcurementMethodDetails.RT, ProcurementMethodDetails.TEST_RT,
-                ProcurementMethodDetails.GPA, ProcurementMethodDetails.TEST_GPA -> true
+                ProcurementMethodDetails.CF, ProcurementMethodDetails.TEST_CF,
+                ProcurementMethodDetails.GPA, ProcurementMethodDetails.TEST_GPA,
+                ProcurementMethodDetails.OF, ProcurementMethodDetails.TEST_OF,
+                ProcurementMethodDetails.RT, ProcurementMethodDetails.TEST_RT -> true
 
                 ProcurementMethodDetails.CD, ProcurementMethodDetails.TEST_CD,
                 ProcurementMethodDetails.DA, ProcurementMethodDetails.TEST_DA,
