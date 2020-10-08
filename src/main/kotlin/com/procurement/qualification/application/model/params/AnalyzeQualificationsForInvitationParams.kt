@@ -2,7 +2,9 @@ package com.procurement.qualification.application.model.params
 
 import com.procurement.qualification.application.model.parseCpid
 import com.procurement.qualification.application.model.parseOcid
+import com.procurement.qualification.application.model.parseOperationType
 import com.procurement.qualification.application.model.parsePmd
+import com.procurement.qualification.domain.enums.OperationType
 import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asSuccess
@@ -14,10 +16,11 @@ class AnalyzeQualificationsForInvitationParams private constructor(
     val cpid: Cpid,
     val ocid: Ocid,
     val pmd: ProcurementMethodDetails,
-    val country: String
+    val country: String,
+    val operationType: OperationType
 ) {
     companion object {
-        val allowedPmd = ProcurementMethodDetails.allowedElements.filter {
+        private val allowedPmd = ProcurementMethodDetails.allowedElements.filter {
             when (it) {
                 ProcurementMethodDetails.CF, ProcurementMethodDetails.TEST_CF,
                 ProcurementMethodDetails.GPA, ProcurementMethodDetails.TEST_GPA,
@@ -37,8 +40,17 @@ class AnalyzeQualificationsForInvitationParams private constructor(
             }
         }
 
+        private val allowedOperationTypes = OperationType.allowedElements.filter {
+            when(it){
+                OperationType.QUALIFICATION_PROTOCOL -> true
+                OperationType.QUALIFICATION,
+                OperationType.QUALIFICATION_CONSIDERATION,
+                OperationType.QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST -> false
+            }
+        }
+
         fun tryCreate(
-            cpid: String, ocid: String, pmd: String, country: String
+            cpid: String, ocid: String, pmd: String, country: String, operationType: String
         ): Result<AnalyzeQualificationsForInvitationParams, DataErrors> {
 
             val cpidParsed = parseCpid(value = cpid)
@@ -50,11 +62,15 @@ class AnalyzeQualificationsForInvitationParams private constructor(
             val pmdParsed = parsePmd(value = pmd, allowedEnums = allowedPmd)
                 .orForwardFail { fail -> return fail }
 
+            val operationTypeParsed = parseOperationType(operationType, allowedOperationTypes)
+                .orForwardFail { fail -> return fail }
+
             return AnalyzeQualificationsForInvitationParams(
                 cpid = cpidParsed,
                 ocid = ocidParsed,
                 pmd = pmdParsed,
-                country = country
+                country = country,
+                operationType = operationTypeParsed
             ).asSuccess()
         }
     }
