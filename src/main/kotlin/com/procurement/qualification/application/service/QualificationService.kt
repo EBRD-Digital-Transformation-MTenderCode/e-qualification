@@ -34,6 +34,7 @@ import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
+import com.procurement.qualification.domain.model.state.States
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientValue
 import com.procurement.qualification.domain.util.extension.getNewElements
@@ -640,14 +641,14 @@ class QualificationServiceImpl(
         val qualifications = qualificationRepository.findBy(cpid = params.cpid, ocid = params.ocid)
             .orForwardFail { fail -> return fail }
 
-        val suitableQualifications = qualifications.filter { qualification ->
-            qualification.status == QualificationStatus.PENDING
-                && qualification.statusDetails == QualificationStatusDetails.ACTIVE
-        }
+        val validStates = rulesService.findValidStates(params.country, params.pmd, params.operationType)
+            .orForwardFail { fail -> return fail }
+            .toSet()
 
-        val minimumQuantity = rulesService.findMinimumQualificationQuantity(
-            country = params.country, pmd = params.pmd
-        )
+        val qualificationsByStates = qualifications.groupBy { States.State(it.status, it.statusDetails) }
+        val suitableQualifications = qualificationsByStates.filter { it.key in validStates }.flatMap { it.value }
+
+        val minimumQuantity = rulesService.findMinimumQualificationQuantity(params.country, params.pmd)
             .orForwardFail { fail -> return fail }
             ?: return ValidationError.RuleNotFound(pmd = params.pmd, country = params.country)
                 .asFailure()
