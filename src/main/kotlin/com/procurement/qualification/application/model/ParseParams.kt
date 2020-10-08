@@ -2,6 +2,7 @@ package com.procurement.qualification.application.model
 
 import com.procurement.qualification.domain.enums.EnumElementProvider
 import com.procurement.qualification.domain.enums.EnumElementProvider.Companion.keysAsStrings
+import com.procurement.qualification.domain.enums.OperationType
 import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.fail.error.DataTimeError
 import com.procurement.qualification.domain.functional.Result
@@ -43,6 +44,10 @@ fun parsePmd(
 ): Result<ProcurementMethodDetails, DataErrors> =
     parseEnum(value = value, allowedEnums = allowedEnums, attributeName = attributeName, target = ProcurementMethodDetails)
 
+fun parseOperationType(
+    value: String, allowedEnums: List<OperationType>, attributeName: String = "operationType"
+): Result<OperationType, DataErrors> =
+    parseEnum(value = value, allowedEnums = allowedEnums, attributeName = attributeName, target = OperationType)
 
 fun <T> parseEnum(
     value: String, allowedEnums: Collection<T>, attributeName: String, target: EnumElementProvider<T>
