@@ -51,6 +51,7 @@ class CheckQualificationStateParams private constructor(
                     OperationType.QUALIFICATION,
                     OperationType.QUALIFICATION_CONSIDERATION,
                     OperationType.QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST -> true
+                    OperationType.QUALIFICATION_PROTOCOL -> false
                 }
             }
             .toSet()
