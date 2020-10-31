@@ -8,6 +8,7 @@ import com.procurement.qualification.application.model.params.AnalyzeQualificati
 import com.procurement.qualification.application.model.params.DoConsiderationParams
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.QualificationRepository
+import com.procurement.qualification.domain.enums.OperationType
 import com.procurement.qualification.domain.enums.ProcurementMethodDetails
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
@@ -18,6 +19,7 @@ import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.qualification.Qualification
 import com.procurement.qualification.domain.model.qualification.QualificationId
+import com.procurement.qualification.domain.model.state.States
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeDeserializer
 import com.procurement.qualification.infrastructure.bind.databinding.JsonDateTimeSerializer
@@ -37,6 +39,7 @@ internal class QualificationServiceImplTest {
         val OCID = Ocid.tryCreateOrNull("ocds-b3wdp1-MD-1580458690892-EV-1580458791896") ?: throw RuntimeException()
         val COUNTRY = "MD"
         val PMD = ProcurementMethodDetails.GPA
+        val OPERATION_TYPE = OperationType.QUALIFICATION_PROTOCOL
         private val DATE = JsonDateTimeDeserializer.deserialize(JsonDateTimeSerializer.serialize(LocalDateTime.now()))
         val QUALIFICATION_ID_FIRST = QualificationId.generate()
         val QUALIFICATION_ID_SECOND = QualificationId.generate()
@@ -250,12 +253,53 @@ internal class QualificationServiceImplTest {
             whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
                 .thenReturn(qualificationsStored.asSuccess())
 
+            val allowedStates = States(listOf(States.State(allowedStatus, allowedStatusDetails)))
+            whenever(rulesService.findValidStates(params.country, params.pmd, params.operationType))
+                .thenReturn(allowedStates.asSuccess())
+
             val minimumQuantity = 2L
             whenever(rulesService.findMinimumQualificationQuantity(country = COUNTRY, pmd = PMD))
                 .thenReturn(minimumQuantity.asSuccess())
 
             val actual = qualificationService.analyzeQualificationsForInvitation(params).get
             val expected = AnalyzeQualificationsForInvitationResult(qualificationsStored.map {qualification ->
+                AnalyzeQualificationsForInvitationResult.Qualification(
+                    id = qualification.id,
+                    status = qualification.status,
+                    relatedSubmission = qualification.relatedSubmission,
+                    statusDetails = qualification.statusDetails!!
+                )
+            })
+
+            assertEquals(expected, actual)
+        }
+
+        @Test
+        fun equalsMinimumQuantityWithTwoAllowedStates_success() {
+            val params: AnalyzeQualificationsForInvitationParams = getParams()
+
+            val allowedStates = States(
+                listOf(
+                    States.State(QualificationStatus.PENDING, QualificationStatusDetails.ACTIVE),
+                    States.State(QualificationStatus.PENDING, QualificationStatusDetails.UNSUCCESSFUL)
+                )
+            )
+
+            val qualificationsStored = listOf(
+                createQualification(allowedStates.get(0).status, allowedStates.get(0).statusDetails!!),
+                createQualification(allowedStates.get(1).status, allowedStates.get(1).statusDetails!!)
+            )
+            whenever(qualificationRepository.findBy(CPID, OCID)).thenReturn(qualificationsStored.asSuccess())
+
+            whenever(rulesService.findValidStates(params.country, params.pmd, params.operationType))
+                .thenReturn(allowedStates.asSuccess())
+
+            val minimumQuantity = 2L
+            whenever(rulesService.findMinimumQualificationQuantity(COUNTRY, PMD))
+                .thenReturn(minimumQuantity.asSuccess())
+
+            val actual = qualificationService.analyzeQualificationsForInvitation(params).get
+            val expected = AnalyzeQualificationsForInvitationResult(qualificationsStored.map { qualification ->
                 AnalyzeQualificationsForInvitationResult.Qualification(
                     id = qualification.id,
                     status = qualification.status,
@@ -280,6 +324,10 @@ internal class QualificationServiceImplTest {
             whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
                 .thenReturn(qualificationsStored.asSuccess())
 
+            val allowedStates = States(listOf(States.State(allowedStatus, allowedStatusDetails)))
+            whenever(rulesService.findValidStates(params.country, params.pmd, params.operationType))
+                .thenReturn(allowedStates.asSuccess())
+
             val minimumQuantity = 1L
             whenever(rulesService.findMinimumQualificationQuantity(country = COUNTRY, pmd = PMD))
                 .thenReturn(minimumQuantity.asSuccess())
@@ -300,8 +348,8 @@ internal class QualificationServiceImplTest {
         @Test
         fun wrongStatusMakesQuantityLessThanMinimum_nullResult() {
             val params: AnalyzeQualificationsForInvitationParams = getParams()
-            val wrongStatus = QualificationStatus.UNSUCCESSFUL
             val allowedStatusDetails = QualificationStatusDetails.ACTIVE
+            val wrongStatus = QualificationStatus.UNSUCCESSFUL
 
             val qualificationsStored = listOf(
                 createQualification(wrongStatus, allowedStatusDetails),
@@ -309,6 +357,11 @@ internal class QualificationServiceImplTest {
             )
             whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
                 .thenReturn(qualificationsStored.asSuccess())
+
+            val allowedStatus = QualificationStatus.PENDING
+            val allowedStates = States(listOf(States.State(allowedStatus, allowedStatusDetails)))
+            whenever(rulesService.findValidStates(params.country, params.pmd, params.operationType))
+                .thenReturn(allowedStates.asSuccess())
 
             val minimumQuantity = 2L
             whenever(rulesService.findMinimumQualificationQuantity(country = COUNTRY, pmd = PMD))
@@ -332,6 +385,11 @@ internal class QualificationServiceImplTest {
             whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
                 .thenReturn(qualificationsStored.asSuccess())
 
+            val allowedStatusDetails = QualificationStatusDetails.ACTIVE
+            val allowedStates = States(listOf(States.State(allowedStatus, allowedStatusDetails)))
+            whenever(rulesService.findValidStates(params.country, params.pmd, params.operationType))
+                .thenReturn(allowedStates.asSuccess())
+
             val minimumQuantity = 2L
             whenever(rulesService.findMinimumQualificationQuantity(country = COUNTRY, pmd = PMD))
                 .thenReturn(minimumQuantity.asSuccess())
@@ -345,14 +403,18 @@ internal class QualificationServiceImplTest {
         fun quantityRuleNotFound_nullResult() {
             val params: AnalyzeQualificationsForInvitationParams = getParams()
             val allowedStatus = QualificationStatus.PENDING
-            val wrongStatusDetails = QualificationStatusDetails.AWAITING
+            val allowedStatusDetails = QualificationStatusDetails.ACTIVE
 
             val qualificationsStored = listOf(
-                createQualification(allowedStatus, wrongStatusDetails),
-                createQualification(allowedStatus, wrongStatusDetails)
+                createQualification(allowedStatus, allowedStatusDetails),
+                createQualification(allowedStatus, allowedStatusDetails)
             )
             whenever(qualificationRepository.findBy(cpid = CPID, ocid = OCID))
                 .thenReturn(qualificationsStored.asSuccess())
+
+            val allowedStates = States(listOf(States.State(allowedStatus, allowedStatusDetails)))
+            whenever(rulesService.findValidStates(params.country, params.pmd, params.operationType))
+                .thenReturn(allowedStates.asSuccess())
 
             whenever(rulesService.findMinimumQualificationQuantity(country = COUNTRY, pmd = PMD))
                 .thenReturn(null.asSuccess())
@@ -366,7 +428,7 @@ internal class QualificationServiceImplTest {
         }
 
         private fun getParams() = AnalyzeQualificationsForInvitationParams.tryCreate(
-            cpid = CPID.toString(), ocid = OCID.toString(), country = COUNTRY, pmd = PMD.toString()
+            cpid = CPID.toString(), ocid = OCID.toString(), country = COUNTRY, pmd = PMD.toString(), operationType = OPERATION_TYPE.key
         ).get
 
     }

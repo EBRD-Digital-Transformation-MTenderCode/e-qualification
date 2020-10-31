@@ -5,9 +5,10 @@ import com.fasterxml.jackson.annotation.JsonValue
 
 enum class OperationType(@JsonValue override val key: String) : EnumElementProvider.Key {
 
-    QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST("qualificationDeclareNonConflictOfInterest"),
     QUALIFICATION("qualification"),
-    QUALIFICATION_CONSIDERATION("qualificationConsideration");
+    QUALIFICATION_CONSIDERATION("qualificationConsideration"),
+    QUALIFICATION_DECLARE_NON_CONFLICT_OF_INTEREST("qualificationDeclareNonConflictOfInterest"),
+    QUALIFICATION_PROTOCOL("qualificationProtocol");
 
     override fun toString(): String = key
 

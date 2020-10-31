@@ -6,5 +6,5 @@ import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 fun AnalyzeQualificationsForInvitationRequest.convert(): Result<AnalyzeQualificationsForInvitationParams, DataErrors> =
     AnalyzeQualificationsForInvitationParams.tryCreate(
-        cpid = cpid, ocid = ocid, country = country, pmd = pmd
+        cpid = cpid, ocid = ocid, country = country, pmd = pmd, operationType = operationType
     )
