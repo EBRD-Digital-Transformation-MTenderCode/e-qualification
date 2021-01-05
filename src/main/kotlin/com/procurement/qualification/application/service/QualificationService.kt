@@ -415,6 +415,20 @@ class QualificationServiceImpl(
                         .asValidationFailure()
             }
 
+        qualification.requirementResponses
+            .find { it.id == params.requirementResponse.id }
+            ?.run {
+                val receivedResponder = params.requirementResponse.responder
+                if (receivedResponder.id != this.responder.id)
+                    return ValidationError.ResponderIdMismatchOnCheckDeclaration(actual = receivedResponder.id, expected = this.responder.id)
+                        .asValidationFailure()
+
+                if (receivedResponder.name != this.responder.name)
+                    return ValidationError.ResponderNameMismatchOnCheckDeclaration(actual = receivedResponder.name, expected = this.responder.name)
+                        .asValidationFailure()
+            }
+
+
         return ValidationResult.ok()
     }
 
