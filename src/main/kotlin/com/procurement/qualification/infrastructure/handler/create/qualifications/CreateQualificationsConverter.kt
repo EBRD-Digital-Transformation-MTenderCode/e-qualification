@@ -2,6 +2,7 @@ package com.procurement.qualification.infrastructure.handler.create.qualificatio
 
 import com.procurement.qualification.application.model.params.CreateQualificationsParams
 import com.procurement.qualification.domain.functional.Result
+import com.procurement.qualification.domain.util.extension.mapResult
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
 
 fun CreateQualificationsRequest.convert(): Result<CreateQualificationsParams, DataErrors> =
@@ -54,7 +55,36 @@ fun CreateQualificationsRequest.Tender.convert(): Result<CreateQualificationsPar
                     .orForwardFail { fail -> return fail }
             },
         otherCriteria = this.otherCriteria.convert()
+            .orForwardFail { fail -> return fail },
+        criteria = criteria?.mapResult { it.convert() }
+            ?.orForwardFail { fail -> return fail }
+    )
+
+private fun CreateQualificationsRequest.Tender.Criterion.convert(): Result<CreateQualificationsParams.Tender.Criterion, DataErrors> =
+    CreateQualificationsParams.Tender.Criterion.tryCreate(
+        id = id,
+        relatesTo = relatesTo,
+        source = source,
+        classification = CreateQualificationsParams.Tender.Criterion.Classification(
+            id = classification.id,
+            scheme = classification.scheme
+        ),
+        requirementGroups = requirementGroups.mapResult { it.convert() }
             .orForwardFail { fail -> return fail }
+    )
+
+private fun CreateQualificationsRequest.Tender.Criterion.RequirementGroup.convert(): Result<CreateQualificationsParams.Tender.Criterion.RequirementGroup, DataErrors> =
+    CreateQualificationsParams.Tender.Criterion.RequirementGroup.tryCreate(
+        id = id,
+        requirements = requirements.mapResult { it.convert() }
+            .orForwardFail { fail -> return fail }
+    )
+
+private fun CreateQualificationsRequest.Tender.Criterion.RequirementGroup.Requirement.convert(): Result<CreateQualificationsParams.Tender.Criterion.RequirementGroup.Requirement, DataErrors> =
+    CreateQualificationsParams.Tender.Criterion.RequirementGroup.Requirement.tryCreate(
+        id = id,
+        dataType = dataType,
+        status = status
     )
 
 fun CreateQualificationsRequest.Tender.OtherCriteria.convert(): Result<CreateQualificationsParams.Tender.OtherCriteria, DataErrors> =
