@@ -1,5 +1,6 @@
 package com.procurement.qualification.application.model
 
+import com.procurement.qualification.domain.enums.CriteriaRelatesTo
 import com.procurement.qualification.domain.enums.EnumElementProvider
 import com.procurement.qualification.domain.enums.EnumElementProvider.Companion.keysAsStrings
 import com.procurement.qualification.domain.enums.OperationType
@@ -61,6 +62,11 @@ fun parseDataType(
     value: String, allowedEnums: Set<RequirementDataType>, attributeName: String
 ): Result<RequirementDataType, DataErrors> =
     parseEnum(value = value, allowedEnums = allowedEnums, attributeName = attributeName, target = RequirementDataType)
+
+fun parseCriteriaRelatesTo(
+    value: String, allowedEnums: Set<CriteriaRelatesTo>, attributeName: String
+): Result<CriteriaRelatesTo, DataErrors> =
+    parseEnum(value = value, allowedEnums = allowedEnums, attributeName = attributeName, target = CriteriaRelatesTo)
 
 fun <T> parseEnum(
     value: String, allowedEnums: Collection<T>, attributeName: String, target: EnumElementProvider<T>
