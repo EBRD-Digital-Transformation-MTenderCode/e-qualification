@@ -3,6 +3,7 @@ package com.procurement.qualification.application.model.params
 import com.procurement.qualification.application.model.noDuplicatesRule
 import com.procurement.qualification.application.model.notEmptyRule
 import com.procurement.qualification.application.model.parseCpid
+import com.procurement.qualification.application.model.parseCriteriaRelatesTo
 import com.procurement.qualification.application.model.parseDataType
 import com.procurement.qualification.application.model.parseDate
 import com.procurement.qualification.application.model.parseEnum
@@ -12,6 +13,7 @@ import com.procurement.qualification.application.model.parseRequirementId
 import com.procurement.qualification.application.model.parseRequirementStatus
 import com.procurement.qualification.application.model.parseSubmissionId
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
+import com.procurement.qualification.domain.enums.CriteriaRelatesTo
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
 import com.procurement.qualification.domain.enums.RequirementDataType
@@ -310,11 +312,13 @@ class CreateQualificationsParams private constructor(
         class Criterion private constructor(
             val id: String,
             val source: String,
-            val relatesTo: String,
+            val relatesTo: CriteriaRelatesTo,
             val requirementGroups: List<RequirementGroup>,
             val classification: Classification
         ) {
             companion object {
+                val allowedRelatesTo = CriteriaRelatesTo.allowedElements.toSet()
+
                 fun tryCreate(
                     id: String,
                     source: String,
@@ -327,10 +331,14 @@ class CreateQualificationsParams private constructor(
                         .validate(noDuplicatesRule("tender.criteria.requirementGroups") { it.id })
                         .orForwardFail { return it }
 
+                    val relatesToParsed = parseCriteriaRelatesTo(
+                        relatesTo, allowedRelatesTo, "tender.criteria.relatesTo"
+                    ).orForwardFail { return it }
+
                     return Criterion(
                         id = id,
                         source = source,
-                        relatesTo = relatesTo,
+                        relatesTo = relatesToParsed,
                         requirementGroups = requirementGroups,
                         classification = classification
                     ).asSuccess()
@@ -374,9 +382,9 @@ class CreateQualificationsParams private constructor(
 
                         val ALLOWED_REQUIREMENT_DATA_TYPE = RequirementDataType.allowedElements.toSet()
 
-                        val REQUIREMENTS_ID_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.id"
-                        val REQUIREMENTS_STATUS_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.status"
-                        val REQUIREMENTS_DATA_TYPE_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.dataType"
+                        const val REQUIREMENTS_ID_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.id"
+                        const val REQUIREMENTS_STATUS_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.status"
+                        const val REQUIREMENTS_DATA_TYPE_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.dataType"
 
                         fun tryCreate(
                             id: String,
