@@ -43,3 +43,11 @@ private fun <T> Iterable<T>.asSet(): Set<T> = when (this) {
     is Set -> this
     else -> this.toSet()
 }
+
+inline fun <T, V> Collection<T>?.getDuplicate(selector: (T) -> V): T? {
+    val unique = HashSet<V>()
+    this?.forEach { item ->
+        if (!unique.add(selector(item))) return item
+    }
+    return null
+}
