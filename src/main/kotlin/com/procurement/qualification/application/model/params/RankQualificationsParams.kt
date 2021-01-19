@@ -5,17 +5,13 @@ import com.procurement.qualification.application.model.parseDate
 import com.procurement.qualification.application.model.parseEnum
 import com.procurement.qualification.application.model.parseOcid
 import com.procurement.qualification.application.model.parseSubmissionId
-import com.procurement.qualification.domain.enums.CriteriaRelatesTo
 import com.procurement.qualification.domain.enums.CriteriaSource
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
-import com.procurement.qualification.domain.enums.RequirementDataType
 import com.procurement.qualification.domain.functional.Result
-import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
-import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.submission.SubmissionId
 import com.procurement.qualification.domain.util.extension.getElementIfOnlyOne
 import com.procurement.qualification.infrastructure.fail.error.DataErrors
@@ -124,12 +120,7 @@ class RankQualificationsParams private constructor(
 
         class Criteria private constructor(
             val id: String,
-            val title: String,
-            val requirementGroups: List<RequirementGroup>,
-            val source: CriteriaSource,
-            val description: String?,
-            val relatesTo: CriteriaRelatesTo?,
-            val relatedItem: String?
+            val source: CriteriaSource
         ) {
 
             companion object {
@@ -143,26 +134,9 @@ class RankQualificationsParams private constructor(
                     }
                     .toSet()
 
-                private val allowedRelatesTo = CriteriaRelatesTo.allowedElements
-                    .filter {
-                        when (it) {
-                            CriteriaRelatesTo.AWARD,
-                            CriteriaRelatesTo.ITEM,
-                            CriteriaRelatesTo.LOT,
-                            CriteriaRelatesTo.TENDERER,
-                            CriteriaRelatesTo.QUALIFICATION -> true
-                        }
-                    }
-                    .toSet()
-
                 fun tryCreate(
                     id: String,
-                    title: String,
-                    requirementGroups: List<RequirementGroup>,
-                    source: String,
-                    description: String?,
-                    relatesTo: String?,
-                    relatedItem: String?
+                    source: String
                 ): Result<Criteria, DataErrors> {
 
                     val parsedCriteriaSource = parseEnum(
@@ -173,90 +147,11 @@ class RankQualificationsParams private constructor(
                     )
                         .orForwardFail { fail -> return fail }
 
-                    val parsedCriteriaRelatesTo = relatesTo?.let {
-                        parseEnum(
-                            attributeName = "relatesTo",
-                            value = it,
-                            allowedEnums = allowedRelatesTo,
-                            target = CriteriaRelatesTo
-                        )
-                            .orForwardFail { fail -> return fail }
-                    }
                     return Criteria(
                         id = id,
-                        description = description,
-                        source = parsedCriteriaSource,
-                        requirementGroups = requirementGroups,
-                        relatesTo = parsedCriteriaRelatesTo,
-                        relatedItem = relatedItem,
-                        title = title
+                        source = parsedCriteriaSource
                     )
                         .asSuccess()
-                }
-            }
-
-            class RequirementGroup private constructor(
-                val id: String,
-                val description: String?,
-                val requirements: List<Requirement>
-            ) {
-                companion object {
-                    fun tryCreate(
-                        id: String,
-                        description: String?,
-                        requirements: List<Requirement>
-                    ): Result<RequirementGroup, DataErrors> =
-                        RequirementGroup(id = id, description = description, requirements = requirements)
-                            .asSuccess()
-                }
-
-                class Requirement private constructor(
-                    val id: RequirementId,
-                    val title: String,
-                    val dataType: RequirementDataType,
-                    val description: String?
-                ) {
-                    companion object {
-
-                        private val allowedDataType = RequirementDataType.allowedElements
-                            .filter {
-                                when (it) {
-                                    RequirementDataType.BOOLEAN,
-                                    RequirementDataType.INTEGER,
-                                    RequirementDataType.NUMBER,
-                                    RequirementDataType.STRING -> true
-                                }
-                            }
-                            .toSet()
-
-                        fun tryCreate(
-                            id: String,
-                            title: String,
-                            dataType: String,
-                            description: String?
-                        ): Result<Requirement, DataErrors> {
-
-                            val parsedRequirementId = RequirementId.parse(id)
-                                ?: return DataErrors.Validation.EmptyString(name = id)
-                                    .asFailure()
-
-                            val parsedDataType = parseEnum(
-                                attributeName = "dataType",
-                                value = dataType,
-                                allowedEnums = allowedDataType,
-                                target = RequirementDataType
-                            )
-                                .orForwardFail { fail -> return fail }
-
-                            return Requirement(
-                                id = parsedRequirementId,
-                                description = description,
-                                dataType = parsedDataType,
-                                title = title
-                            )
-                                .asSuccess()
-                        }
-                    }
                 }
             }
         }
