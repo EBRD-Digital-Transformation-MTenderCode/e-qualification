@@ -52,12 +52,12 @@ class RankQualificationsParams private constructor(
 
     class Tender private constructor(
         val otherCriteria: OtherCriteria,
-        val criteria: List<Criteria>?
+        val criteria: List<Criteria>
     ) {
 
         companion object {
             fun tryCreate(otherCriteria: OtherCriteria, criteria: List<Criteria>?): Result<Tender, DataErrors> =
-                Tender(otherCriteria = otherCriteria, criteria = criteria)
+                Tender(otherCriteria = otherCriteria, criteria = criteria ?: emptyList())
                     .asSuccess()
         }
 
