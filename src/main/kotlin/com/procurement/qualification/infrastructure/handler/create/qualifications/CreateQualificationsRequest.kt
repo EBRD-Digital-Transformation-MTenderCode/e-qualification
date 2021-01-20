@@ -41,7 +41,10 @@ data class CreateQualificationsRequest(
     data class Tender(
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         @field:JsonProperty("conversions") @param:JsonProperty("conversions") val conversions: List<Conversion>?,
-        @field:JsonProperty("otherCriteria") @param:JsonProperty("otherCriteria") val otherCriteria: OtherCriteria
+        @field:JsonProperty("otherCriteria") @param:JsonProperty("otherCriteria") val otherCriteria: OtherCriteria,
+
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        @field:JsonProperty("criteria") @param:JsonProperty("criteria") val criteria: List<Criterion>?
     ) {
         data class Conversion(
             @field:JsonProperty("id") @param:JsonProperty("id") val id: String,
@@ -64,5 +67,29 @@ data class CreateQualificationsRequest(
             @field:JsonProperty("reductionCriteria") @param:JsonProperty("reductionCriteria") val reductionCriteria: String,
             @field:JsonProperty("qualificationSystemMethods") @param:JsonProperty("qualificationSystemMethods") val qualificationSystemMethods: List<String>
         )
+
+        data class Criterion(
+            @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
+            @param:JsonProperty("source") @field:JsonProperty("source") val source: String,
+            @param:JsonProperty("relatesTo") @field:JsonProperty("relatesTo") val relatesTo: String,
+            @param:JsonProperty("requirementGroups") @field:JsonProperty("requirementGroups") val requirementGroups: List<RequirementGroup>,
+            @param:JsonProperty("classification") @field:JsonProperty("classification") val classification: Classification
+        ) {
+            data class RequirementGroup(
+                @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
+                @param:JsonProperty("requirements") @field:JsonProperty("requirements") val requirements: List<Requirement>
+            ) {
+                data class Requirement(
+                    @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
+                    @param:JsonProperty("status") @field:JsonProperty("status") val status: String,
+                    @param:JsonProperty("dataType") @field:JsonProperty("dataType") val dataType: String
+                )
+            }
+
+            data class Classification(
+                @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
+                @param:JsonProperty("scheme") @field:JsonProperty("scheme") val scheme: String
+            )
+        }
     }
 }

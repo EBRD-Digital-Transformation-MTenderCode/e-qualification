@@ -17,6 +17,7 @@ import com.procurement.qualification.application.model.params.SetQualificationPe
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
+import com.procurement.qualification.domain.enums.CriteriaRelatesTo
 import com.procurement.qualification.domain.enums.CriteriaSource
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
@@ -146,7 +147,7 @@ class QualificationServiceImpl(
         val qualifications = params.submissions
             .map { submission ->
                 val scoring: Scoring? = if (isNeedCalculateScoring) {
-                    val coefficients = getCoefficients(tender.conversions, submission.requirementResponses)
+                    val coefficients = getCoefficients(tender.conversions, params.tender.criteria, submission.requirementResponses)
                     calculateScoring(coefficients = coefficients)
                 } else
                     null
@@ -810,18 +811,33 @@ class QualificationServiceImpl(
 
         fun getCoefficients(
             conversions: List<CreateQualificationsParams.Tender.Conversion>,
+            criteria: List<CreateQualificationsParams.Tender.Criterion>,
             requirementResponses: List<CreateQualificationsParams.Submission.RequirementResponse>
         ): List<CoefficientRate> {
-            if (requirementResponses.isEmpty()) return emptyList()
+            if (conversions.isEmpty() ||
+                criteria.isEmpty() ||
+                requirementResponses.isEmpty())
+                return emptyList()
 
-            val conversionsRelatesToRequirement: Map<String, CreateQualificationsParams.Tender.Conversion> = conversions
+            val selectionCriteria = criteria.filter {
+                it.relatesTo == CriteriaRelatesTo.TENDERER
+                    && it.classification.id.startsWith("CRITERION.SELECTION.")
+            }
+            val responsesByRequirement = requirementResponses.groupBy { it.requirement.id }
+
+            val responsesForCriteriaRequirements = selectionCriteria.flatMap { criterion -> criterion.requirementGroups }
+                .flatMap { requirementGroup -> requirementGroup.requirements }
+                .mapNotNull { requirement -> responsesByRequirement[requirement.id] }
+                .flatten()
+
+            val conversionsByRequirement: Map<String, CreateQualificationsParams.Tender.Conversion> = conversions
                 .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
                 .associateBy { it.relatedItem }
 
-            return requirementResponses
+            return responsesForCriteriaRequirements
                 .mapNotNull { requirementResponse ->
                     val id = requirementResponse.requirement.id.toString()
-                    conversionsRelatesToRequirement[id]
+                    conversionsByRequirement[id]
                         ?.coefficients
                         ?.firstOrNull { coefficient ->
                             isMatchCoefficientValueAndRequirementValue(coefficient.value, requirementResponse.value)
