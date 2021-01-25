@@ -8,6 +8,7 @@ enum class CriteriaRelatesTo(@JsonValue override val key: String) : EnumElementP
     AWARD("award"),
     ITEM("item"),
     LOT("lot"),
+    TENDER("tender"),
     TENDERER("tenderer"),
     QUALIFICATION("qualification");
 
