@@ -1,17 +1,27 @@
 package com.procurement.qualification.application.model.params
 
+import com.procurement.qualification.application.model.noDuplicatesRule
+import com.procurement.qualification.application.model.notEmptyRule
 import com.procurement.qualification.application.model.parseCpid
+import com.procurement.qualification.application.model.parseCriteriaRelatesTo
+import com.procurement.qualification.application.model.parseDataType
 import com.procurement.qualification.application.model.parseDate
 import com.procurement.qualification.application.model.parseEnum
 import com.procurement.qualification.application.model.parseOcid
 import com.procurement.qualification.application.model.parseOwner
+import com.procurement.qualification.application.model.parseRequirementId
+import com.procurement.qualification.application.model.parseRequirementStatus
 import com.procurement.qualification.application.model.parseSubmissionId
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
+import com.procurement.qualification.domain.enums.CriteriaRelatesTo
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
+import com.procurement.qualification.domain.enums.RequirementDataType
+import com.procurement.qualification.domain.enums.RequirementStatus
 import com.procurement.qualification.domain.functional.Result
 import com.procurement.qualification.domain.functional.asFailure
 import com.procurement.qualification.domain.functional.asSuccess
+import com.procurement.qualification.domain.functional.validate
 import com.procurement.qualification.domain.model.Cpid
 import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.Owner
@@ -149,12 +159,26 @@ class CreateQualificationsParams private constructor(
 
     class Tender private constructor(
         val conversions: List<Conversion>,
-        val otherCriteria: OtherCriteria
+        val otherCriteria: OtherCriteria,
+        val criteria: List<Criterion>
     ) {
 
         companion object {
-            fun tryCreate(conversions: List<Conversion>?, otherCriteria: OtherCriteria): Result<Tender, DataErrors> {
-                return Tender(conversions = conversions ?: emptyList(), otherCriteria = otherCriteria)
+            fun tryCreate(
+                conversions: List<Conversion>?,
+                otherCriteria: OtherCriteria,
+                criteria: List<Criterion>?
+            ): Result<Tender, DataErrors> {
+                criteria.validate(notEmptyRule("tender.criteria"))
+                    .orForwardFail { return it }
+                    .validate(noDuplicatesRule("tender.criteria") { it.id })
+                    .orForwardFail { return it }
+
+                return Tender(
+                    conversions = conversions ?: emptyList(),
+                    otherCriteria = otherCriteria,
+                    criteria = criteria ?: emptyList()
+                )
                     .asSuccess()
             }
         }
@@ -283,6 +307,115 @@ class CreateQualificationsParams private constructor(
                         .asSuccess()
                 }
             }
+        }
+
+        class Criterion private constructor(
+            val id: String,
+            val source: String,
+            val relatesTo: CriteriaRelatesTo,
+            val requirementGroups: List<RequirementGroup>,
+            val classification: Classification
+        ) {
+            companion object {
+                val allowedRelatesTo = CriteriaRelatesTo.allowedElements.toSet()
+
+                fun tryCreate(
+                    id: String,
+                    source: String,
+                    relatesTo: String,
+                    requirementGroups: List<RequirementGroup>,
+                    classification: Classification
+                ): Result<Criterion, DataErrors> {
+                    requirementGroups.validate(notEmptyRule("tender.criteria.requirementGroups"))
+                        .orForwardFail { return it }
+                        .validate(noDuplicatesRule("tender.criteria.requirementGroups") { it.id })
+                        .orForwardFail { return it }
+
+                    val relatesToParsed = parseCriteriaRelatesTo(
+                        relatesTo, allowedRelatesTo, "tender.criteria.relatesTo"
+                    ).orForwardFail { return it }
+
+                    return Criterion(
+                        id = id,
+                        source = source,
+                        relatesTo = relatesToParsed,
+                        requirementGroups = requirementGroups,
+                        classification = classification
+                    ).asSuccess()
+                }
+            }
+
+            class RequirementGroup private constructor(
+                val id: String,
+                val requirements: List<Requirement>
+            ) {
+                companion object {
+                    fun tryCreate(
+                        id: String,
+                        requirements: List<Requirement>
+                    ): Result<RequirementGroup, DataErrors> {
+                        requirements.validate(notEmptyRule("tender.criteria.requirementGroups.requirements"))
+                            .orForwardFail { return it }
+                            .validate(noDuplicatesRule("tender.criteria.requirementGroups.requirements") { it.id })
+                            .orForwardFail { return it }
+
+                        return RequirementGroup(
+                            id = id,
+                            requirements = requirements
+                        ).asSuccess()
+                    }
+                }
+
+                class Requirement private constructor(
+                    val id: RequirementId,
+                    val status: RequirementStatus,
+                    val dataType: RequirementDataType
+                ) {
+
+                    companion object {
+                        val ALLOWED_REQUIREMENT_STATUSES = RequirementStatus.allowedElements
+                            .filter {
+                                when (it) {
+                                    RequirementStatus.ACTIVE -> true
+                                }
+                            }.toSet()
+
+                        val ALLOWED_REQUIREMENT_DATA_TYPE = RequirementDataType.allowedElements.toSet()
+
+                        const val REQUIREMENTS_ID_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.id"
+                        const val REQUIREMENTS_STATUS_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.status"
+                        const val REQUIREMENTS_DATA_TYPE_ATTRIBUTE = "tender.criteria.requirementGroups.requirements.dataType"
+
+                        fun tryCreate(
+                            id: String,
+                            status: String,
+                            dataType: String
+                        ): Result<Requirement, DataErrors> {
+                            val requirementId = parseRequirementId(id, REQUIREMENTS_ID_ATTRIBUTE)
+                                .orForwardFail { return it }
+
+                            val parsedStatus = parseRequirementStatus(
+                                status, ALLOWED_REQUIREMENT_STATUSES, REQUIREMENTS_STATUS_ATTRIBUTE
+                            ).orForwardFail { return it }
+
+                            val parseDataType = parseDataType(
+                                dataType, ALLOWED_REQUIREMENT_DATA_TYPE, REQUIREMENTS_DATA_TYPE_ATTRIBUTE
+                            ).orForwardFail { return it }
+
+                            return Requirement(
+                                id = requirementId,
+                                status = parsedStatus,
+                                dataType = parseDataType
+                            ).asSuccess()
+                        }
+                    }
+                }
+            }
+
+            data class Classification(
+                val id: String,
+                val scheme: String
+            )
         }
     }
 }

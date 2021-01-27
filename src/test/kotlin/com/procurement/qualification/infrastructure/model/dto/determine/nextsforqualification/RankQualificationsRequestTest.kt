@@ -17,9 +17,4 @@ class RankQualificationsRequestTest : AbstractDTOTestBase<RankQualificationsRequ
     fun full1() {
         testBindingAndMapping(pathToJsonFile = "json/dto/rank.qualification/rank_qualifications_request_1.json")
     }
-
-    @Test
-    fun full2() {
-        testBindingAndMapping(pathToJsonFile = "json/dto/rank.qualification/rank_qualifications_request_2.json")
-    }
 }

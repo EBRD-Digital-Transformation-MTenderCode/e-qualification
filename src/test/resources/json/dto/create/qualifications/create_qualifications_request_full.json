@@ -80,6 +80,29 @@
       "qualificationSystemMethods": [
         "automated"
       ]
-    }
+    },
+    "criteria": [
+      {
+        "id": "string",
+        "source": "procuringEntity",
+        "relatesTo": "tenderer",
+        "requirementGroups": [
+          {
+            "id": "string",
+            "requirements": [
+              {
+                "id": "string",
+                "status": "active",
+                "dataType": "integer"
+              }
+            ]
+          }
+        ],
+        "classification": {
+          "id": "string",
+          "scheme": "string"
+        }
+      }
+    ]
   }
 }
