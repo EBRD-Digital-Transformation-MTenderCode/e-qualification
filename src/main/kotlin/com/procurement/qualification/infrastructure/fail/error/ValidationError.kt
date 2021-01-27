@@ -8,6 +8,7 @@ import com.procurement.qualification.domain.model.Ocid
 import com.procurement.qualification.domain.model.Owner
 import com.procurement.qualification.domain.model.Token
 import com.procurement.qualification.domain.model.date.format
+import com.procurement.qualification.domain.model.person.PersonId
 import com.procurement.qualification.domain.model.qualification.QualificationId
 import com.procurement.qualification.domain.model.requirement.RequirementId
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
@@ -82,6 +83,16 @@ sealed class ValidationError(
 
     class InvalidResponderNameOnCheckDeclaration(expected: String, actual: String) : ValidationError(
         numberError = "7.16.5",
+        description = "Invalid Responder name, actual='$actual', expected='$expected'."
+    )
+
+    class ResponderIdMismatchOnCheckDeclaration(expected: PersonId, actual: PersonId) : ValidationError(
+        numberError = "7.16.6",
+        description = "Invalid Responder name, actual='$actual', expected='$expected'."
+    )
+
+    class ResponderNameMismatchOnCheckDeclaration(expected: String, actual: String) : ValidationError(
+        numberError = "7.16.7",
         description = "Invalid Responder name, actual='$actual', expected='$expected'."
     )
 

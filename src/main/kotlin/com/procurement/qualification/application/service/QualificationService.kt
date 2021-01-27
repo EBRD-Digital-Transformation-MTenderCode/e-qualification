@@ -17,6 +17,8 @@ import com.procurement.qualification.application.model.params.SetQualificationPe
 import com.procurement.qualification.application.repository.PeriodRepository
 import com.procurement.qualification.application.repository.QualificationRepository
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
+import com.procurement.qualification.domain.enums.CriteriaRelatesTo
+import com.procurement.qualification.domain.enums.CriteriaSource
 import com.procurement.qualification.domain.enums.QualificationStatus
 import com.procurement.qualification.domain.enums.QualificationStatusDetails
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
@@ -145,7 +147,7 @@ class QualificationServiceImpl(
         val qualifications = params.submissions
             .map { submission ->
                 val scoring: Scoring? = if (isNeedCalculateScoring) {
-                    val coefficients = getCoefficients(tender.conversions, submission.requirementResponses)
+                    val coefficients = getCoefficients(tender.conversions, params.tender.criteria, submission.requirementResponses)
                     calculateScoring(coefficients = coefficients)
                 } else
                     null
@@ -203,20 +205,7 @@ class QualificationServiceImpl(
             ReductionCriteria.SCORING -> {
                 when (qualificationSystemMethod) {
                     QualificationSystemMethod.AUTOMATED -> {
-                        val qualificationWithMinScoring = findMinScoring(qualifications = filteredQualifications)!!
-                        val hasSameScoring = hasSameScoring(
-                            qualifications = filteredQualifications,
-                            scoring = qualificationWithMinScoring.scoring!!
-                        )
-                        val qualificationsToUpdate =
-                            if (hasSameScoring) {
-                                val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
-                                val qualificationRelatedToSubmission = filteredQualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }!!
-                                listOf(qualificationRelatedToSubmission)
-                            } else {
-                                listOf(qualificationWithMinScoring)
-                            }
-
+                        val qualificationsToUpdate = getMinScoringOrMinDateQualifications(filteredQualifications, params)
                         setStatusDetailsByCriteria(criteria = criteria, qualifications = qualificationsToUpdate)
                     }
                     QualificationSystemMethod.MANUAL ->
@@ -240,6 +229,26 @@ class QualificationServiceImpl(
                 RankQualificationsResult(id = qualification.id, statusDetails = qualification.statusDetails)
             }
             .asSuccess()
+    }
+
+    private fun getMinScoringOrMinDateQualifications(
+        filteredQualifications: List<Qualification>,
+        params: RankQualificationsParams
+    ): List<Qualification> {
+        val qualificationWithMinScoring = findMinScoring(qualifications = filteredQualifications)!!
+        val hasSameScoring = hasSameScoring(
+            qualifications = filteredQualifications,
+            scoring = qualificationWithMinScoring.scoring!!
+        )
+        val qualificationsToUpdate =
+            if (hasSameScoring) {
+                val submissionWithMinDate = findMinDate(submissions = params.submissions)!!
+                val qualificationRelatedToSubmission = filteredQualifications.find { q -> q.relatedSubmission == submissionWithMinDate.id }!!
+                listOf(qualificationRelatedToSubmission)
+            } else {
+                listOf(qualificationWithMinScoring)
+            }
+        return qualificationsToUpdate
     }
 
     override fun checkAccessToQualification(params: CheckAccessToQualificationParams): ValidationResult<Fail> {
@@ -414,6 +423,20 @@ class QualificationServiceImpl(
                     )
                         .asValidationFailure()
             }
+
+        qualification.requirementResponses
+            .find { it.id == params.requirementResponse.id }
+            ?.run {
+                val receivedResponder = params.requirementResponse.responder
+                if (receivedResponder.id != this.responder.id)
+                    return ValidationError.ResponderIdMismatchOnCheckDeclaration(actual = receivedResponder.id, expected = this.responder.id)
+                        .asValidationFailure()
+
+                if (receivedResponder.name != this.responder.name)
+                    return ValidationError.ResponderNameMismatchOnCheckDeclaration(actual = receivedResponder.name, expected = this.responder.name)
+                        .asValidationFailure()
+            }
+
 
         return ValidationResult.ok()
     }
@@ -707,15 +730,15 @@ class QualificationServiceImpl(
 
     private fun setStatusDetailsByCriteria(
         qualifications: List<Qualification>,
-        criteria: List<RankQualificationsParams.Tender.Criteria>?
-    ) = if (criteria.isNullOrEmpty()) {
+        criteria: List<RankQualificationsParams.Tender.Criteria>
+    ) = if (criteria.map { it.source }.contains(CriteriaSource.PROCURING_ENTITY)) {
         setStatusDetails(
-            statusDetails = QualificationStatusDetails.CONSIDERATION,
+            statusDetails = QualificationStatusDetails.AWAITING,
             qualifications = qualifications
         )
     } else {
         setStatusDetails(
-            statusDetails = QualificationStatusDetails.AWAITING,
+            statusDetails = QualificationStatusDetails.CONSIDERATION,
             qualifications = qualifications
         )
     }
@@ -788,18 +811,33 @@ class QualificationServiceImpl(
 
         fun getCoefficients(
             conversions: List<CreateQualificationsParams.Tender.Conversion>,
+            criteria: List<CreateQualificationsParams.Tender.Criterion>,
             requirementResponses: List<CreateQualificationsParams.Submission.RequirementResponse>
         ): List<CoefficientRate> {
-            if (requirementResponses.isEmpty()) return emptyList()
+            if (conversions.isEmpty() ||
+                criteria.isEmpty() ||
+                requirementResponses.isEmpty())
+                return emptyList()
 
-            val conversionsRelatesToRequirement: Map<String, CreateQualificationsParams.Tender.Conversion> = conversions
+            val selectionCriteria = criteria.filter {
+                it.relatesTo == CriteriaRelatesTo.TENDERER
+                    && it.classification.id.startsWith("CRITERION.SELECTION.")
+            }
+            val responsesByRequirement = requirementResponses.groupBy { it.requirement.id }
+
+            val responsesForCriteriaRequirements = selectionCriteria.flatMap { criterion -> criterion.requirementGroups }
+                .flatMap { requirementGroup -> requirementGroup.requirements }
+                .mapNotNull { requirement -> responsesByRequirement[requirement.id] }
+                .flatten()
+
+            val conversionsByRequirement: Map<String, CreateQualificationsParams.Tender.Conversion> = conversions
                 .filter { it.relatesTo == ConversionRelatesTo.REQUIREMENT }
                 .associateBy { it.relatedItem }
 
-            return requirementResponses
+            return responsesForCriteriaRequirements
                 .mapNotNull { requirementResponse ->
                     val id = requirementResponse.requirement.id.toString()
-                    conversionsRelatesToRequirement[id]
+                    conversionsByRequirement[id]
                         ?.coefficients
                         ?.firstOrNull { coefficient ->
                             isMatchCoefficientValueAndRequirementValue(coefficient.value, requirementResponse.value)

@@ -22,31 +22,8 @@ data class RankQualificationsRequest(
 
         data class Criteria(
             @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
-            @param:JsonProperty("title") @field:JsonProperty("title") val title: String,
-            @param:JsonProperty("requirementGroups") @field:JsonProperty("requirementGroups") val requirementGroups: List<RequirementGroup>,
-            @param:JsonProperty("source") @field:JsonProperty("source") val source: String,
-            @JsonInclude(JsonInclude.Include.NON_NULL)
-            @param:JsonProperty("description") @field:JsonProperty("description") val description: String?,
-            @JsonInclude(JsonInclude.Include.NON_NULL)
-            @param:JsonProperty("relatesTo") @field:JsonProperty("relatesTo") val relatesTo: String?,
-            @JsonInclude(JsonInclude.Include.NON_NULL)
-            @param:JsonProperty("relatedItem") @field:JsonProperty("relatedItem") val relatedItem: String?
-        ) {
-            data class RequirementGroup(
-                @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
-                @param:JsonProperty("requirements") @field:JsonProperty("requirements") val requirements: List<Requirement>,
-                @JsonInclude(JsonInclude.Include.NON_NULL)
-                @param:JsonProperty("description") @field:JsonProperty("description") val description: String?
-            ) {
-                data class Requirement(
-                    @param:JsonProperty("id") @field:JsonProperty("id") val id: String,
-                    @param:JsonProperty("title") @field:JsonProperty("title") val title: String,
-                    @param:JsonProperty("dataType") @field:JsonProperty("dataType") val dataType: String,
-                    @JsonInclude(JsonInclude.Include.NON_NULL)
-                    @param:JsonProperty("description") @field:JsonProperty("description") val description: String?
-                )
-            }
-        }
+            @param:JsonProperty("source") @field:JsonProperty("source") val source: String
+        )
     }
 
     data class Submission(

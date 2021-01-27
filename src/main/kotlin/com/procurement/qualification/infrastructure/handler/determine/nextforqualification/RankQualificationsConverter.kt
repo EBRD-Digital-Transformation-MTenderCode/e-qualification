@@ -33,36 +33,7 @@ fun RankQualificationsRequest.Tender.convert(): Result<RankQualificationsParams.
 fun RankQualificationsRequest.Tender.Criteria.convert(): Result<RankQualificationsParams.Tender.Criteria, DataErrors> =
     RankQualificationsParams.Tender.Criteria.tryCreate(
         id = this.id,
-        title = this.title,
-        description = this.description,
-        relatedItem = this.relatedItem,
-        relatesTo = this.relatesTo,
-        source = this.source,
-        requirementGroups = this.requirementGroups
-            .map {
-                it.convert()
-                    .orForwardFail { fail -> return fail }
-            }
-
-    )
-
-fun RankQualificationsRequest.Tender.Criteria.RequirementGroup.convert(): Result<RankQualificationsParams.Tender.Criteria.RequirementGroup, DataErrors> =
-    RankQualificationsParams.Tender.Criteria.RequirementGroup.tryCreate(
-        id = this.id,
-        description = this.description,
-        requirements = this.requirements
-            .map {
-                it.convert()
-                    .orForwardFail { fail -> return fail }
-            }
-    )
-
-fun RankQualificationsRequest.Tender.Criteria.RequirementGroup.Requirement.convert(): Result<RankQualificationsParams.Tender.Criteria.RequirementGroup.Requirement, DataErrors> =
-    RankQualificationsParams.Tender.Criteria.RequirementGroup.Requirement.tryCreate(
-        id = this.id,
-        description = this.description,
-        title = this.title,
-        dataType = this.dataType
+        source = this.source
     )
 
 fun RankQualificationsRequest.Tender.OtherCriteria.convert(): Result<RankQualificationsParams.Tender.OtherCriteria, DataErrors> =

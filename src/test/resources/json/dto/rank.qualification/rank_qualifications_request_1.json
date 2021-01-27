@@ -13,25 +13,6 @@
         "automated"
       ],
       "reductionCriteria": "scoring"
-    },
-    "criteria": [
-      {
-        "id": "string",
-        "title": "string",
-        "source": "tenderer",
-        "requirementGroups": [
-          {
-            "id": "string",
-            "requirements": [
-              {
-                "id": "string",
-                "title": "string",
-                "dataType": "string"
-              }
-            ]
-          }
-        ]
-      }
-    ]
+    }
   }
 }

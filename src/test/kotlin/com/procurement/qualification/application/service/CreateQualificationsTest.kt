@@ -4,6 +4,8 @@ import com.procurement.qualification.application.model.params.CreateQualificatio
 import com.procurement.qualification.domain.enums.ConversionRelatesTo
 import com.procurement.qualification.domain.enums.QualificationSystemMethod
 import com.procurement.qualification.domain.enums.ReductionCriteria
+import com.procurement.qualification.domain.enums.RequirementDataType
+import com.procurement.qualification.domain.enums.RequirementStatus
 import com.procurement.qualification.domain.model.measure.Scoring
 import com.procurement.qualification.domain.model.requirement.RequirementResponseValue
 import com.procurement.qualification.domain.model.tender.conversion.coefficient.CoefficientRate
@@ -47,9 +49,10 @@ class CreateQualificationsTest {
     fun getCoefficients(
         conversions: List<CreateQualificationsParams.Tender.Conversion>,
         requirementResponses: List<CreateQualificationsParams.Submission.RequirementResponse>,
+        criteria: List<CreateQualificationsParams.Tender.Criterion>,
         result: List<CoefficientRate>
     ) {
-        val actual = QualificationServiceImpl.getCoefficients(conversions, requirementResponses)
+        val actual = QualificationServiceImpl.getCoefficients(conversions, criteria, requirementResponses)
         assertEquals(result, actual)
     }
 
@@ -184,6 +187,7 @@ class CreateQualificationsTest {
             Arguments.of(
                 emptyList<CreateQualificationsParams.Tender.Conversion>(),
                 emptyList<CreateQualificationsParams.Submission.RequirementResponse>(),
+                emptyList<CreateQualificationsParams.Tender.Criterion>(),
                 result()
             ),
             Arguments.of(
@@ -197,6 +201,7 @@ class CreateQualificationsTest {
                     )
                 ),
                 emptyList<CreateQualificationsParams.Submission.RequirementResponse>(),
+                listOf(criteria("requirement-id-1")),
                 result()
             ),
             Arguments.of(
@@ -212,6 +217,7 @@ class CreateQualificationsTest {
                 listOf(
                     requirementResponse(requirement = "requirement-id-1", value = 99)
                 ),
+                listOf(criteria("requirement-id-1")),
                 result()
             ),
             Arguments.of(
@@ -227,6 +233,7 @@ class CreateQualificationsTest {
                 listOf(
                     requirementResponse(requirement = "requirement-id-2", value = 10)
                 ),
+                listOf(criteria("requirement-id-1")),
                 result()
             ),
             Arguments.of(
@@ -248,6 +255,7 @@ class CreateQualificationsTest {
                 listOf(
                     requirementResponse(requirement = "requirement-id-1", value = 10)
                 ),
+                listOf(criteria("requirement-id-1")),
                 result(0.5)
             ),
             Arguments.of(
@@ -271,6 +279,7 @@ class CreateQualificationsTest {
                     requirementResponse(requirement = "requirement-id-1", value = 10),
                     requirementResponse(requirement = "requirement-id-2", value = 40)
                 ),
+                listOf(criteria("requirement-id-1"), criteria("requirement-id-2")),
                 result(0.5, 0.33)
             )
         ).asSequence().asStream()
@@ -303,6 +312,29 @@ class CreateQualificationsTest {
                     id = "candidate-id-1",
                     name = "candidate-name-1"
                 ).get
+            ).get
+
+        private fun criteria(requirement: String): CreateQualificationsParams.Tender.Criterion =
+            CreateQualificationsParams.Tender.Criterion.tryCreate(
+                id = UUID.randomUUID().toString(),
+                relatesTo = "tenderer",
+                source = "",
+                classification = CreateQualificationsParams.Tender.Criterion.Classification(
+                    id = "CRITERION.SELECTION.123",
+                    scheme = ""
+                ),
+                requirementGroups = listOf(
+                    CreateQualificationsParams.Tender.Criterion.RequirementGroup.tryCreate(
+                        id = UUID.randomUUID().toString(),
+                        requirements = listOf(
+                            CreateQualificationsParams.Tender.Criterion.RequirementGroup.Requirement.tryCreate(
+                                id = requirement,
+                                status = RequirementStatus.ACTIVE.key,
+                                dataType = RequirementDataType.INTEGER.key
+                            ).get
+                        )
+                    ).get
+                )
             ).get
 
         private fun result(vararg values: Double): List<CoefficientRate> = values.map { value -> coefficientRate(value) }

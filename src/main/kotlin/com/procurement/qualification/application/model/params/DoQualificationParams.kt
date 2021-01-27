@@ -62,10 +62,11 @@ class DoQualificationParams private constructor(
                 .filter {
                     when (it) {
                         QualificationStatusDetails.ACTIVE,
-                        QualificationStatusDetails.AWAITING,
-                        QualificationStatusDetails.CONSIDERATION,
                         QualificationStatusDetails.UNSUCCESSFUL -> true
-                        QualificationStatusDetails.BASED_ON_HUMAN_DECISION -> false
+
+                        QualificationStatusDetails.AWAITING,
+                        QualificationStatusDetails.BASED_ON_HUMAN_DECISION,
+                        QualificationStatusDetails.CONSIDERATION -> false
                     }
                 }
                 .toSet()
